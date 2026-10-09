@@ -1,0 +1,5 @@
+-r requirements.txt
+boto3>=1.35
+pytest>=8
+aws-cdk-lib==2.273.0
+constructs>=10,<11

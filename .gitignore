@@ -34,3 +34,6 @@ video/footage/
 Thumbs.db
 .idea/
 .vscode/
+
+# Build output
+build/
