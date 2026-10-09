@@ -85,7 +85,8 @@ A `CaseView` with timeline.
 | Route | Body | Effect |
 |---|---|---|
 | `POST /admin/ingest` | `{"source": "fixtures"\|"snapshot"\|"live", "start_cases": true, "villages": ["optional names or keys"]}` | Starts the ingest asynchronously (202) |
-| `POST /admin/reset` | `{}` | Deletes demo villages, cases, events and tokens; keeps Telegram subscriptions |
+| `POST /admin/reset` | `{}` | Stops running case workflows and deletes demo villages, cases, events and tokens; keeps Telegram subscriptions |
+| `POST /admin/restart-case` | `{"case_id"}` | Starts a fresh workflow for an existing case (for a workflow that failed) |
 | `POST /admin/engineer-action` | `{"case_id", "action": "chlorination"\|"repair"\|"source_changed"\|"need_help"}` | Same as the engineer's Telegram button |
 | `POST /admin/try-close` | `{"case_id"}` | An engineer tries to close without lab evidence; Cedar denies and it's logged |
 | `POST /admin/kit-result` | `{"case_id", "result": "clean"\|"contaminated"}` | Same as the field-kit buttons (no photo) |

@@ -136,13 +136,14 @@ class JalSaathiStack(Stack):
         steps_fn.add_to_role_policy(iam.PolicyStatement(actions=["polly:SynthesizeSpeech"], resources=["*"]))
 
         # Case workflow (docs/BUILD_PLAN.md section 5)
-        def step(sid: str, name: str, *, wait: bool = False, timeout_path: str | None = None, result_path=None):
-            payload = {"step": name, "case_id": sfn.JsonPath.string_at("$.case_id")}
+        def step(sid: str, name: str, *, wait: bool = False, timeout_path: str | None = None, result_path=None,
+                 extra: dict | None = None):
+            payload = {"step": name, "case_id": sfn.JsonPath.string_at("$.case_id"), **(extra or {})}
             mode = {"payload_response_only": True}
             if wait:
                 payload["token"] = sfn.JsonPath.task_token
                 mode = {"integration_pattern": sfn.IntegrationPattern.WAIT_FOR_TASK_TOKEN}
-            return tasks.LambdaInvoke(
+            task = tasks.LambdaInvoke(
                 self, sid,
                 lambda_function=steps_fn,
                 payload=sfn.TaskInput.from_object(payload),
@@ -151,25 +152,31 @@ class JalSaathiStack(Stack):
                 retry_on_service_exceptions=True,
                 **mode,
             )
+            # New accounts start with a Lambda concurrency limit of 10, so many cases at once get throttled.
+            task.add_retry(errors=["Lambda.TooManyRequestsException"], interval=Duration.seconds(2), backoff_rate=2,
+                           max_attempts=10, max_delay=Duration.seconds(60), jitter_strategy=sfn.JitterType.FULL)
+            return task
 
         init = step("Init", "init")
         alert = step("Alert", "alert")
-        await_fix = step("AwaitFix", "await_fix", wait=True, timeout_path="$.timers.fix_seconds", result_path="$.fix")
-        escalate_fix = step("EscalateFix", "escalate")
-        await_kit = step("AwaitKit", "await_kit", wait=True, timeout_path="$.timers.retest_seconds", result_path="$.kit")
-        escalate_kit = step("EscalateRetest", "escalate")
         reopen = step("Reopen", "reopen")
         provisional = step("MarkProvisional", "provisional")
-        await_lab = step("AwaitLab", "await_lab", wait=True, timeout_path="$.timers.lab_seconds", result_path="$.lab")
-        escalate_lab = step("EscalateLab", "escalate")
         close = step("Close", "close")
 
-        await_fix.add_catch(escalate_fix, errors=["States.Timeout"], result_path="$.timeout")
-        escalate_fix.next(await_fix)
-        await_kit.add_catch(escalate_kit, errors=["States.Timeout"], result_path="$.timeout")
-        escalate_kit.next(await_kit)
-        await_lab.add_catch(escalate_lab, errors=["States.Timeout"], result_path="$.timeout")
-        escalate_lab.next(await_lab)
+        def waiting(sid: str, name: str, kind: str, timer: str, result: str):
+            """A wait step that escalates on each deadline, at most 3 times, then keeps waiting without a deadline."""
+            timed = step(sid, name, wait=True, timeout_path=f"$.timers.{timer}", result_path=result)
+            final = step(f"{sid}NoDeadline", name, wait=True, result_path=result)
+            escalate = step(f"{sid}Escalate", "escalate", result_path="$.esc", extra={"reason": kind})
+            timed.add_catch(escalate, errors=["States.Timeout"], result_path="$.timeout")
+            escalate.next(sfn.Choice(self, f"{sid}EscalationLimit")
+                          .when(sfn.Condition.number_greater_than_equals("$.esc.escalations", 3), final)
+                          .otherwise(timed))
+            return timed, final
+
+        await_fix, await_fix_final = waiting("AwaitFix", "await_fix", "fix", "fix_seconds", "$.fix")
+        await_kit, await_kit_final = waiting("AwaitKit", "await_kit", "retest", "retest_seconds", "$.kit")
+        await_lab, await_lab_final = waiting("AwaitLab", "await_lab", "lab", "lab_seconds", "$.lab")
         reopen.next(await_fix)
 
         kit_choice = (sfn.Choice(self, "KitResult")
@@ -180,9 +187,12 @@ class JalSaathiStack(Stack):
                       .otherwise(reopen))
         provisional.next(await_lab)
         await_lab.next(lab_choice)
+        await_lab_final.next(lab_choice)
         close.next(sfn.Succeed(self, "Closed"))
         await_kit.next(kit_choice)
+        await_kit_final.next(kit_choice)
         await_fix.next(await_kit)
+        await_fix_final.next(await_kit)
         definition = init.next(alert).next(await_fix)
 
         machine = sfn.StateMachine(
@@ -201,8 +211,12 @@ class JalSaathiStack(Stack):
         machine.grant_task_response(webhook_fn)
         webhook_url = webhook_fn.add_function_url(auth_type=lambda_.FunctionUrlAuthType.NONE)
 
-        api_fn = fn("ApiHandler", "jalsaathi.api.handler", timeout=29, extra={"INGEST_FUNCTION": ingest_fn.function_name})
+        api_fn = fn("ApiHandler", "jalsaathi.api.handler", timeout=29,
+                    extra={"INGEST_FUNCTION": ingest_fn.function_name, "STATE_MACHINE_ARN": machine.state_machine_arn})
         machine.grant_task_response(api_fn)
+        machine.grant_start_execution(api_fn)
+        machine.grant(api_fn, "states:ListExecutions")
+        machine.grant_execution(api_fn, "states:StopExecution")
         ingest_fn.grant_invoke(api_fn)
         http_api.add_routes(path="/api/{proxy+}", methods=[apigw.HttpMethod.ANY],
                             integration=integ.HttpLambdaIntegration("ApiIntegration", api_fn))

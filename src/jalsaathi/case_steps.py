@@ -89,12 +89,25 @@ def step_await_fix(case: dict, event: dict) -> None:
                     note=f"asked {len(engineers)} engineer(s)" if engineers else "no engineer subscribed yet; waiting")
 
 
+ESCALATION = {
+    "fix": ("fix deadline passed", "काम की समय सीमा निकल गई। मामला ज़िले को भेजा गया।", "AWAITING_FIX"),
+    "retest": ("field-kit re-test overdue", "दोबारा जांच की समय सीमा निकल गई। कृपया शीशी से जांच करें।", "AWAITING_RETEST"),
+    "lab": ("lab re-test overdue", "लैब की दोबारा जांच का इंतज़ार है। मामला ज़िले को भेजा गया।", "PROVISIONALLY_SAFE"),
+}
+
+
 def step_escalate(case: dict, event: dict) -> dict:
-    n = int(case.get("escalations", 0)) + 1
-    store.update_case(case["case_id"], status="ESCALATED", escalations=n)
-    store.add_event(case["case_id"], "escalated", note=f"fix deadline passed (escalation {n})")
-    for e in _engineers(case):
-        _send_safely(e["chat_id"], f"⏰ <b>{case['village']}</b>: काम की समय सीमा निकल गई। मामला ज़िले को भेजा गया।")
+    reason = event.get("reason", "fix")
+    note, message, status_after = ESCALATION.get(reason, ESCALATION["fix"])
+    counts = dict(case.get("escalation_counts") or {})
+    counts[reason] = int(counts.get(reason, 0)) + 1
+    n = counts[reason]
+    store.update_case(case["case_id"], status="ESCALATED" if reason == "fix" else status_after,
+                      escalations=sum(counts.values()), escalation_counts=counts)
+    store.add_event(case["case_id"], "escalated", note=f"{note} (escalation {n} of 3)")
+    targets = _engineers(case) if reason in ("fix", "lab") else _relays(case)
+    for t in targets:
+        _send_safely(t["chat_id"], f"⏰ <b>{case['village']}</b>: {message}")
     return {"escalations": n}
 
 

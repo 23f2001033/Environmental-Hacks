@@ -48,10 +48,11 @@ def _stats():
     cases = store.list_cases()
     open_cases = [c for c in cases if c.get("status") in store.OPEN_STATUSES]
     count = lambda key, items: {k: sum(1 for c in items if c.get(key) == k) for k in sorted({c.get(key) for c in items})}
+    run = {k: v for k, v in (store.latest_run() or {}).items() if k not in ("pk", "sk", "type")} or None
     return {"villages": len(store.list_villages()), "cases": len(cases), "open_cases": len(open_cases),
             "closed_cases": sum(1 for c in cases if c.get("status") == "CLOSED"),
             "open_by_severity": count("severity", open_cases), "open_by_code": count("code", open_cases),
-            "by_status": count("status", cases), "last_run": store.latest_run()}
+            "by_status": count("status", cases), "last_run": run}
 
 
 def _admin_route(method: str, path: str, body: dict):
@@ -62,10 +63,25 @@ def _admin_route(method: str, path: str, body: dict):
                                        Payload=json.dumps(payload).encode())
         return _resp(202, {"started": True, "request": payload})
     if path == "/api/v1/admin/reset":
-        return _resp(200, {"deleted": store.reset_demo()})
+        sfn, stopped = config.client("stepfunctions"), 0
+        for page in sfn.get_paginator("list_executions").paginate(stateMachineArn=config.state_machine_arn(),
+                                                                  statusFilter="RUNNING"):
+            for ex in page["executions"]:
+                sfn.stop_execution(executionArn=ex["executionArn"], cause="demo reset")
+                stopped += 1
+        return _resp(200, {"deleted": store.reset_demo(), "workflows_stopped": stopped})
     case_id = body.get("case_id", "")
-    if not store.get_case(case_id):
+    case = store.get_case(case_id)
+    if not case:
         return _resp(404, {"error": "case not found"})
+    if path == "/api/v1/admin/restart-case":
+        import uuid
+
+        config.client("stepfunctions").start_execution(
+            stateMachineArn=config.state_machine_arn(), name=f"{case_id}-r{uuid.uuid4().hex[:6]}"[:80],
+            input=json.dumps({"case_id": case_id, "timers": case["timers"]}))
+        store.add_event(case_id, "restarted", actor="admin-console", note="workflow restarted")
+        return _resp(202, {"restarted": True})
     try:
         if path == "/api/v1/admin/engineer-action":
             actions.log_fix(case_id, body.get("action", "chlorination"), "admin-console (demo)")

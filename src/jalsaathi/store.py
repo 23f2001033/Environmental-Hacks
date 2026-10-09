@@ -143,7 +143,7 @@ def update_case(case_id: str, **fields) -> None:
 
 def add_event(case_id: str, kind: str, actor: str = "system", **details) -> dict:
     ts = now_iso()
-    item = {"pk": f"CASE#{case_id}", "sk": f"EVT#{ts}#{time.time_ns() % 1_000_000:06d}", "type": "event",
+    item = {"pk": f"CASE#{case_id}", "sk": f"EVT#{time.time_ns():020d}", "type": "event",
             "kind": kind, "actor": actor, "at": ts, **details}
     _t().put_item(Item=to_ddb(item))
     return item
