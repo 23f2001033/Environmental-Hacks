@@ -231,3 +231,21 @@ def test_cost_estimate_has_assumptions():
     assert est["usd_total"] == pytest.approx(sum(est["usd_by_service"].values()), abs=1e-3)
     assert est["usd_total"] < 5 and "prices" in est["assumptions"]
     assert costs.estimate(0, 0, 0)["usd_per_case"] is None
+
+
+def test_kit_hint_falls_back_when_claude_is_not_subscribed(monkeypatch):
+    asked = []
+
+    class Bedrock:
+        def converse(self, modelId, **kw):
+            asked.append(modelId)
+            if "anthropic" in modelId:
+                raise RuntimeError("AccessDeniedException: INVALID_PAYMENT_INSTRUMENT")
+            return {"output": {"message": {"content": [{"text": '{"colour": "black", "confidence": "high", "reason": "dark"}'}]}}}
+
+    monkeypatch.setattr(vision, "_unavailable", set())
+    monkeypatch.setattr(config, "client", lambda n: Bedrock())
+    first = vision.kit_hint(b"jpeg")
+    second = vision.kit_hint(b"jpeg")
+    assert first["model"] == vision.FALLBACK_MODEL_ID and second["colour"] == "black"
+    assert asked == [vision.MODEL_ID, vision.FALLBACK_MODEL_ID, vision.FALLBACK_MODEL_ID]  # Claude not retried

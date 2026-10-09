@@ -291,7 +291,7 @@ Only after the Saturday 18:00 freeze is green, in this order:
 
 ## D-30 AI reads the field-kit photo, the person decides (stretch S2)
 
-**Decision.** When a village relay sends a photo, Claude Haiku 4.5 on Bedrock (India inference profile) suggests the vial colour (black, yellow or unclear). The message says it is only a suggestion. The case moves only when the person taps a result button. The timeline records the suggestion and whether the person agreed.
+**Decision.** When a village relay sends a photo, a Bedrock model suggests the vial colour (black, yellow or unclear): Claude Haiku 4.5 (India inference profile) first, Amazon Nova Pro if Claude is unavailable. Anthropic models need an AWS Marketplace subscription, which this account cannot complete without a payment card; Nova needs none. The timeline records which model answered. The message says it is only a suggestion. The case moves only when the person taps a result button. The timeline records the suggestion and whether the person agreed.
 
 **Why.** It helps a first-time relay read the vial, and the agree/disagree record shows how reliable the suggestion is, without letting a model close or reopen a case.
 

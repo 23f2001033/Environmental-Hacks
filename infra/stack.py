@@ -267,7 +267,9 @@ class JalSaathiStack(Stack):
         webhook_fn.add_to_role_policy(iam.PolicyStatement(
             actions=["bedrock:InvokeModel"],
             resources=[f"arn:aws:bedrock:{self.region}:{self.account}:inference-profile/in.anthropic.claude-haiku-4-5-*",
-                       "arn:aws:bedrock:*::foundation-model/anthropic.claude-haiku-4-5-*"]))
+                       "arn:aws:bedrock:*::foundation-model/anthropic.claude-haiku-4-5-*",
+                       f"arn:aws:bedrock:{self.region}:{self.account}:inference-profile/apac.amazon.nova-pro-v1:0",
+                       "arn:aws:bedrock:*::foundation-model/amazon.nova-pro-v1:0"]))
         webhook_url = webhook_fn.add_function_url(auth_type=lambda_.FunctionUrlAuthType.NONE)
 
         api_fn = fn("ApiHandler", "jalsaathi.api.handler", timeout=29,
