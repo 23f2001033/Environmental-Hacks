@@ -13,7 +13,7 @@ class ActionError(Exception):
     pass
 
 
-def _waiting(case_id: str, kind: str) -> dict:
+def require_waiting(case_id: str, kind: str) -> dict:
     """The task token the case is waiting on. Checked before anything is recorded, so a rejected action leaves no trace."""
     tok = store.token_for_case(case_id, kind)
     if not tok:
@@ -36,7 +36,7 @@ def case_for_short(short: str, kind: str) -> str:
 def log_fix(case_id: str, action: str, actor: str) -> None:
     if action not in FIX_ACTIONS:
         raise ActionError(f"unknown fix action: {action}")
-    tok = _waiting(case_id, "fix")
+    tok = require_waiting(case_id, "fix")
     store.add_event(case_id, "fix_logged", actor=actor, action=action, note=FIX_ACTIONS[action])
     if action != "need_help":
         _resume(case_id, "fix", tok, {"action": action})
@@ -50,19 +50,22 @@ def try_close(case_id: str, actor: str, role: str = "engineer") -> dict:
     return d
 
 
-def kit_result(case_id: str, result: str, actor: str, photo_key: str | None) -> None:
+def kit_result(case_id: str, result: str, actor: str, photo_key: str | None, ai_hint: dict | None = None) -> None:
     if result not in ("clean", "contaminated"):
         raise ActionError(f"unknown kit result: {result}")
-    tok = _waiting(case_id, "kit")
-    store.add_event(case_id, "kit_result", actor=actor, result=result, photo_key=photo_key,
-                    note="field-kit H2S vial: " + ("yellow (clean)" if result == "clean" else "black (contaminated)"))
+    tok = require_waiting(case_id, "kit")
+    note = "field-kit H2S vial: " + ("yellow (clean)" if result == "clean" else "black (contaminated)")
+    if ai_hint:
+        agrees = {"yellow": "clean", "black": "contaminated"}.get(ai_hint.get("colour")) == result
+        note += f"; AI suggestion was {ai_hint.get('colour')} ({ai_hint.get('confidence')}), " + ("agrees" if agrees else "person chose differently")
+    store.add_event(case_id, "kit_result", actor=actor, result=result, photo_key=photo_key, ai_hint=ai_hint, note=note)
     _resume(case_id, "kit", tok, {"result": result})
 
 
 def lab_result(case_id: str, result: str, actor: str, simulated: bool) -> None:
     if result not in ("pass", "fail"):
         raise ActionError(f"unknown lab result: {result}")
-    tok = _waiting(case_id, "lab")
+    tok = require_waiting(case_id, "lab")
     note = ("SIMULATED lab re-test (demo control)" if simulated else "lab re-test") + f": {result}"
     store.add_event(case_id, "lab_result", actor=actor, result=result, note=note, simulated=simulated)
     _resume(case_id, "lab", tok, {"result": result})

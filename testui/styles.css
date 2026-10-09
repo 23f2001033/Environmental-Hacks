@@ -33,4 +33,11 @@ input { font:inherit; padding:6px 8px; border:1px solid var(--line); border-radi
 #poster { padding:24px; }
 .poster { max-width:720px; margin:0 auto; border:6px solid var(--red); border-radius:12px; padding:24px; background:#fff; font-size:20px; }
 .poster h1 { font-size:34px; margin:0 0 8px; }
+.map { height:420px; border-radius:6px; overflow:hidden; background:#e8eeec; display:grid; place-items:center; }
+.legend { display:flex; flex-wrap:wrap; gap:4px 12px; align-items:center; margin-top:6px; }
+.dot { display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:2px; }
+.dot.unsafe { background:var(--red); } .dot.provisional { background:var(--amber); } .dot.safe_again { background:var(--ok); }
+.dot.ring { border:2px solid var(--red); background:transparent; }
+.grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:8px 16px; margin-top:8px; font-size:13px; }
+#filter { width:100%; margin-bottom:8px; }
 @media print { .bar,#app { display:none !important; } #poster { display:block !important; } }

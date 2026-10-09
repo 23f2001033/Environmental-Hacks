@@ -11,12 +11,26 @@ Base path: **`/api/v1`** on the site domain (same origin as the frontend). JSON,
 {"ok": true, "version": "0.1.0", "demo_clock": true, "bot": "Srott_bot"}
 ```
 
+### `GET /config`
+Settings the frontend needs at start-up. `map.style_url` is a MapLibre style (Amazon Location, key restricted to the site
+domain and `http://localhost*`); it is `null` if maps are not configured, and the page must still work without a map.
+```json
+{"bot": "Srott_bot", "demo_clock": true,
+ "map": {"style_url": "https://maps.geo.ap-south-1.amazonaws.com/v2/styles/Standard/descriptor?key=...&color-scheme=Light",
+         "provider": "Amazon Location Service", "center": [78.5, 26.5], "zoom": 5}}
+```
+
 ### `GET /villages`
 Every village with a test on record, unsafe first.
 ```json
 {"villages": [{"key": "412558", "name": "BEHTA LAKHI", "block": "Harpalpur", "district": "Hardoi", "state": "Uttar Pradesh",
-  "lat": null, "lon": null, "status": "unsafe", "worst_severity": "red", "open_cases": 1, "parameters": ["ecoli"]}]}
+  "lat": 27.23725, "lon": 79.77993, "geo_precision": "village", "source": "fixtures",
+  "status": "unsafe", "worst_severity": "red", "open_cases": 1, "parameters": ["ecoli"]}]}
 ```
+
+- `lat`/`lon` may be `null` (no trustworthy location found). `geo_precision`: `village` (geocoded and checked against the
+  WQMIS district and name) or `block` (village not found; the point is the block's location; draw it differently).
+- `source`: `fixtures` (the demo villages) · `snapshot` · `live`.
 
 ### `GET /villages/{key}`
 Everything the village page needs.
@@ -24,7 +38,7 @@ Everything the village page needs.
 {
   "village": {"key": "412558", "name": "BEHTA LAKHI", "gram_panchayat": "BEHTA  LAKHI", "block": "Harpalpur", "block_key": "5037",
               "district": "Hardoi", "state": "Uttar Pradesh", "village_id": 412558, "block_id": 5037, "district_id": 481,
-              "state_id": 31, "lat": null, "lon": null},
+              "state_id": 31, "lat": 27.23725, "lon": 79.77993, "geo_precision": "village"},
   "status": "unsafe",
   "status_text": {"hi": "पानी असुरक्षित", "en": "Unsafe water"},
   "cases": [CaseView, ...],
@@ -74,18 +88,33 @@ A `CaseView` with timeline.
 
 ### `GET /stats`
 ```json
-{"villages": 13, "cases": 13, "open_cases": 13, "closed_cases": 0,
+{"villages": 13, "villages_on_map": 11, "cases": 13, "open_cases": 13, "closed_cases": 0,
  "open_by_severity": {"red": 13}, "open_by_code": {"ecoli": 9, "nitrate": 4},
- "by_status": {"AWAITING_FIX": 13}, "last_run": {"run_id": "...", "source": "fixtures", "records": 13, "cases_planned": 13,
- "new_cases": 13, "workflows_started": 13, "data_as_of": "2026-10-09", "seconds": 4.1, "finished_at": "..."}}
+ "by_status": {"AWAITING_FIX": 13}, "by_source": {"fixtures": 13},
+ "alert_latency": {"cases": 13, "median_s": 4.2, "p95_s": 9.8, "max_s": 11.0},
+ "last_run": {"run_id": "...", "source": "fixtures", "records": 13, "cases_planned": 13, "new_cases": 13,
+              "workflows_started": 13, "scale_run": false, "scale_execution_arn": null, "new_samples": 13, "villages": 13,
+              "villages_located": 11, "geocode_calls": 15, "demo_clock": true, "data_as_of": "2026-10-09", "seconds": 4.1,
+              "finished_at": "...",
+              "cost_estimate": {"usd_total": 0.13, "usd_per_case": 0.0098, "usd_by_service": {"polly": 0.12, "...": 0},
+                                "assumptions": {"prices": "approximate on-demand list prices ...", "...": "..."}}},
+ "scale_run": {"status": "SUCCEEDED", "started": "...", "stopped": "...", "seconds": 640.2,
+               "items": {"total": 580, "succeeded": 580, "failed": 0, "running": 0, "pending": 0}},
+ "repeat_failures": {"question": "...", "source": "...", "totals": {"last_year": 1233, "this_year": 580, "both": 149,
+                     "share_of_last_year_failing_again": 0.121}, "caveats": ["..."], "by_state_and_parameter": [...]}}
 ```
+
+- `alert_latency`: seconds from case opened (failed test found) to village warned. For a scale run this includes the
+  deliberate pacing (about one case a second).
+- `scale_run` is `null` unless the last ingest used the ScaleRun state machine.
 
 ## Admin (header `x-admin-token`)
 
 | Route | Body | Effect |
 |---|---|---|
-| `POST /admin/ingest` | `{"source": "fixtures"\|"snapshot"\|"live", "start_cases": true, "villages": ["optional names or keys"]}` | Starts the ingest asynchronously (202) |
-| `POST /admin/reset` | `{}` | Stops running case workflows and deletes demo villages, cases, events and tokens; keeps Telegram subscriptions |
+| `POST /admin/ingest` | `{"source": "fixtures"\|"snapshot"\|"live", "start_cases": true, "villages": ["optional names or keys"]}` | Starts the ingest asynchronously (202). Over 25 new cases go through the ScaleRun state machine |
+| `POST /admin/scale-run` | `{}` | Ingests every FY 2026-27 failure in the WQMIS snapshot (about 580 cases, real deadlines) and starts their workflows at a steady pace (202) |
+| `POST /admin/reset` | `{}` | Asynchronous (202): stops all workflows, deletes villages, cases, events, tokens and runs; keeps Telegram subscriptions. Takes up to a minute at scale |
 | `POST /admin/restart-case` | `{"case_id"}` | Starts a fresh workflow for an existing case (for a workflow that failed) |
 | `POST /admin/engineer-action` | `{"case_id", "action": "chlorination"\|"repair"\|"source_changed"\|"need_help"}` | Same as the engineer's Telegram button |
 | `POST /admin/try-close` | `{"case_id"}` | An engineer tries to close without lab evidence; Cedar denies and it's logged |

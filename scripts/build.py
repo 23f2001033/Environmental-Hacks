@@ -23,6 +23,7 @@ def build_lambda() -> None:
     shutil.copytree(ROOT / "content", out / "content")
     shutil.copytree(ROOT / "policies", out / "policies")
     shutil.copytree(ROOT / "data" / "fixtures", out / "data" / "fixtures")
+    shutil.copytree(ROOT / "data" / "analysis", out / "data" / "analysis")
     print(f"lambda bundle: {out}")
 
 

@@ -93,5 +93,37 @@ def test_api_unknown_route_and_method():
 
 
 def test_api_village_not_found(monkeypatch):
-    monkeypatch.setattr(api.views, "village_bundle", lambda key: None)
+    monkeypatch.setattr(api.views, "village_bundle", lambda key, **kw: None)
     assert _api("/api/v1/villages/zzz")["statusCode"] == 404
+
+
+def test_relay_photo_gets_ai_hint_and_kit_result_carries_it(monkeypatch, sent):
+    monkeypatch.setattr(webhook.store, "seen_update", lambda uid: False)
+    monkeypatch.setattr(webhook.store, "chat_subscriptions", lambda chat: [{"scope_pk": "VILLAGE#9"}])
+    monkeypatch.setattr(webhook.telegram, "download_file", lambda fid: b"jpeg")
+    monkeypatch.setattr(webhook.vision, "kit_hint", lambda img: {"colour": "yellow", "confidence": "high"})
+    pending = {}
+    monkeypatch.setattr(webhook.store, "put_pending_photo", lambda chat, fid, hint=None: pending.update(file_id=fid, hint=hint))
+    webhook.handler(_tg_event({"update_id": 20, "message": {"chat": {"id": 5}, "photo": [{"file_id": "big"}]}}))
+    assert pending == {"file_id": "big", "hint": {"colour": "yellow", "confidence": "high"}} and "सुझाव" in sent[-1][1]
+
+    recorded = []
+    monkeypatch.setattr(webhook.store, "has_pending_photo", lambda chat: True)
+    monkeypatch.setattr(webhook.store, "pop_pending_photo", lambda chat: dict(pending))
+    monkeypatch.setattr(webhook.actions, "case_for_short", lambda short, kind: "c1")
+    monkeypatch.setattr(webhook.actions, "require_waiting", lambda cid, kind: {"token": "T"})
+    monkeypatch.setattr(webhook.actions, "kit_result", lambda *a: recorded.append(a))
+    monkeypatch.setattr(webhook.config, "client", lambda n: type("S3", (), {"put_object": lambda self, **k: None})())
+    webhook.handler(_tg_event({"update_id": 21, "callback_query": {"id": "c", "data": "k:abc:clean",
+                                                                   "message": {"chat": {"id": 5}, "message_id": 3}}}))
+    assert recorded == [("c1", "clean", "tg:5", "private/kit/c1/big.jpg", {"colour": "yellow", "confidence": "high"})]
+
+
+def test_kit_button_without_photo_is_refused(monkeypatch, sent):
+    monkeypatch.setattr(webhook.store, "seen_update", lambda uid: False)
+    monkeypatch.setattr(webhook.store, "has_pending_photo", lambda chat: False)
+    monkeypatch.setattr(webhook.actions, "case_for_short", lambda short, kind: "c1")
+    webhook.handler(_tg_event({"update_id": 22, "callback_query": {"id": "c", "data": "k:abc:clean",
+                                                                   "message": {"chat": {"id": 5}, "message_id": 3}}}))
+    answer = [s for s in sent if s[0] == "answer"][0]
+    assert answer[2]["alert"] is True

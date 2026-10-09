@@ -264,3 +264,39 @@ Only after the Saturday 18:00 freeze is green, in this order:
 **Decision.** Claude Code, in Aman's session, implements most of the code quickly. Each lane has a human owner who reviews, tests on real phones, accepts the work against the done criteria in the build plan, and owns the copy and content for that lane.
 
 **Why.** Speed: the strongest competitor built 81 commits in a day the same way. Ownership: people still decide what is correct and what ships.
+
+## D-26 Scale run through a Distributed Map, paced
+
+**Decision.** Ingests with more than 25 new cases write the list to `s3://<bucket>/runs/scale-items.json` and start the `ScaleRun` state machine. Its Distributed Map (Express children, at most 3 at a time) starts one case workflow per item and then waits 3 seconds, so about one case starts per second. Workflow names are deterministic (`case id + hash + run id`), and `ExecutionAlreadyExists` is caught, so a retried item can never start a case twice. Up to 5% of items may fail without failing the run; failed cases can be restarted from the console.
+
+**Why.** The real snapshot has about 580 open failures. A new AWS account has a Lambda concurrency limit of 10, and starting 580 workflows at once throttled earlier runs (3 of 13 failed even at demo size). Pacing keeps every case inside the limit without asking AWS for a quota increase. It is also the honest answer to "does this scale?": a measured run over real data, with its duration and failures in `/stats`.
+
+## D-27 Real deadlines for real data; demo clock only for fixtures
+
+**Decision.** Only the 13 demo fixture cases use the minutes-long demo clock. Cases from the snapshot or live ingest get the real deadlines (red: 48 h to fix, 7 days to re-test).
+
+**Why.** Real villages must never get a "deadline passed" escalation four minutes after a case opens.
+
+## D-28 Voice notes on first need
+
+**Decision.** Polly makes a case's voice note only when someone will hear it: a relay is subscribed when the alert goes out, a relay joins later, or someone opens the village page. Demo fixtures always get theirs up front. The audio path is stored on the case, so each note is made once.
+
+**Why.** Most of the 580 real villages have no relay yet. Making audio nobody hears costs money and time inside the paced scale run.
+
+## D-29 Map locations are checked, not trusted
+
+**Decision.** Villages are geocoded with Amazon Location (`geo-places` Geocode, `IntendedUse=Storage` because we keep the result). A result is accepted only when its district matches the WQMIS district, its name matches the village, and it is a place rather than a shop or street. Otherwise we use the block's location and mark it `geo_precision: "block"` (drawn hollow on the map). If neither is found, the village has no pin.
+
+**Why.** In testing, the geocoder put "Dhabla Kalayanpura, Baran" in Jaipur district and "Bhajangarh, Baran" at a flour mill. A wrong pin on a water-safety map is worse than no pin.
+
+## D-30 AI reads the field-kit photo, the person decides (stretch S2)
+
+**Decision.** When a village relay sends a photo, Claude Haiku 4.5 on Bedrock (India inference profile) suggests the vial colour (black, yellow or unclear). The message says it is only a suggestion. The case moves only when the person taps a result button. The timeline records the suggestion and whether the person agreed.
+
+**Why.** It helps a first-time relay read the vial, and the agree/disagree record shows how reliable the suggestion is, without letting a model close or reopen a case.
+
+## D-31 Stretch items not built
+
+- **S1 Hindi video alert:** needs an ffmpeg layer and Devanagari text rendering in Lambda. The voice note plus the printable poster cover the same need for now.
+- **S4 SES email escalation:** SES is in sandbox, so it could only email verified addresses. Telegram escalation to the block engineer is in place.
+- **S5 Repeat-failure analysis** was built as a script plus bundled results (`data/analysis/repeat_failures.json`, shown in `/stats`) rather than a live job, because last year's data does not change.

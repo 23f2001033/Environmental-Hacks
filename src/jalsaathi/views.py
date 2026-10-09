@@ -63,7 +63,7 @@ def case_view(case: dict, with_timeline: bool = True) -> dict:
     return view
 
 
-def village_bundle(key: str) -> dict | None:
+def village_bundle(key: str, make_audio: bool = False) -> dict | None:
     items = store.village_items(key)
     meta = next((i for i in items if i["sk"] == "META"), None)
     if not meta:
@@ -71,13 +71,18 @@ def village_bundle(key: str) -> dict | None:
     case_ids = [i["case_id"] for i in items if i["sk"].startswith("CASEREF#")]
     cases = [c for c in (store.get_case(cid) for cid in case_ids) if c]
     cases.sort(key=lambda c: (rules.SEVERITY_ORDER.get(c.get("severity"), 9), c.get("opened_at", "")))
+    if make_audio:
+        for c in cases:
+            if c.get("status") in store.OPEN_STATUSES:
+                voice.ensure_audio(c)  # first visit makes the voice note; later visits reuse it
     status = village_status(cases)
     samples = [{k: s.get(k) for k in ("parameter", "value", "unit", "acceptable_limit", "permissible_limit", "lab",
                                        "lab_approval", "sample_id", "source_type", "scheme_id", "scheme_name")}
                for s in items if s["sk"].startswith("SAMPLE#")]
     return {
         "village": {k: meta.get(k) for k in ("key", "name", "gram_panchayat", "block", "block_key", "district", "state",
-                                             "village_id", "block_id", "district_id", "state_id", "lat", "lon")},
+                                             "village_id", "block_id", "district_id", "state_id", "lat", "lon",
+                                             "geo_precision")},
         "status": status,
         "status_text": STATUS_TEXT[status],
         "cases": [case_view(c) for c in cases],
@@ -94,7 +99,8 @@ def village_summary(meta: dict, cases: list[dict]) -> dict:
     worst = min((rules.SEVERITY_ORDER.get(c.get("severity"), 9) for c in cases if c.get("status") in store.OPEN_STATUSES),
                 default=None)
     return {"key": meta["key"], "name": meta.get("name"), "block": meta.get("block"), "district": meta.get("district"),
-            "state": meta.get("state"), "lat": meta.get("lat"), "lon": meta.get("lon"), "status": status,
+            "state": meta.get("state"), "lat": meta.get("lat"), "lon": meta.get("lon"),
+            "geo_precision": meta.get("geo_precision"), "source": meta.get("source"), "status": status,
             "worst_severity": next((s for s, o in rules.SEVERITY_ORDER.items() if o == worst), None),
             "open_cases": sum(1 for c in cases if c.get("status") in store.OPEN_STATUSES),
             "parameters": sorted({c["code"] for c in cases})}

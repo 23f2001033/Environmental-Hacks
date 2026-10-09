@@ -6,8 +6,11 @@ import base64
 import hmac
 import json
 import logging
+import statistics
+from datetime import datetime
+from functools import lru_cache
 
-from . import __version__, actions, config, store, views
+from . import __version__, actions, config, paths, store, views
 
 log = logging.getLogger()
 log.setLevel(logging.INFO)
@@ -44,32 +47,95 @@ def _villages():
     return sorted(out, key=lambda s: (s["status"] != "unsafe", s.get("district") or "", s.get("name") or ""))
 
 
+def alert_latency(cases: list[dict]) -> dict | None:
+    """Seconds from case opened (failed test found) to village warned, over cases that have been warned."""
+    secs = sorted((datetime.fromisoformat(c["warned_at"]) - datetime.fromisoformat(c["opened_at"])).total_seconds()
+                  for c in cases if c.get("warned_at") and c.get("opened_at"))
+    if not secs:
+        return None
+    return {"cases": len(secs), "median_s": round(statistics.median(secs), 1),
+            "p95_s": round(secs[min(len(secs) - 1, int(0.95 * len(secs)))], 1), "max_s": round(secs[-1], 1)}
+
+
+def _scale_status(run: dict | None) -> dict | None:
+    arn = (run or {}).get("scale_execution_arn")
+    if not arn:
+        return None
+    sfn = config.client("stepfunctions")
+    ex = sfn.describe_execution(executionArn=arn)
+    out = {"status": ex["status"], "started": ex["startDate"].isoformat()}
+    if ex.get("stopDate"):
+        out.update(stopped=ex["stopDate"].isoformat(), seconds=round((ex["stopDate"] - ex["startDate"]).total_seconds(), 1))
+    runs = sfn.list_map_runs(executionArn=arn).get("mapRuns", [])
+    if runs:
+        counts = sfn.describe_map_run(mapRunArn=runs[0]["mapRunArn"])["itemCounts"]
+        out["items"] = {k: counts.get(k) for k in ("total", "succeeded", "failed", "running", "pending")}
+    return out
+
+
+@lru_cache(maxsize=1)
+def repeat_failures() -> dict | None:
+    try:
+        data = json.loads(paths.analysis_file("repeat_failures.json").read_text(encoding="utf-8"))
+    except (FileNotFoundError, json.JSONDecodeError):
+        return None
+    return {k: data.get(k) for k in ("question", "source", "totals", "caveats", "by_state_and_parameter")}
+
+
 def _stats():
     cases = store.list_cases()
     open_cases = [c for c in cases if c.get("status") in store.OPEN_STATUSES]
     count = lambda key, items: {k: sum(1 for c in items if c.get(key) == k) for k in sorted({c.get(key) for c in items})}
     run = {k: v for k, v in (store.latest_run() or {}).items() if k not in ("pk", "sk", "type")} or None
-    return {"villages": len(store.list_villages()), "cases": len(cases), "open_cases": len(open_cases),
+    try:
+        scale = _scale_status(run)
+    except Exception as exc:  # noqa: BLE001 - stats must still load
+        log.warning("scale status failed: %s", exc)
+        scale = None
+    villages = store.list_villages()
+    return {"villages": len(villages), "villages_on_map": sum(1 for v in villages if v.get("lat") is not None),
+            "cases": len(cases), "open_cases": len(open_cases),
             "closed_cases": sum(1 for c in cases if c.get("status") == "CLOSED"),
             "open_by_severity": count("severity", open_cases), "open_by_code": count("code", open_cases),
-            "by_status": count("status", cases), "last_run": run}
+            "by_status": count("status", cases), "by_source": count("source", cases),
+            "alert_latency": alert_latency(cases), "last_run": run, "scale_run": scale,
+            "repeat_failures": repeat_failures()}
+
+
+@lru_cache(maxsize=1)
+def _map_key() -> str | None:
+    name = config.map_key_name()
+    if not name:
+        return None
+    return config.client("location").describe_key(KeyName=name)["Key"]
+
+
+def _config():
+    try:
+        key = _map_key()
+    except Exception as exc:  # noqa: BLE001 - the page works without a map
+        log.warning("map key lookup failed: %s", exc)
+        key = None
+    style = (f"https://maps.geo.{config.REGION}.amazonaws.com/v2/styles/Standard/descriptor?key={key}&color-scheme=Light"
+             if key else None)
+    return {"bot": config.bot_username(), "demo_clock": config.demo_clock(),
+            "map": {"style_url": style, "provider": "Amazon Location Service", "center": [78.5, 26.5], "zoom": 5}}
 
 
 def _admin_route(method: str, path: str, body: dict):
-    if path == "/api/v1/admin/ingest":
-        payload = {"source": body.get("source", "fixtures"), "start_cases": body.get("start_cases", True),
-                   "villages": body.get("villages")}
+    if path in ("/api/v1/admin/ingest", "/api/v1/admin/scale-run", "/api/v1/admin/reset"):
+        if path.endswith("/reset"):
+            payload = {"action": "reset"}
+        elif path.endswith("/scale-run"):
+            payload = {"source": "snapshot", "scale": True}
+        else:
+            payload = {"source": body.get("source", "fixtures"), "start_cases": body.get("start_cases", True),
+                       "villages": body.get("villages")}
+        if payload.get("source") not in (None, "fixtures", "snapshot", "live"):
+            return _resp(400, {"error": "source must be fixtures, snapshot or live"})
         config.client("lambda").invoke(FunctionName=config.env("INGEST_FUNCTION"), InvocationType="Event",
                                        Payload=json.dumps(payload).encode())
         return _resp(202, {"started": True, "request": payload})
-    if path == "/api/v1/admin/reset":
-        sfn, stopped = config.client("stepfunctions"), 0
-        for page in sfn.get_paginator("list_executions").paginate(stateMachineArn=config.state_machine_arn(),
-                                                                  statusFilter="RUNNING"):
-            for ex in page["executions"]:
-                sfn.stop_execution(executionArn=ex["executionArn"], cause="demo reset")
-                stopped += 1
-        return _resp(200, {"deleted": store.reset_demo(), "workflows_stopped": stopped})
     case_id = body.get("case_id", "")
     case = store.get_case(case_id)
     if not case:
@@ -117,10 +183,12 @@ def handler(event, context=None):
         if path == "/api/v1/health":
             return _resp(200, {"ok": True, "version": __version__, "demo_clock": config.demo_clock(),
                                "bot": config.bot_username()})
+        if path == "/api/v1/config":
+            return _resp(200, _config())
         if path == "/api/v1/villages":
             return _resp(200, {"villages": _villages()})
         if len(parts) == 5 and parts[3] == "villages":
-            bundle = views.village_bundle(parts[4])
+            bundle = views.village_bundle(parts[4], make_audio=True)
             return _resp(200, bundle) if bundle else _resp(404, {"error": "village not found"})
         if len(parts) == 6 and parts[3] == "blocks" and parts[5] == "cases":
             cases = [views.case_view(c, with_timeline=False) for c in store.block_cases(parts[4])]

@@ -46,10 +46,12 @@ def _new_token(case_id: str, kind: str, token: str) -> str:
 
 def send_alert(case: dict, chat_ids: list[int] | None = None) -> int:
     """Village alert (text + voice). Used by the workflow and when a relay joins a village with an open case."""
-    url = voice.public_url(case.get("audio_path"))
+    targets = chat_ids if chat_ids is not None else [s["chat_id"] for s in _relays(case)]
+    if not targets:
+        return 0
+    url = voice.public_url(voice.ensure_audio(case))
     text = advice.alert_text(case, "hi", page_url=config.village_url(case["village_key"]),
                              data_as_of=(case.get("opened_at") or "")[:10])
-    targets = chat_ids if chat_ids is not None else [s["chat_id"] for s in _relays(case)]
     return sum(_send_safely(cid, text, audio_url=url) for cid in targets)
 
 
@@ -66,11 +68,8 @@ def step_alert(case: dict, event: dict) -> dict:
     if not decision["allowed"]:
         store.update_case(case["case_id"], status="WARNED", alert_blocked=True)
         return {"sent": 0, "blocked": True}
-    try:
-        case["audio_path"] = voice.synthesize(advice.voice_script(case), f"audio/{case['case_id']}.mp3")
-        store.update_case(case["case_id"], audio_path=case["audio_path"])
-    except Exception as exc:  # noqa: BLE001 - text alerts still go out without audio
-        log.warning("polly failed: %s", exc)
+    if case.get("source") == "fixtures":
+        voice.ensure_audio(case)  # demo villages always have their voice note ready; others get one on first need
     sent = send_alert(case)
     store.update_case(case["case_id"], status="WARNED", warned_at=store.now_iso())
     store.add_event(case["case_id"], "warned", note=f"alert sent to {sent} village contact(s)")

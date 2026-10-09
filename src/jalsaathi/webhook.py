@@ -11,7 +11,7 @@ import hmac
 import json
 import logging
 
-from . import actions, case_steps, config, store, telegram, views
+from . import actions, case_steps, config, store, telegram, views, vision
 
 log = logging.getLogger()
 log.setLevel(logging.INFO)
@@ -39,7 +39,8 @@ def _consent(chat_id: int, role: str, key: str, label: str) -> None:
 
 
 def _village_picker(chat_id: int) -> None:
-    villages = sorted(store.list_villages(), key=lambda v: (v.get("district") or "", v.get("name") or ""))[:12]
+    villages = sorted(store.list_villages(),
+                      key=lambda v: (v.get("source") != "fixtures", v.get("district") or "", v.get("name") or ""))[:12]
     rows = [[(f"{v['name']} ({v.get('block') or v.get('district')})", f"j:{v['key']}")] for v in villages]
     telegram.send_message(chat_id, HELP, rows or None)
 
@@ -83,13 +84,23 @@ def _command(u: dict) -> None:
         telegram.send_message(chat, HELP)
 
 
-def _store_kit_photo(chat_id: int, case_id: str) -> str | None:
-    file_id = store.pop_pending_photo(chat_id)
-    if not file_id:
-        return None
+def _store_kit_photo(chat_id: int, case_id: str) -> tuple[str | None, dict | None]:
+    pending = store.pop_pending_photo(chat_id)
+    if not pending:
+        return None, None
+    file_id = pending["file_id"]
     key = f"private/kit/{case_id}/{file_id[-16:]}.jpg"
     config.client("s3").put_object(Bucket=config.bucket(), Key=key, Body=telegram.download_file(file_id), ContentType="image/jpeg")
-    return key
+    return key, pending.get("hint")
+
+
+def _photo(u: dict) -> None:
+    """A field-kit photo. Village relays get an AI suggestion of the vial colour; the person still chooses."""
+    hint = None
+    if any(s["scope_pk"].startswith("VILLAGE#") for s in store.chat_subscriptions(u["chat_id"])):
+        hint = vision.kit_hint(telegram.download_file(u["file_id"]))
+    store.put_pending_photo(u["chat_id"], u["file_id"], hint)
+    telegram.send_message(u["chat_id"], vision.hint_message(hint))
 
 
 def _callback(u: dict) -> None:
@@ -132,11 +143,12 @@ def _callback(u: dict) -> None:
             telegram.answer_callback(cb, msg, alert=True)
         elif parts[0] == "k" and len(parts) == 3:
             case_id = actions.case_for_short(parts[1], "kit")
-            photo = _store_kit_photo(chat, case_id)
-            if photo is None and config.kit_photo_required():
+            if config.kit_photo_required() and not store.has_pending_photo(chat):
                 telegram.answer_callback(cb, "पहले शीशी की फ़ोटो भेजें, फिर बटन दबाएं।", alert=True)
                 return
-            actions.kit_result(case_id, parts[2], actor, photo)
+            actions.require_waiting(case_id, "kit")  # fail before the photo is consumed
+            photo, hint = _store_kit_photo(chat, case_id)
+            actions.kit_result(case_id, parts[2], actor, photo, hint)
             telegram.clear_buttons(chat, u["message_id"])
             telegram.answer_callback(cb, "नतीजा दर्ज ✅")
         else:
@@ -160,8 +172,7 @@ def handler(event, context=None):
         elif u["kind"] == "callback":
             _callback(u)
         elif u["kind"] == "photo":
-            store.put_pending_photo(u["chat_id"], u["file_id"])
-            telegram.send_message(u["chat_id"], "📷 फ़ोटो मिल गई। अब जांच वाले संदेश में नतीजा चुनें।")
+            _photo(u)
         elif u["kind"] == "text":
             telegram.send_message(u["chat_id"], HELP)
     except Exception:  # noqa: BLE001 - always 200 so Telegram doesn't retry forever
