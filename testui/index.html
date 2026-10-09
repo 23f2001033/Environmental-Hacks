@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="hi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>JalSaathi test console</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+</head>
+<body>
+  <header class="bar">
+    <div>
+      <strong>JalSaathi</strong> <span class="tag">test console</span>
+      <div class="sub">For testing the backend. The product UI lives in <code>frontend/</code>.</div>
+    </div>
+    <div class="right">
+      <button id="lang" type="button">English</button>
+    </div>
+  </header>
+
+  <main id="app">
+    <section id="stats" class="card"></section>
+
+    <section class="card">
+      <h2>Villages</h2>
+      <div id="villages" class="list">Loading…</div>
+    </section>
+
+    <section id="detail" class="card" hidden></section>
+
+    <section class="card admin">
+      <h2>Demo controls</h2>
+      <p class="sub">Need the admin token (SSM <code>/jalsaathi/console-token</code>). Stored only in this browser.</p>
+      <div class="row">
+        <label for="token">Admin token</label>
+        <input id="token" type="password" autocomplete="off" placeholder="paste token">
+        <button id="save-token" type="button">Save</button>
+      </div>
+      <div class="row">
+        <button data-admin="ingest" type="button">Ingest demo records (fixtures)</button>
+        <button data-admin="reset" type="button" class="danger">Reset demo data</button>
+      </div>
+      <pre id="admin-out" class="out"></pre>
+    </section>
+  </main>
+
+  <div id="poster" hidden></div>
+  <script src="app.js"></script>
+</body>
+</html>

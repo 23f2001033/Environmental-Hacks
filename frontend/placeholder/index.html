@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="hi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>JalSaathi</title>
+  <style>
+    body{margin:0;min-height:100vh;display:grid;place-items:center;font:16px/1.6 system-ui,sans-serif;background:#f4f7f6;color:#132120}
+    main{max-width:560px;padding:24px}
+    a{color:#0a6b6b}
+  </style>
+</head>
+<body>
+  <main>
+    <h1>JalSaathi</h1>
+    <p>The product interface is being built in <code>frontend/</code>. Meanwhile the test console works:</p>
+    <p id="go"><a href="/test/">Open the test console</a></p>
+    <script>
+      // Keep village links working: /?v=<key> opens that village in the test console.
+      var v = new URLSearchParams(location.search).get("v");
+      if (v) { location.replace("/test/?v=" + encodeURIComponent(v)); }
+    </script>
+  </main>
+</body>
+</html>

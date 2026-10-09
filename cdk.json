@@ -1,0 +1,7 @@
+{
+  "app": "python infra/app.py",
+  "context": {
+    "demo_clock": "1",
+    "bot_username": "Srott_bot"
+  }
+}
