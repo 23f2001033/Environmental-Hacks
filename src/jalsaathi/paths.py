@@ -24,3 +24,7 @@ def policies_file(name: str) -> Path:
 
 def fixtures_file(name: str) -> Path:
     return _find("data") / "fixtures" / name
+
+
+def analysis_file(name: str) -> Path:
+    return _find("data") / "analysis" / name

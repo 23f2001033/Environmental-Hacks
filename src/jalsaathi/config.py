@@ -27,6 +27,14 @@ def state_machine_arn() -> str:
     return env("STATE_MACHINE_ARN", "")
 
 
+def scale_run_arn() -> str:
+    return env("SCALE_RUN_ARN", "")
+
+
+def map_key_name() -> str:
+    return env("MAP_KEY_NAME", "")
+
+
 def demo_clock() -> bool:
     return env("DEMO_CLOCK", "0") == "1"
 

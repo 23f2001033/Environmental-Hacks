@@ -227,16 +227,21 @@ def seen_update(update_id: int) -> bool:
     return not _conditional_put({"pk": f"UPD#{update_id}", "sk": "META", "type": "upd", "ttl": int(time.time()) + 2 * 86400})
 
 
-def put_pending_photo(chat_id: int, file_id: str) -> None:
-    _t().put_item(Item={"pk": f"CHAT#tg{chat_id}", "sk": "PHOTO", "type": "photo", "file_id": file_id,
-                        "at": now_iso(), "ttl": int(time.time()) + 86400})
+def put_pending_photo(chat_id: int, file_id: str, hint: dict | None = None) -> None:
+    _t().put_item(Item=to_ddb({"pk": f"CHAT#tg{chat_id}", "sk": "PHOTO", "type": "photo", "file_id": file_id,
+                               "hint": hint, "at": now_iso(), "ttl": int(time.time()) + 86400}))
 
 
-def pop_pending_photo(chat_id: int) -> str | None:
+def has_pending_photo(chat_id: int) -> bool:
+    return _get(f"CHAT#tg{chat_id}", "PHOTO") is not None
+
+
+def pop_pending_photo(chat_id: int) -> dict | None:
+    """{"file_id", "hint"} of the last photo this chat sent, removed so it is used once."""
     item = _get(f"CHAT#tg{chat_id}", "PHOTO")
     if item:
         _t().delete_item(Key={"pk": f"CHAT#tg{chat_id}", "sk": "PHOTO"})
-        return item["file_id"]
+        return {"file_id": item["file_id"], "hint": item.get("hint")}
     return None
 
 

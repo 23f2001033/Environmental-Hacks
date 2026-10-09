@@ -4,6 +4,9 @@
   const API = "/api/v1";
   let lang = "hi";
   let current = null;
+  let villages = [];
+  let map = null;
+  const COLORS = { unsafe: "#b23a22", provisional: "#946000", safe_again: "#2c7a39", unknown: "#77858a" };
 
   const $ = (sel) => document.querySelector(sel);
   const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -25,25 +28,84 @@
     return r.ok;
   }
 
+  const secs = (s) => (s == null ? "-" : s < 120 ? `${s}s` : s < 7200 ? `${Math.round(s / 60)} min` : `${(s / 3600).toFixed(1)} h`);
+
   async function loadStats() {
     try {
       const s = await get("/stats");
-      const run = s.last_run ? `Last ingest: ${esc(s.last_run.source)} · ${s.last_run.cases_planned} cases planned · ${s.last_run.new_cases} new · data as of ${esc(s.last_run.data_as_of)}` : "No ingest yet.";
-      $("#stats").innerHTML = `<strong>${s.villages}</strong> villages · <strong>${s.open_cases}</strong> open cases · <strong>${s.closed_cases}</strong> closed<div class="sub">${run}</div>`;
+      const r = s.last_run;
+      const run = r ? `Last ingest: ${esc(r.source)} · ${r.cases_planned} cases planned · ${r.new_cases} new · ${r.villages_located ?? "-"}/${r.villages ?? "-"} villages located · data as of ${esc(r.data_as_of)} · took ${secs(r.seconds)}` : "No ingest yet.";
+      const lat = s.alert_latency;
+      const sc = s.scale_run;
+      const rep = s.repeat_failures && s.repeat_failures.totals;
+      const cost = r && r.cost_estimate;
+      $("#stats").innerHTML = `<strong>${s.villages}</strong> villages (${s.villages_on_map} on map) · <strong>${s.open_cases}</strong> open cases · <strong>${s.closed_cases}</strong> closed
+        <div class="sub">${run}</div>
+        <div class="grid">
+          <div><strong>Test found → village warned</strong><br>${lat ? `median ${secs(lat.median_s)} · p95 ${secs(lat.p95_s)} · ${lat.cases} cases` : "no alerts yet"}</div>
+          <div><strong>Scale run</strong><br>${sc ? `${esc(sc.status)} · ${sc.items ? `${sc.items.succeeded}/${sc.items.total} started, ${sc.items.failed} failed` : ""} ${sc.seconds ? "· " + secs(sc.seconds) : ""}` : "not run"}</div>
+          <div><strong>Failed again next year</strong><br>${rep ? `${rep.both} of ${rep.last_year} villages (${Math.round(rep.share_of_last_year_failing_again * 1000) / 10}%)` : "-"}</div>
+          <div><strong>Estimated AWS cost of last run</strong><br>${cost ? `$${cost.usd_total} (${cost.usd_per_case ? "$" + cost.usd_per_case + " per case" : "-"})` : "-"}</div>
+        </div>`;
     } catch (e) { $("#stats").textContent = "API not reachable: " + e.message; }
+  }
+
+  function renderVillages() {
+    const q = ($("#filter").value || "").toLowerCase();
+    const shown = villages.filter((v) => !q || `${v.name} ${v.block} ${v.district} ${v.state}`.toLowerCase().includes(q));
+    $("#villages").innerHTML = villages.length ? shown.slice(0, 150).map((v) => `
+        <div class="vrow" data-key="${esc(v.key)}">
+          <span><strong>${esc(v.name)}</strong> <span class="sub">${esc(v.block)}, ${esc(v.district)}, ${esc(v.state)}${v.source === "fixtures" ? " · demo" : ""}</span></span>
+          <span><span class="pill ${esc(v.worst_severity || v.status)}">${esc(v.parameters.join(", "))}</span>
+                <span class="pill ${esc(v.status)}">${esc(v.status)}</span></span>
+        </div>`).join("") + (shown.length > 150 ? `<div class="sub">${shown.length - 150} more; search to narrow down.</div>` : "")
+      : "No villages yet. Use Demo controls → Ingest demo records.";
+    document.querySelectorAll(".vrow").forEach((el) => el.addEventListener("click", () => openVillage(el.dataset.key)));
+  }
+
+  // Approximate points (block or district centre) would stack exactly; spread them a little, on the map only.
+  function spread(key) {
+    let h = 0;
+    for (const ch of String(key)) h = (h * 31 + ch.charCodeAt(0)) | 0;
+    const angle = (h % 360) * Math.PI / 180, r = 0.01 + ((h >>> 9) % 100) / 4000;
+    return [Math.cos(angle) * r, Math.sin(angle) * r];
+  }
+
+  function geojson() {
+    return { type: "FeatureCollection", features: villages.filter((v) => v.lat != null).map((v) => {
+      const approx = v.geo_precision !== "village";
+      const [dx, dy] = approx ? spread(v.key) : [0, 0];
+      return { type: "Feature", geometry: { type: "Point", coordinates: [v.lon + dx, v.lat + dy] },
+        properties: { key: v.key, name: v.name, status: v.status, block: approx ? 1 : 0 } };
+    }) };
+  }
+
+  async function initMap() {
+    let cfg;
+    try { cfg = await get("/config"); } catch (e) { $("#map").textContent = "Map config unavailable."; return; }
+    if (!cfg.map.style_url || !window.maplibregl) { $("#map").textContent = "Map not configured."; return; }
+    $("#map").innerHTML = "";
+    map = new maplibregl.Map({ container: "map", style: cfg.map.style_url, center: cfg.map.center, zoom: cfg.map.zoom });
+    map.addControl(new maplibregl.NavigationControl(), "top-right");
+    map.on("load", () => {
+      map.addSource("villages", { type: "geojson", data: geojson() });
+      const color = ["match", ["get", "status"], "unsafe", COLORS.unsafe, "provisional", COLORS.provisional, "safe_again", COLORS.safe_again, COLORS.unknown];
+      map.addLayer({ id: "villages", type: "circle", source: "villages", paint: {
+        "circle-radius": ["interpolate", ["linear"], ["zoom"], 4, 3, 10, 8],
+        "circle-color": ["case", ["==", ["get", "block"], 1], "rgba(0,0,0,0)", color],
+        "circle-stroke-color": color, "circle-stroke-width": ["case", ["==", ["get", "block"], 1], 2, 1] } });
+      map.on("click", "villages", (e) => openVillage(e.features[0].properties.key));
+      map.on("mouseenter", "villages", () => { map.getCanvas().style.cursor = "pointer"; });
+      map.on("mouseleave", "villages", () => { map.getCanvas().style.cursor = ""; });
+    });
   }
 
   async function loadVillages() {
     loadStats();
     try {
-      const { villages } = await get("/villages");
-      $("#villages").innerHTML = villages.length ? villages.map((v) => `
-        <div class="vrow" data-key="${esc(v.key)}">
-          <span><strong>${esc(v.name)}</strong> <span class="sub">${esc(v.block)}, ${esc(v.district)}, ${esc(v.state)}</span></span>
-          <span><span class="pill ${esc(v.worst_severity || v.status)}">${esc(v.parameters.join(", "))}</span>
-                <span class="pill ${esc(v.status)}">${esc(v.status)}</span></span>
-        </div>`).join("") : "No villages yet. Use Demo controls → Ingest demo records.";
-      document.querySelectorAll(".vrow").forEach((el) => el.addEventListener("click", () => openVillage(el.dataset.key)));
+      villages = (await get("/villages")).villages;
+      renderVillages();
+      if (map && map.getSource("villages")) map.getSource("villages").setData(geojson());
     } catch (e) { $("#villages").textContent = e.message; }
   }
 
@@ -128,8 +190,15 @@
 
   $("#lang").addEventListener("click", () => { lang = lang === "hi" ? "en" : "hi"; $("#lang").textContent = lang === "hi" ? "English" : "हिंदी"; if (current) openVillage(current); });
   $("#save-token").addEventListener("click", () => { try { localStorage.setItem("js-admin-token", $("#token").value.trim()); } catch {} $("#admin-out").textContent = "Token saved in this browser."; });
-  document.querySelectorAll("[data-admin]").forEach((b) => b.addEventListener("click", () => admin(b.dataset.admin, b.dataset.admin === "ingest" ? { source: "fixtures" } : {})));
+  document.querySelectorAll("[data-admin]").forEach((b) => b.addEventListener("click", () => {
+    if (b.dataset.admin === "scale-run" && !confirm("Start a workflow for every real WQMIS failure in the snapshot (about 580 cases, real deadlines)?")) return;
+    if (b.dataset.admin === "reset" && !confirm("Stop all workflows and delete all cases and villages?")) return;
+    admin(b.dataset.admin, b.dataset.admin === "ingest" ? { source: "fixtures" } : {});
+  }));
+  $("#filter").addEventListener("input", renderVillages);
   const params = new URLSearchParams(location.search);
+  initMap();
   loadVillages();
+  setInterval(loadStats, 15000);
   if (params.get("v")) openVillage(params.get("v"));
 })();

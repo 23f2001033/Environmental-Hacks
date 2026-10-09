@@ -2,7 +2,11 @@
 
 from __future__ import annotations
 
+import logging
+
 from . import config
+
+log = logging.getLogger()
 
 VOICE_ID = "Kajal"
 
@@ -22,3 +26,18 @@ def public_url(path: str | None) -> str | None:
         return None
     base = config.public_base()
     return f"{base}{path}" if base else path
+
+
+def ensure_audio(case: dict) -> str | None:
+    """The case's voice note, made on first need (a relay joins, or someone opens the village page). Cached on the case."""
+    if case.get("audio_path"):
+        return case["audio_path"]
+    from . import advice, store
+
+    try:
+        case["audio_path"] = synthesize(advice.voice_script(case), f"audio/{case['case_id']}.mp3")
+        store.update_case(case["case_id"], audio_path=case["audio_path"])
+        return case["audio_path"]
+    except Exception as exc:  # noqa: BLE001 - text alerts still work without audio
+        log.warning("polly failed for %s: %s", case.get("case_id"), exc)
+        return None

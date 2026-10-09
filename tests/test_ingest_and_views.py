@@ -18,8 +18,8 @@ def test_fixture_plan_makes_one_case_per_village_and_contaminant():
 def test_village_without_id_gets_a_slug_key_and_block_key():
     planned, _ = _planned()
     dhabla = next(c for c in planned if c["village"] == "Dhabla Kalayanpura")
-    assert dhabla["village_key"] == "27-baran-anta-dhabla-kalayanpura"
-    assert dhabla["block_key"] == "27-baran-anta"
+    assert dhabla["village_key"] == "651384"
+    assert dhabla["block_key"] == "4320"
     assert dhabla["code"] == "nitrate" and dhabla["severity"] == "red"
 
 

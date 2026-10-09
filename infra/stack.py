@@ -15,6 +15,7 @@ from aws_cdk import aws_events as events
 from aws_cdk import aws_events_targets as targets
 from aws_cdk import aws_iam as iam
 from aws_cdk import aws_lambda as lambda_
+from aws_cdk import aws_location as location
 from aws_cdk import aws_logs as logs
 from aws_cdk import aws_s3 as s3
 from aws_cdk import aws_s3_deployment as s3d
@@ -202,21 +203,86 @@ class JalSaathiStack(Stack):
             timeout=Duration.days(120),
         )
 
+        # Scale run: start hundreds of case workflows at a steady pace (about one a second), so a new account's
+        # Lambda concurrency limit of 10 is never swamped. Items come from s3://bucket/runs/scale-items.json.
+        start_case = tasks.StepFunctionsStartExecution(
+            self, "StartCase",
+            state_machine=machine,
+            name=sfn.JsonPath.string_at("$.exec_name"),
+            input=sfn.TaskInput.from_object({"case_id": sfn.JsonPath.string_at("$.case_id"),
+                                             "timers": sfn.JsonPath.object_at("$.timers")}),
+            integration_pattern=sfn.IntegrationPattern.REQUEST_RESPONSE,
+            result_path=sfn.JsonPath.DISCARD,
+        )
+        pace = sfn.Wait(self, "Pace", time=sfn.WaitTime.duration(Duration.seconds(3)))
+        already = sfn.Pass(self, "AlreadyStarted")  # a retried item: the deterministic name makes it a no-op
+        start_case.add_catch(already, errors=["StepFunctions.ExecutionAlreadyExistsException"])
+        already.next(pace)
+        start_cases = sfn.DistributedMap(
+            self, "StartCases",
+            item_reader=sfn.S3JsonItemReader(bucket=bucket, key="runs/scale-items.json"),
+            max_concurrency=3,
+            tolerated_failure_percentage=5,
+            map_execution_type=sfn.StateMachineType.EXPRESS,
+            result_path=sfn.JsonPath.DISCARD,
+        )
+        start_cases.item_processor(start_case.next(pace))
+        scale_machine = sfn.StateMachine(
+            self, "ScaleRun",
+            definition_body=sfn.DefinitionBody.from_chainable(start_cases.next(sfn.Succeed(self, "AllStarted"))),
+            state_machine_type=sfn.StateMachineType.STANDARD,
+            timeout=Duration.hours(3),
+        )
+        bucket.grant_read(scale_machine)
+
+        # Map tiles for the web pages (Amazon Location, key restricted to our site and local development)
+        map_key = location.CfnAPIKey(
+            self, "MapKey",
+            key_name=f"{self.stack_name.lower()}-maps",
+            description="JalSaathi web map tiles",
+            no_expiry=True,
+            restrictions=location.CfnAPIKey.ApiKeyRestrictionsProperty(
+                allow_actions=["geo-maps:*"],
+                allow_resources=[f"arn:aws:geo-maps:{self.region}::provider/default"],
+                allow_referers=[f"https://{dist.distribution_domain_name}/*", "http://localhost*"],
+            ),
+        )
+
+        polly = iam.PolicyStatement(actions=["polly:SynthesizeSpeech"], resources=["*"])
+
         # Entry points
         ingest_fn = fn("Ingest", "jalsaathi.ingest.handler", timeout=900, memory=1024,
-                       extra={"STATE_MACHINE_ARN": machine.state_machine_arn})
-        machine.grant_start_execution(ingest_fn)
+                       extra={"STATE_MACHINE_ARN": machine.state_machine_arn,
+                              "SCALE_RUN_ARN": scale_machine.state_machine_arn})
+        for m in (machine, scale_machine):
+            m.grant_start_execution(ingest_fn)
+            m.grant(ingest_fn, "states:ListExecutions")
+            m.grant_execution(ingest_fn, "states:StopExecution")
+        ingest_fn.add_to_role_policy(iam.PolicyStatement(
+            actions=["geo-places:Geocode"], resources=[f"arn:aws:geo-places:{self.region}::provider/default"]))
 
         webhook_fn = fn("Webhook", "jalsaathi.webhook.handler", timeout=30)
         machine.grant_task_response(webhook_fn)
+        webhook_fn.add_to_role_policy(polly)
+        webhook_fn.add_to_role_policy(iam.PolicyStatement(
+            actions=["bedrock:InvokeModel"],
+            resources=[f"arn:aws:bedrock:{self.region}:{self.account}:inference-profile/in.anthropic.claude-haiku-4-5-*",
+                       "arn:aws:bedrock:*::foundation-model/anthropic.claude-haiku-4-5-*",
+                       f"arn:aws:bedrock:{self.region}:{self.account}:inference-profile/apac.amazon.nova-pro-v1:0",
+                       "arn:aws:bedrock:*::foundation-model/amazon.nova-pro-v1:0"]))
         webhook_url = webhook_fn.add_function_url(auth_type=lambda_.FunctionUrlAuthType.NONE)
 
         api_fn = fn("ApiHandler", "jalsaathi.api.handler", timeout=29,
-                    extra={"INGEST_FUNCTION": ingest_fn.function_name, "STATE_MACHINE_ARN": machine.state_machine_arn})
+                    extra={"INGEST_FUNCTION": ingest_fn.function_name, "STATE_MACHINE_ARN": machine.state_machine_arn,
+                           "SCALE_RUN_ARN": scale_machine.state_machine_arn, "MAP_KEY_NAME": map_key.key_name})
         machine.grant_task_response(api_fn)
         machine.grant_start_execution(api_fn)
-        machine.grant(api_fn, "states:ListExecutions")
-        machine.grant_execution(api_fn, "states:StopExecution")
+        scale_machine.grant_execution(api_fn, "states:DescribeExecution", "states:ListMapRuns")
+        api_fn.add_to_role_policy(iam.PolicyStatement(
+            actions=["states:DescribeMapRun"],
+            resources=[f"arn:aws:states:{self.region}:{self.account}:mapRun:{scale_machine.state_machine_name}/*"]))
+        api_fn.add_to_role_policy(iam.PolicyStatement(actions=["geo:DescribeKey"], resources=[map_key.attr_key_arn]))
+        api_fn.add_to_role_policy(polly)
         ingest_fn.grant_invoke(api_fn)
         http_api.add_routes(path="/api/{proxy+}", methods=[apigw.HttpMethod.ANY],
                             integration=integ.HttpLambdaIntegration("ApiIntegration", api_fn))
@@ -261,5 +327,6 @@ class JalSaathiStack(Stack):
         CfnOutput(self, "ApiBase", value=f"https://{dist.distribution_domain_name}/api/v1")
         CfnOutput(self, "WebhookUrl", value=webhook_url.url)
         CfnOutput(self, "StateMachineArn", value=machine.state_machine_arn)
+        CfnOutput(self, "ScaleRunArn", value=scale_machine.state_machine_arn)
         CfnOutput(self, "TableName", value=table.table_name)
         CfnOutput(self, "BucketName", value=bucket.bucket_name)

@@ -1,0 +1,127 @@
+{
+ "written_at": "2026-10-09T23:37:53",
+ "source": "JJM-WQMIS, https://ejalshakti.gov.in/WQMIS/Main/report",
+ "files": [
+  {
+   "file": "wqmis_2026-2027_UttarPradesh_Ecoil.json",
+   "fy": "2026-2027",
+   "state": "Uttar Pradesh",
+   "param": "Ecoil"
+  },
+  {
+   "file": "wqmis_2026-2027_UttarPradesh_Coliform.json",
+   "fy": "2026-2027",
+   "state": "Uttar Pradesh",
+   "param": "Coliform"
+  },
+  {
+   "file": "wqmis_2026-2027_UttarPradesh_Nitrate.json",
+   "fy": "2026-2027",
+   "state": "Uttar Pradesh",
+   "param": "Nitrate"
+  },
+  {
+   "file": "wqmis_2026-2027_UttarPradesh_Fluoride.json",
+   "fy": "2026-2027",
+   "state": "Uttar Pradesh",
+   "param": "Fluoride"
+  },
+  {
+   "file": "wqmis_2026-2027_UttarPradesh_Totalarsenic.json",
+   "fy": "2026-2027",
+   "state": "Uttar Pradesh",
+   "param": "Total arsenic"
+  },
+  {
+   "file": "wqmis_2026-2027_Rajasthan_Ecoil.json",
+   "fy": "2026-2027",
+   "state": "Rajasthan",
+   "param": "Ecoil"
+  },
+  {
+   "file": "wqmis_2026-2027_Rajasthan_Coliform.json",
+   "fy": "2026-2027",
+   "state": "Rajasthan",
+   "param": "Coliform"
+  },
+  {
+   "file": "wqmis_2026-2027_Rajasthan_Nitrate.json",
+   "fy": "2026-2027",
+   "state": "Rajasthan",
+   "param": "Nitrate"
+  },
+  {
+   "file": "wqmis_2026-2027_Rajasthan_Fluoride.json",
+   "fy": "2026-2027",
+   "state": "Rajasthan",
+   "param": "Fluoride"
+  },
+  {
+   "file": "wqmis_2026-2027_Rajasthan_Totalarsenic.json",
+   "fy": "2026-2027",
+   "state": "Rajasthan",
+   "param": "Total arsenic"
+  },
+  {
+   "file": "wqmis_2025-2026_UttarPradesh_Ecoil.json",
+   "fy": "2025-2026",
+   "state": "Uttar Pradesh",
+   "param": "Ecoil"
+  },
+  {
+   "file": "wqmis_2025-2026_UttarPradesh_Coliform.json",
+   "fy": "2025-2026",
+   "state": "Uttar Pradesh",
+   "param": "Coliform"
+  },
+  {
+   "file": "wqmis_2025-2026_UttarPradesh_Nitrate.json",
+   "fy": "2025-2026",
+   "state": "Uttar Pradesh",
+   "param": "Nitrate"
+  },
+  {
+   "file": "wqmis_2025-2026_UttarPradesh_Fluoride.json",
+   "fy": "2025-2026",
+   "state": "Uttar Pradesh",
+   "param": "Fluoride"
+  },
+  {
+   "file": "wqmis_2025-2026_UttarPradesh_Totalarsenic.json",
+   "fy": "2025-2026",
+   "state": "Uttar Pradesh",
+   "param": "Total arsenic"
+  },
+  {
+   "file": "wqmis_2025-2026_Rajasthan_Ecoil.json",
+   "fy": "2025-2026",
+   "state": "Rajasthan",
+   "param": "Ecoil"
+  },
+  {
+   "file": "wqmis_2025-2026_Rajasthan_Coliform.json",
+   "fy": "2025-2026",
+   "state": "Rajasthan",
+   "param": "Coliform"
+  },
+  {
+   "file": "wqmis_2025-2026_Rajasthan_Nitrate.json",
+   "fy": "2025-2026",
+   "state": "Rajasthan",
+   "param": "Nitrate"
+  },
+  {
+   "file": "wqmis_2025-2026_Rajasthan_Fluoride.json",
+   "fy": "2025-2026",
+   "state": "Rajasthan",
+   "param": "Fluoride"
+  },
+  {
+   "file": "wqmis_2025-2026_Rajasthan_Totalarsenic.json",
+   "fy": "2025-2026",
+   "state": "Rajasthan",
+   "param": "Total arsenic"
+  }
+ ],
+ "missing": []
+}
