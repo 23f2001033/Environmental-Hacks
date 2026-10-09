@@ -14,7 +14,7 @@ jobs:
         with:
           python-version: "3.12"
       - name: Install
-        run: pip install -r requirements.txt boto3 pytest
+        run: pip install -r requirements.txt boto3 pytest requests
       - name: Validate advice library and fixtures
         run: python -c "import json; json.load(open('content/advice.json', encoding='utf-8')); json.load(open('data/fixtures/wqmis_demo_records.json', encoding='utf-8'))"
       - name: Tests
