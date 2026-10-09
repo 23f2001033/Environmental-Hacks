@@ -29,7 +29,8 @@ Every village with a test on record, unsafe first.
 ```
 
 - `lat`/`lon` may be `null` (no trustworthy location found). `geo_precision`: `village` (geocoded and checked against the
-  WQMIS district and name) or `block` (village not found; the point is the block's location; draw it differently).
+  WQMIS district and name), `block` or `district` (village not found; the point is that area's centre; draw it as
+  approximate, and spread stacked points if you like, but never present it as the village).
 - `source`: `fixtures` (the demo villages) · `snapshot` · `live`.
 
 ### `GET /villages/{key}`

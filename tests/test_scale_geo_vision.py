@@ -29,14 +29,24 @@ def test_geocode_accepts_matching_village():
                                                                  "geo_title": BEHTA["Title"]}
 
 
+BARAN_TOWN = {"Title": "Baran, Rajasthan, India", "PlaceType": "Locality", "Position": [76.50895, 25.09606],
+              "Address": {"SubRegion": {"Name": "Baran"}}}
+
+
 def test_geocode_falls_back_to_block_once_per_block(monkeypatch):
-    calls = []
-    monkeypatch.setattr(geo, "_geocode", lambda q: calls.append(q) or ([ANTA] if q.startswith("Anta") else [JAIPUR]))
+    monkeypatch.setattr(geo, "_geocode", lambda q: [ANTA] if q.startswith("Anta") else [JAIPUR])
     cache = {}
     first, n1 = geo.locate("Dhabla Kalayanpura", "Anta", "Baran", "Rajasthan", cache)
     second, n2 = geo.locate("Bhajangarh", "Anta", "Baran", "Rajasthan", cache)
     assert first["geo_precision"] == second["geo_precision"] == "block" and first["lat"] == 25.15
     assert (n1, n2) == (2, 1)
+
+
+def test_block_query_answered_with_district_town_is_labelled_district(monkeypatch):
+    # The real geocoder answers "Anta, Baran" with Baran town; that must not be called the block.
+    monkeypatch.setattr(geo, "_geocode", lambda q: [BARAN_TOWN])
+    found, calls = geo.locate("Dhabla Kalayanpura", "Anta", "Baran", "Rajasthan", {})
+    assert found["geo_precision"] == "district" and calls == 3
 
 
 def test_geocode_failure_never_raises(monkeypatch):

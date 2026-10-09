@@ -63,10 +63,21 @@
     document.querySelectorAll(".vrow").forEach((el) => el.addEventListener("click", () => openVillage(el.dataset.key)));
   }
 
+  // Approximate points (block or district centre) would stack exactly; spread them a little, on the map only.
+  function spread(key) {
+    let h = 0;
+    for (const ch of String(key)) h = (h * 31 + ch.charCodeAt(0)) | 0;
+    const angle = (h % 360) * Math.PI / 180, r = 0.01 + ((h >>> 9) % 100) / 4000;
+    return [Math.cos(angle) * r, Math.sin(angle) * r];
+  }
+
   function geojson() {
-    return { type: "FeatureCollection", features: villages.filter((v) => v.lat != null).map((v) => ({
-      type: "Feature", geometry: { type: "Point", coordinates: [v.lon, v.lat] },
-      properties: { key: v.key, name: v.name, status: v.status, block: v.geo_precision === "block" ? 1 : 0 } })) };
+    return { type: "FeatureCollection", features: villages.filter((v) => v.lat != null).map((v) => {
+      const approx = v.geo_precision !== "village";
+      const [dx, dy] = approx ? spread(v.key) : [0, 0];
+      return { type: "Feature", geometry: { type: "Point", coordinates: [v.lon + dx, v.lat + dy] },
+        properties: { key: v.key, name: v.name, status: v.status, block: approx ? 1 : 0 } };
+    }) };
   }
 
   async function initMap() {

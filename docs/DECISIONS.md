@@ -285,9 +285,9 @@ Only after the Saturday 18:00 freeze is green, in this order:
 
 ## D-29 Map locations are checked, not trusted
 
-**Decision.** Villages are geocoded with Amazon Location (`geo-places` Geocode, `IntendedUse=Storage` because we keep the result). A result is accepted only when its district matches the WQMIS district, its name matches the village, and it is a place rather than a shop or street. Otherwise we use the block's location and mark it `geo_precision: "block"` (drawn hollow on the map). If neither is found, the village has no pin.
+**Decision.** Villages are geocoded with Amazon Location (`geo-places` Geocode, `IntendedUse=Storage` because we keep the result). A result is accepted only when its district matches the WQMIS district, its name matches the village, and it is a place rather than a shop or street. Otherwise we try the block, then the district, each also matched by name, and mark the point `geo_precision: "block"` or `"district"` (drawn hollow on the map). If none matches, the village has no pin.
 
-**Why.** In testing, the geocoder put "Dhabla Kalayanpura, Baran" in Jaipur district and "Bhajangarh, Baran" at a flour mill. A wrong pin on a water-safety map is worse than no pin.
+**Why.** In testing, the geocoder put "Dhabla Kalayanpura, Baran" in Jaipur district, "Bhajangarh, Baran" at a flour mill, and answered "Anta block, Baran" with Baran town. A wrong pin on a water-safety map is worse than no pin.
 
 ## D-30 AI reads the field-kit photo, the person decides (stretch S2)
 

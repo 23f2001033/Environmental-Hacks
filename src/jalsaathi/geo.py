@@ -51,21 +51,31 @@ def _geocode(query: str) -> list[dict]:
     return resp.get("ResultItems", [])
 
 
-def locate(village: str, block: str | None, district: str | None, state: str | None, block_cache: dict) -> tuple[dict, int]:
-    """(location fields, geocode calls made). Location is {} when nothing trustworthy was found."""
+def locate(village: str, block: str | None, district: str | None, state: str | None, cache: dict) -> tuple[dict, int]:
+    """(location fields, geocode calls made). Tries village, then block, then district; each must match by name.
+
+    geo_precision says which one the point is. Location is {} when nothing trustworthy was found.
+    """
     calls = 0
+
+    def area(level: str, name: str | None, query: tuple) -> dict | None:
+        nonlocal calls
+        key = f"{level}|{state}|{district}|{block if level == 'block' else ''}"
+        if key not in cache:
+            calls += 1
+            cache[key] = pick(_geocode(", ".join(p for p in query if p)), name or "", district or "") if name else None
+        return cache[key]
+
     try:
         calls += 1
         hit = pick(_geocode(", ".join(p for p in (village, block, district, state, "India") if p)), village, district or "")
         if hit:
             return {**hit, "geo_precision": "village"}, calls
-        bkey = f"{state}|{district}|{block}"
-        if bkey not in block_cache:
-            calls += 1
-            block_cache[bkey] = pick(_geocode(", ".join(p for p in (block, district, state, "India") if p)), block or "",
-                                     district or "", need_name=False)
-        if block_cache[bkey]:
-            return {**block_cache[bkey], "geo_precision": "block"}, calls
+        for level, name, query in (("block", block, (block, district, state, "India")),
+                                   ("district", district, (district, state, "India"))):
+            hit = area(level, name, query)
+            if hit:
+                return {**hit, "geo_precision": level}, calls
     except Exception as exc:  # noqa: BLE001 - a missing map pin must never stop ingest
         log.warning("geocode failed for %s: %s", village, exc)
     return {}, calls
