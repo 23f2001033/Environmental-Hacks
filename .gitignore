@@ -1,0 +1,36 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+*.egg-info/
+build/
+dist/
+
+# Node
+node_modules/
+
+# AWS CDK
+cdk.out/
+cdk.context.json
+.cdk.staging/
+
+# Local config and secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Video work files
+video/out/
+video/footage/
+
+# OS and editors
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

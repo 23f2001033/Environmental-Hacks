@@ -1,0 +1,129 @@
+{
+  "source": "JJM-WQMIS Format WQ6 (Contaminant-wise details), https://ejalshakti.gov.in/WQMIS/Main/report",
+  "fetched": "2026-10-09, about 18:15-19:30 IST, by script (endpoints ContaminantwiseVillagefil and Contaminantwisesamplefillist)",
+  "financial_year": "2026-2027",
+  "notes": [
+    "Transcribed from the portal's JSON responses on 9 Oct 2026. Replace with data/snapshot/ once the full snapshot is committed.",
+    "sample_id is null where the sample ID was not captured in our first pull.",
+    "Limits are the sample's own acceptable and permissible limits as returned by WQMIS (IS 10500:2012)."
+  ],
+  "national_counts_pws_lab_tests": {
+    "2026-2027_to_9_Oct": {"Ecoli": 2616, "TotalColiform": 5334, "Nitrate": 3090, "Fluoride": 1359, "Arsenic": 35, "Iron": 711, "TDS": 756},
+    "2025-2026": {"Ecoli": 4640, "TotalColiform": 7122, "Nitrate": 5701, "Fluoride": 2217, "Arsenic": 282, "Iron": 1971, "TDS": 1297},
+    "note": "Number of villages where at least one sample failed for that parameter. A village can appear under several parameters, so do not add them up."
+  },
+  "records": [
+    {
+      "state": "Uttar Pradesh", "state_id": 31, "district": "Hardoi", "district_id": 481,
+      "block": "Harpalpur", "block_id": 5037, "gram_panchayat": "BEHTA  LAKHI", "gram_panchayat_id": 176508,
+      "village": "BEHTA LAKHI", "village_id": 412558,
+      "parameter": "Ecoil", "value": 80.0, "unit": "CFU/100 ml", "acceptable_limit": 0, "permissible_limit": 0,
+      "source_type": "Deep Tubewell", "scheme_id": "20059029", "scheme_name": "BEHTA LAKHI JJM", "pws": true,
+      "lab_approval": "2026-06-15T15:34:00+05:30", "lab": null, "sample_id": null, "demo_role": "primary"
+    },
+    {
+      "state": "Uttar Pradesh", "state_id": 31, "district": "Hardoi", "district_id": 481,
+      "block": "Harpalpur", "block_id": 5037, "gram_panchayat": "Murcha", "gram_panchayat_id": 292916,
+      "village": "Murcha", "village_id": 412557,
+      "parameter": "Ecoil", "value": 32.0, "unit": "CFU/100 ml", "acceptable_limit": 0, "permissible_limit": 0,
+      "source_type": "Deep Tubewell", "scheme_id": "20059262", "scheme_name": "MURCHA (GOGP) JJM", "pws": true,
+      "lab_approval": "2026-06-15T12:49:00+05:30", "lab": null, "sample_id": null, "demo_role": "cluster"
+    },
+    {
+      "state": "Uttar Pradesh", "state_id": 31, "district": "Hardoi", "district_id": 481,
+      "block": "Harpalpur", "block_id": 5037, "gram_panchayat": "DHAKPURA", "gram_panchayat_id": 292915,
+      "village": "DHAKPURA", "village_id": 412554,
+      "parameter": "Ecoil", "value": 32.0, "unit": "CFU/100 ml", "acceptable_limit": 0, "permissible_limit": 0,
+      "source_type": "Deep Tubewell", "scheme_id": "20084169", "scheme_name": "DHAKPURA JJM", "pws": true,
+      "lab_approval": "2026-06-15T13:05:00+05:30", "lab": null, "sample_id": null, "demo_role": "cluster"
+    },
+    {
+      "state": "Uttar Pradesh", "state_id": 31, "district": "Hardoi", "district_id": 481,
+      "block": "Harpalpur", "block_id": 5037, "gram_panchayat": "BASI", "gram_panchayat_id": 176498,
+      "village": "Basi", "village_id": 412542,
+      "parameter": "Ecoil", "value": 72.0, "unit": "CFU/100 ml", "acceptable_limit": 0, "permissible_limit": 0,
+      "source_type": "Deep Tubewell", "scheme_id": "20058994", "scheme_name": "BASI (GOGP) JJM", "pws": true,
+      "lab_approval": "2026-06-15T15:36:00+05:30", "lab": null, "sample_id": null, "demo_role": "cluster"
+    },
+    {
+      "state": "Uttar Pradesh", "state_id": 31, "district": "Hardoi", "district_id": 481,
+      "block": "Harpalpur", "block_id": 5037, "gram_panchayat": "Bhusehra", "gram_panchayat_id": 176497,
+      "village": "Bhusehra", "village_id": 412540,
+      "parameter": "Ecoil", "value": 100.0, "unit": "CFU/100 ml", "acceptable_limit": 0, "permissible_limit": 0,
+      "source_type": "Deep Tubewell", "scheme_id": "20059058", "scheme_name": "BHUSEHRA (GOGP) JJM", "pws": true,
+      "lab_approval": "2026-06-15T13:25:00+05:30", "lab": null, "sample_id": null, "demo_role": "cluster"
+    },
+    {
+      "state": "Uttar Pradesh", "state_id": 31, "district": "Hardoi", "district_id": 481,
+      "block": "Harpalpur", "block_id": 5037, "gram_panchayat": "SHYAMPUR PANJA", "gram_panchayat_id": 176493,
+      "village": "SHYAMPUR PANJA", "village_id": 412536,
+      "parameter": "Ecoil", "value": 52.0, "unit": "CFU/100 ml", "acceptable_limit": 0, "permissible_limit": 0,
+      "source_type": "Deep Tubewell", "scheme_id": "20060425", "scheme_name": "SHYAMPUR PANJA (GOGP) JJM", "pws": true,
+      "lab_approval": "2026-06-15T12:22:00+05:30", "lab": null, "sample_id": null, "demo_role": "cluster"
+    },
+    {
+      "state": "Uttar Pradesh", "state_id": 31, "district": "Hardoi", "district_id": 481,
+      "block": "Harpalpur", "block_id": 5037, "gram_panchayat": "VARRA", "gram_panchayat_id": 176491,
+      "village": "VARRA", "village_id": 412534,
+      "parameter": "Ecoil", "value": 22.0, "unit": "CFU/100 ml", "acceptable_limit": 0, "permissible_limit": 0,
+      "source_type": "Deep Tubewell", "scheme_id": "20062346", "scheme_name": "BARRA (GOGP)JJM", "pws": true,
+      "lab_approval": "2026-06-15T16:45:00+05:30", "lab": null, "sample_id": null, "demo_role": "cluster"
+    },
+    {
+      "state": "Uttar Pradesh", "state_id": 31, "district": "Hardoi", "district_id": 481,
+      "block": "Harpalpur", "block_id": 5037, "gram_panchayat": "Nagra Choudharpur", "gram_panchayat_id": 176479,
+      "village": "Nagra Choudharpur", "village_id": 412509,
+      "parameter": "Ecoil", "value": 40.0, "unit": "CFU/100 ml", "acceptable_limit": 0, "permissible_limit": 0,
+      "source_type": "Deep Tubewell", "scheme_id": "20059281", "scheme_name": "NAGRA CHOUDHARPUR (GOGP) JJM", "pws": true,
+      "lab_approval": "2026-06-15T12:48:00+05:30", "lab": null, "sample_id": null, "demo_role": "cluster"
+    },
+    {
+      "state": "Uttar Pradesh", "state_id": 31, "district": "Kannauj", "district_id": 486,
+      "block": "Chhibramau", "block_id": 5103, "gram_panchayat": "MAHMOOD PUR KEERAT", "gram_panchayat_id": 180533,
+      "village": "Mahmood Pur Keerat", "village_id": 418795,
+      "parameter": "Ecoil", "value": 50.0, "unit": "CFU/100 ml", "acceptable_limit": 0, "permissible_limit": 0,
+      "source_type": "Deep Tubewell", "scheme_id": "20014829", "scheme_name": "MAHMOOD PUR KEERAT GRAMIN PEYJAL YOJNA", "pws": true,
+      "lab_approval": "2026-08-21T13:57:00+05:30",
+      "lab": "State Level Water Analysis Laboratory , U.P Jal Nigam (Rural), Lucknow",
+      "sample_id": "U3027060S38720650", "demo_role": "single_sample_walkthrough",
+      "raw_source": "Location : MAHMOOD PUR KEERAT CHHIBRAMAU  [ Source type : Deep Tubewell ]  [ schemeId : 20014829, scheme name : MAHMOOD PUR KEERAT GRAMIN PEYJAL YOJNA, Type : PWS ]",
+      "raw_value": "50.000 (CFU/100 ml)"
+    },
+    {
+      "state": "Rajasthan", "state_id": 27, "district": "Baran", "district_id": null,
+      "block": "Anta", "block_id": null, "gram_panchayat": null, "gram_panchayat_id": null,
+      "village": "Dhabla Kalayanpura", "village_id": null,
+      "parameter": "Nitrate", "value": 60.0, "unit": "mg/l", "acceptable_limit": 45, "permissible_limit": 45,
+      "source_type": "Deep Tubewell", "scheme_id": "20004324", "scheme_name": "JJM Dhabla Kalayanpura", "pws": true,
+      "lab_approval": "2026-08-05T12:55:00+05:30", "lab": null, "sample_id": null, "demo_role": "chemical_contrast"
+    },
+    {
+      "state": "Rajasthan", "state_id": 27, "district": "Sikar", "district_id": null,
+      "block": "Piprali", "block_id": null, "gram_panchayat": null, "gram_panchayat_id": null,
+      "village": "Bhajangarh", "village_id": null,
+      "parameter": "Nitrate", "value": 56.0, "unit": "mg/l", "acceptable_limit": 45, "permissible_limit": 45,
+      "source_type": "Deep Tubewell", "scheme_id": "20002876", "scheme_name": "RWSS BHAJANGARH", "pws": true,
+      "lab_approval": "2026-07-02T17:40:00+05:30", "lab": null, "sample_id": null, "demo_role": "extra"
+    },
+    {
+      "state": "Rajasthan", "state_id": 27, "district": "Sikar", "district_id": null,
+      "block": "Piprali", "block_id": null, "gram_panchayat": null, "gram_panchayat_id": null,
+      "village": "Krishnanagar", "village_id": null,
+      "parameter": "Nitrate", "value": 72.0, "unit": "mg/l", "acceptable_limit": 45, "permissible_limit": 45,
+      "source_type": null, "scheme_id": null, "scheme_name": null, "pws": true,
+      "lab_approval": "2026-06-18T14:50:00+05:30", "lab": null, "sample_id": null, "demo_role": "extra"
+    },
+    {
+      "state": "Rajasthan", "state_id": 27, "district": "Sikar", "district_id": null,
+      "block": "Dhod", "block_id": null, "gram_panchayat": null, "gram_panchayat_id": null,
+      "village": "Balrampura", "village_id": null,
+      "parameter": "Nitrate", "value": 65.0, "unit": "mg/l", "acceptable_limit": 45, "permissible_limit": 45,
+      "source_type": null, "scheme_id": null, "scheme_name": null, "pws": true,
+      "lab_approval": "2026-06-25T17:10:00+05:30", "lab": null, "sample_id": null, "demo_role": "extra"
+    }
+  ],
+  "listed_without_sample_details": [
+    {"block": "Harpalpur", "district": "Hardoi", "village": "ARWAL PASCHIM", "village_id": 412472, "gram_panchayat": "ARWAL", "gram_panchayat_id": 176459, "parameter": "Ecoil", "failed_samples": 2},
+    {"block": "Harpalpur", "district": "Hardoi", "village": "Nagriya Cut", "village_id": 412471, "gram_panchayat": "Nagriya Cut", "gram_panchayat_id": 292914, "parameter": "Ecoil", "failed_samples": 1}
+  ]
+}
