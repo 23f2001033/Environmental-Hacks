@@ -1,1 +1,3 @@
 pytest>=7.4,<9
+pycryptodome>=3.20,<4
+requests>=2.31,<3
