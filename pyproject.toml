@@ -1,0 +1,10 @@
+[project]
+name = "jalsaathi"
+version = "0.1.0"
+description = "Failed drinking-water lab tests become village cases that close only on a passing re-test."
+requires-python = ">=3.12"
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+addopts = "-q"

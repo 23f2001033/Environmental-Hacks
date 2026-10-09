@@ -1,0 +1,112 @@
+{
+  "_meta": {
+    "purpose": "The only place advice text comes from. Code picks lines; no model writes safety advice (DECISIONS.md D-06, D-07).",
+    "review": "Hindi copy must be reviewed by lane 4 (native speaker) before the demo. Set reviewed_by when done.",
+    "reviewed_by": null,
+    "action_codes": {
+      "boil": "boil water before drinking or cooking",
+      "chlorine": "use chlorine tablets",
+      "ors": "give ORS for diarrhoea and tell the ASHA",
+      "looks_clear_warning": "clear-looking water can still be unsafe",
+      "no_boil": "warning that boiling does not help or makes it worse",
+      "alt_source": "use another tested source",
+      "infant_warning": "never use for infants under 6 months",
+      "settle_filter": "let it settle and filter through cloth",
+      "taste_only": "mainly a taste or staining issue"
+    }
+  },
+  "parameters": {
+    "ecoli": {
+      "class": "microbial",
+      "name": {"hi": "ई. कोलाई बैक्टीरिया", "en": "E. coli bacteria"},
+      "do_now": [
+        {"action": "boil", "hi": "पीने और खाना बनाने का पानी कम से कम 1 मिनट तेज़ उबालकर ही इस्तेमाल करें, या क्लोरीन की गोली डालें।", "en": "Boil drinking and cooking water at a rolling boil for at least 1 minute, or add a chlorine tablet."},
+        {"action": "ors", "hi": "बच्चों को दस्त हो तो तुरंत ORS दें और आशा दीदी को बताएं।", "en": "If a child has diarrhoea, give ORS straight away and tell the ASHA worker."},
+        {"action": "looks_clear_warning", "hi": "पानी साफ़ दिखे तब भी उबालें। बैक्टीरिया आँखों से नहीं दिखते।", "en": "Boil it even if it looks clear. Bacteria can't be seen."}
+      ],
+      "engineer_fix": {"hi": "स्रोत और टंकी को ब्लीचिंग पाउडर से कीटाणुरहित करें, स्रोत के पास लीकेज या सीवेज जांचें, फिर दोबारा जांच कराएं।", "en": "Disinfect the source and tank with bleaching powder, check for leaks or sewage near the source, then re-test."},
+      "sources": ["IS 10500:2012 (E. coli not detectable in 100 mL)", "JJM community training material: remedial action after a failed test"]
+    },
+    "coliform": {
+      "class": "microbial",
+      "name": {"hi": "कोलीफॉर्म बैक्टीरिया", "en": "coliform bacteria"},
+      "do_now": [
+        {"action": "boil", "hi": "पीने और खाना बनाने का पानी कम से कम 1 मिनट तेज़ उबालकर ही इस्तेमाल करें, या क्लोरीन की गोली डालें।", "en": "Boil drinking and cooking water at a rolling boil for at least 1 minute, or add a chlorine tablet."},
+        {"action": "ors", "hi": "बच्चों को दस्त हो तो तुरंत ORS दें और आशा दीदी को बताएं।", "en": "If a child has diarrhoea, give ORS straight away and tell the ASHA worker."},
+        {"action": "looks_clear_warning", "hi": "पानी साफ़ दिखे तब भी उबालें। बैक्टीरिया आँखों से नहीं दिखते।", "en": "Boil it even if it looks clear. Bacteria can't be seen."}
+      ],
+      "engineer_fix": {"hi": "स्रोत और टंकी को ब्लीचिंग पाउडर से कीटाणुरहित करें, स्रोत के पास लीकेज या सीवेज जांचें, फिर दोबारा जांच कराएं।", "en": "Disinfect the source and tank with bleaching powder, check for leaks or sewage near the source, then re-test."},
+      "sources": ["IS 10500:2012 (total coliform not detectable in 100 mL)"]
+    },
+    "nitrate": {
+      "class": "chemical",
+      "name": {"hi": "नाइट्रेट", "en": "nitrate"},
+      "do_now": [
+        {"action": "no_boil", "hi": "यह पानी उबालें नहीं। उबालने से नाइट्रेट और बढ़ता है।", "en": "Do not boil this water. Boiling makes nitrate stronger."},
+        {"action": "alt_source", "hi": "पीने और खाना बनाने के लिए दूसरा जांचा हुआ स्रोत इस्तेमाल करें।", "en": "Use another tested source for drinking and cooking."},
+        {"action": "infant_warning", "hi": "6 महीने से छोटे बच्चों के लिए यह पानी बिल्कुल इस्तेमाल न करें।", "en": "Never use this water for babies under 6 months."}
+      ],
+      "engineer_fix": {"hi": "स्रोत बदलें, गहरा करें, या किसी सुरक्षित स्रोत के पानी से मिलाएं। खाद या सीवेज का रिसाव जांचें।", "en": "Change or deepen the source, or blend with a safe source. Check for fertiliser or sewage seepage."},
+      "sources": ["IS 10500:2012 (nitrate 45 mg/L)", "Iowa DNR: boiling concentrates nitrate"]
+    },
+    "fluoride": {
+      "class": "chemical",
+      "name": {"hi": "फ्लोराइड", "en": "fluoride"},
+      "do_now": [
+        {"action": "no_boil", "hi": "उबालने से फ्लोराइड नहीं हटता।", "en": "Boiling does not remove fluoride."},
+        {"action": "alt_source", "hi": "पीने और खाना बनाने के लिए दूसरा जांचा हुआ स्रोत इस्तेमाल करें। बच्चे और गर्भवती महिलाएं सबसे पहले।", "en": "Use another tested source for drinking and cooking, children and pregnant women first."}
+      ],
+      "engineer_fix": {"hi": "डीफ्लोराइडेशन यूनिट लगाएं या दूसरा स्रोत दें।", "en": "Install a defluoridation unit or provide an alternate source."},
+      "sources": ["IS 10500:2012 (fluoride 1.0 acceptable, 1.5 permissible mg/L)"]
+    },
+    "arsenic": {
+      "class": "chemical",
+      "name": {"hi": "आर्सेनिक", "en": "arsenic"},
+      "do_now": [
+        {"action": "no_boil", "hi": "उबालने से आर्सेनिक नहीं हटता, बल्कि बढ़ता है।", "en": "Boiling does not remove arsenic; it makes it stronger."},
+        {"action": "alt_source", "hi": "पीने और खाना बनाने के लिए दूसरा जांचा हुआ स्रोत इस्तेमाल करें।", "en": "Use another tested source for drinking and cooking."}
+      ],
+      "engineer_fix": {"hi": "आर्सेनिक हटाने की यूनिट लगाएं या दूसरा गहरा या सतही स्रोत दें।", "en": "Install an arsenic removal unit or provide an alternate deeper or surface source."},
+      "sources": ["IS 10500:2012 (arsenic 0.01 mg/L acceptable)"]
+    },
+    "turbidity": {
+      "class": "physical",
+      "name": {"hi": "गंदलापन", "en": "turbidity"},
+      "do_now": [
+        {"action": "settle_filter", "hi": "पानी को कुछ देर रखें, साफ़ कपड़े से छानें।", "en": "Let the water settle, then filter it through clean cloth."},
+        {"action": "boil", "hi": "छानने के बाद पानी उबालें।", "en": "Boil it after filtering."}
+      ],
+      "engineer_fix": {"hi": "पाइपलाइन में गंदे पानी के रिसाव की जांच करें और लाइन फ्लश करें।", "en": "Check the pipeline for ingress and flush the line."},
+      "sources": ["IS 10500:2012 (turbidity 1 acceptable, 5 permissible NTU)"]
+    },
+    "chlorine": {
+      "class": "microbial",
+      "name": {"hi": "क्लोरीन की कमी", "en": "low residual chlorine"},
+      "do_now": [
+        {"action": "boil", "hi": "जब तक दोबारा जांच में क्लोरीन न मिले, पानी उबालकर पिएं।", "en": "Boil drinking water until a re-test shows chlorine."}
+      ],
+      "engineer_fix": {"hi": "योजना पर क्लोरीन की मात्रा ठीक करें।", "en": "Fix chlorine dosing at the scheme."},
+      "sources": ["IS 10500:2012 (residual free chlorine at least 0.2 mg/L)"]
+    },
+    "iron": {
+      "class": "aesthetic",
+      "name": {"hi": "आयरन (लोहा)", "en": "iron"},
+      "do_now": [
+        {"action": "taste_only", "hi": "यह मुख्य रूप से स्वाद और दाग की समस्या है।", "en": "This is mainly a taste and staining problem."},
+        {"action": "settle_filter", "hi": "पानी को कुछ देर रखें और साफ़ कपड़े से छानें।", "en": "Let the water settle and filter it through clean cloth."}
+      ],
+      "engineer_fix": {"hi": "आयरन हटाने का फ़िल्टर लगाएं।", "en": "Install an iron removal filter."},
+      "sources": ["IS 10500:2012"]
+    },
+    "tds": {
+      "class": "aesthetic",
+      "name": {"hi": "घुले हुए लवण (TDS)", "en": "dissolved salts (TDS)"},
+      "do_now": [
+        {"action": "taste_only", "hi": "यह मुख्य रूप से स्वाद की समस्या है।", "en": "This is mainly a taste problem."},
+        {"action": "alt_source", "hi": "अगर TDS 2000 से ज़्यादा है तो पीने के लिए दूसरा जांचा हुआ स्रोत इस्तेमाल करें।", "en": "If TDS is above 2,000, use another tested source for drinking."}
+      ],
+      "engineer_fix": {"hi": "सामुदायिक RO या दूसरा स्रोत दें।", "en": "Provide community RO or an alternate source."},
+      "sources": ["IS 10500:2012 (TDS 500 acceptable, 2,000 permissible mg/L)"]
+    }
+  }
+}
