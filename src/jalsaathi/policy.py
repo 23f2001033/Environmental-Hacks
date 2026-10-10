@@ -5,7 +5,7 @@ from __future__ import annotations
 import re
 from functools import lru_cache
 
-from . import paths
+from . import metrics, paths
 
 _ID = re.compile(r'@id\("([^"]+)"\)')
 
@@ -24,7 +24,7 @@ def _named(reasons: list[str], ids: list[str]) -> list[str]:
     return out
 
 
-def decide(role: str, action: str, case_id: str, context: dict) -> dict:
+def _decide(role: str, action: str, case_id: str, context: dict) -> dict:
     """Return {'allowed', 'action', 'policies', 'reason'}. Never raises."""
     try:
         import cedarpy
@@ -47,3 +47,10 @@ def decide(role: str, action: str, case_id: str, context: dict) -> dict:
         return {"allowed": False, "action": action, "policies": policies, "reason": reason}
     except Exception as exc:  # noqa: BLE001 - fail closed on anything unexpected
         return {"allowed": False, "action": action, "policies": [], "reason": f"policy engine error, denied (fail closed): {exc}"}
+
+
+def decide(role: str, action: str, case_id: str, context: dict) -> dict:
+    """Cedar's decision for one action (see _decide), counted on the dashboard by action and outcome."""
+    d = _decide(role, action, case_id, context)
+    metrics.emit("CedarDecisions", Action=action, Decision="allow" if d["allowed"] else "deny")
+    return d

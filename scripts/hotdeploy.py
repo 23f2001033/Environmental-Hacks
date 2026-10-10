@@ -4,7 +4,7 @@ Pushes exactly what the CDK stack already declares, so the next `cdk deploy` fin
 Lambda code and dependency layer, the CloudFront routing function, S3 CORS for photo uploads, the API's Bedrock
 permission, and the web app in frontend/dist. Run scripts/build.py and `npm run build` (in frontend/) first.
 
-Usage: python scripts/hotdeploy.py [--code] [--site] [--infra]   (no flags = everything)
+Usage: python scripts/hotdeploy.py [--code] [--infra] [--observability] [--site]   (no flags = everything)
 """
 
 from __future__ import annotations
@@ -104,6 +104,35 @@ def deploy_infra() -> None:
     print("cloudfront function: published")
 
 
+def deploy_observability() -> None:
+    """X-Ray tracing on every function and both state machines, and the JalSaathi CloudWatch dashboard."""
+    import json
+    sys.path.insert(0, str(ROOT / "infra"))
+    from dashboard import body
+
+    out = outputs()
+    lam, iam = boto3.client("lambda", region_name=REGION), boto3.client("iam")
+    sfn = boto3.client("stepfunctions", region_name=REGION)
+    xray = ('{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Action":["xray:PutTraceSegments",'
+            '"xray:PutTelemetryRecords","xray:GetSamplingRules","xray:GetSamplingTargets"],"Resource":"*"}]}')
+    funcs = _functions(lam)
+    for short, f in funcs.items():
+        iam.put_role_policy(RoleName=f["Role"].split("/")[-1], PolicyName="xray-tracing", PolicyDocument=xray)
+        cfg = lam.get_function_configuration(FunctionName=f["FunctionName"])
+        variables = {**cfg.get("Environment", {}).get("Variables", {}), "TRACING": "1"}
+        lam.update_function_configuration(FunctionName=f["FunctionName"], TracingConfig={"Mode": "Active"},
+                                          Environment={"Variables": variables})
+        lam.get_waiter("function_updated_v2").wait(FunctionName=f["FunctionName"])
+    for arn in (out["StateMachineArn"], out["ScaleRunArn"]):
+        role = sfn.describe_state_machine(stateMachineArn=arn)["roleArn"].split("/")[-1]
+        iam.put_role_policy(RoleName=role, PolicyName="xray-tracing", PolicyDocument=xray)
+        sfn.update_state_machine(stateMachineArn=arn, tracingConfiguration={"enabled": True})
+    dash = body(REGION, {k: v["FunctionName"] for k, v in funcs.items()}, out["StateMachineArn"], out["ScaleRunArn"])
+    msgs = boto3.client("cloudwatch", region_name=REGION).put_dashboard(
+        DashboardName="JalSaathi", DashboardBody=json.dumps(dash)).get("DashboardValidationMessages")
+    print("observability: X-Ray on", len(funcs), "functions + 2 state machines; dashboard", msgs or "ok")
+
+
 def deploy_site() -> None:
     out = outputs()
     _upload(out, ROOT / "frontend" / "dist", "site/")
@@ -133,10 +162,12 @@ def _upload(out: dict, dist: Path, prefix: str) -> None:
 
 
 if __name__ == "__main__":
-    flags = set(sys.argv[1:]) or {"--code", "--infra", "--site"}
+    flags = set(sys.argv[1:]) or {"--code", "--infra", "--observability", "--site"}
     if "--code" in flags:
         deploy_code()
     if "--infra" in flags:
         deploy_infra()
+    if "--observability" in flags:
+        deploy_observability()
     if "--site" in flags:
         deploy_site()

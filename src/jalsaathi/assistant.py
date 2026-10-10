@@ -15,7 +15,7 @@ import re
 import time
 import uuid
 
-from . import advice, config, i18n, policy, store, views
+from . import advice, config, i18n, metrics, policy, store, views
 
 log = logging.getLogger()
 
@@ -230,6 +230,10 @@ def answer(village_key: str, question: str, lang: str, actor: str = "villager") 
         log.exception("assistant failed")
         out.update(answer=fallback(cases, lang), fallback=True, error=str(exc)[:200])
     out["ms"] = {**steps, "total": int((time.time() - t0) * 1000)}
+    metrics.emit("Questions", Outcome="official_advice" if out["fallback"] else "answered")
+    metrics.emit("AnswerLatency", out["ms"]["total"], unit="Milliseconds")
+    if (out.get("guardrail") or {}).get("grounding") is not None:
+        metrics.emit("GroundingScore", out["guardrail"]["grounding"], unit="None")
     _record(cases, out)
     return out
 

@@ -19,6 +19,9 @@ def synthesize(text: str, key: str, lang: str = "hi") -> str:
                                     LanguageCode=LANGUAGE_CODES.get(lang, "hi-IN"), OutputFormat="mp3")["AudioStream"].read()
     config.client("s3").put_object(Bucket=config.bucket(), Key=f"media/{key}", Body=audio, ContentType="audio/mpeg",
                                    CacheControl="max-age=300")
+    from . import metrics
+
+    metrics.emit("VoiceNotes", Lang=lang)
     return f"/media/{key}"
 
 

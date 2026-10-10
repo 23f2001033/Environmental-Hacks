@@ -23,6 +23,8 @@ from aws_cdk import aws_stepfunctions as sfn
 from aws_cdk import aws_stepfunctions_tasks as tasks
 from constructs import Construct
 
+from dashboard import body as dashboard_body
+
 ROOT = Path(__file__).resolve().parent.parent
 
 # The web app is a single-page app: every page path without a file extension (/village/412558, /officials) serves
@@ -131,7 +133,8 @@ class JalSaathiStack(Stack):
                 layers=[layer],
                 timeout=Duration.seconds(timeout),
                 memory_size=memory,
-                environment={**env, **(extra or {})},
+                environment={**env, "TRACING": "1", **(extra or {})},
+                tracing=lambda_.Tracing.ACTIVE,
                 log_group=logs.LogGroup(self, f"{name}Logs", retention=logs.RetentionDays.TWO_WEEKS,
                                         removal_policy=RemovalPolicy.DESTROY),
             )
@@ -208,6 +211,7 @@ class JalSaathiStack(Stack):
             definition_body=sfn.DefinitionBody.from_chainable(definition),
             state_machine_type=sfn.StateMachineType.STANDARD,
             timeout=Duration.days(120),
+            tracing_enabled=True,
         )
 
         # Scale run: start hundreds of case workflows at a steady pace (about one a second), so a new account's
@@ -239,6 +243,7 @@ class JalSaathiStack(Stack):
             definition_body=sfn.DefinitionBody.from_chainable(start_cases.next(sfn.Succeed(self, "AllStarted"))),
             state_machine_type=sfn.StateMachineType.STANDARD,
             timeout=Duration.hours(3),
+            tracing_enabled=True,
         )
         bucket.grant_read(scale_machine)
 
@@ -351,6 +356,11 @@ class JalSaathiStack(Stack):
             threshold=1, evaluation_periods=1,
             alarm_description="JalSaathi ingest failed",
         )
+
+        cw.CfnDashboard(self, "Dashboard", dashboard_name="JalSaathi", dashboard_body=self.to_json_string(dashboard_body(
+            self.region, {"CaseSteps": steps_fn.function_name, "Ingest": ingest_fn.function_name,
+                          "Webhook": webhook_fn.function_name, "ApiHandler": api_fn.function_name},
+            machine.state_machine_arn, scale_machine.state_machine_arn)))
 
         CfnOutput(self, "SiteUrl", value=f"https://{dist.distribution_domain_name}")
         CfnOutput(self, "TestUiUrl", value=f"https://{dist.distribution_domain_name}/test/")
