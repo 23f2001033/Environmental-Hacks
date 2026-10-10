@@ -2,6 +2,7 @@
 import { language, pair } from "./i18n.js";
 import { escapeHTML as e, routeURL } from "./model.js";
 import { icon } from "./components.js";
+import shapes from "./map-shapes.json";
 
 const BOT = "https://t.me/Srott_bot";
 const FEATURED = "412558"; // Behta Lakhi, Harpalpur, Hardoi: the demo village
@@ -81,6 +82,10 @@ const c = {
   closeTitle: ["इस नक्शे पर कोई गांव है, जिसे यह जानना ज़रूरी है।", "Somewhere on this map is a village that needs to know."],
   telegram: ["Telegram पर जुड़ें", "Join on Telegram"],
   featured: ["आज ध्यान दें", "Act today"],
+  legendUnsafe: ["पानी असुरक्षित", "Unsafe water"],
+  legendProvisional: ["फील्ड जांच साफ़, लैब बाकी", "Field test clean, lab pending"],
+  legendApprox: ["अनुमानित जगह (ब्लॉक या ज़िला)", "Approximate (block or district)"],
+  legendCount: ["गांव नक्शे पर", "villages on the map"],
   labTest: ["लैब जांच", "Lab test"],
 };
 
@@ -96,17 +101,24 @@ export function chemicalShare(stats) {
   return total ? Math.round((chem / total) * 100) : null;
 }
 
-// A small cartographic projection of the real village coordinates (no basemap download on the first page).
-function project(villages, width, height, pad = 18) {
-  const pts = villages.filter((v) => Number.isFinite(v.lat) && Number.isFinite(v.lon));
-  if (!pts.length) return { pts: [], x: () => 0, y: () => 0, bounds: null };
-  const lons = pts.map((v) => v.lon), lats = pts.map((v) => v.lat);
-  const b = { w: Math.min(...lons) - 0.6, e: Math.max(...lons) + 0.6, s: Math.min(...lats) - 0.6, n: Math.max(...lats) + 0.6 };
+// The map: real state outlines and rivers (Natural Earth, public domain; scripts/build_map_shapes.py), reference
+// cities, and one dot per village with a failed test, from the live API. No basemap download on the first page.
+const MAP_W = 640;
+const fmt = (n) => n.toFixed(1);
+
+function frame() {
+  // Fit the two states we cover, with a margin; equirectangular, scaled by cos(latitude).
+  const pts = shapes.states.filter((st) => st.focus).flatMap((st) => st.rings.flat());
+  const b = { w: Math.min(...pts.map((q) => q[0])) - 0.5, e: Math.max(...pts.map((q) => q[0])) + 0.9,
+              s: Math.min(...pts.map((q) => q[1])) - 0.4, n: Math.max(...pts.map((q) => q[1])) + 0.5 };
   const k = Math.cos((((b.n + b.s) / 2) * Math.PI) / 180);
-  const sx = (width - 2 * pad) / ((b.e - b.w) * k), sy = (height - 2 * pad) / (b.n - b.s);
-  const s = Math.min(sx, sy);
-  const ox = (width - (b.e - b.w) * k * s) / 2, oy = (height - (b.n - b.s) * s) / 2;
-  return { pts, bounds: b, x: (lon) => ox + (lon - b.w) * k * s, y: (lat) => oy + (b.n - lat) * s };
+  const sc = MAP_W / ((b.e - b.w) * k);
+  const H = Math.round((b.n - b.s) * sc);
+  return { H, b, sc, k, x: (lon) => (lon - b.w) * k * sc, y: (lat) => (b.n - lat) * sc };
+}
+
+function path(points, f, close) {
+  return points.map((q, i) => (i ? "L" : "M") + fmt(f.x(q[0])) + " " + fmt(f.y(q[1]))).join("") + (close ? "Z" : "");
 }
 
 function spread(key) {
@@ -116,47 +128,87 @@ function spread(key) {
   return [Math.cos(a) * r, Math.sin(a) * r];
 }
 
+const STATE_NAMES = { Rajasthan: ["राजस्थान", "Rajasthan"], "Uttar Pradesh": ["उत्तर प्रदेश", "Uttar Pradesh"] };
+const RIVER_NAMES = { Ganges: ["गंगा", "Ganga"], Yamuna: ["यमुना", "Yamuna"], Chambal: ["चंबल", "Chambal"] };
+
 export function villageMap(villages, featured) {
-  const W = 600;
+  const f = frame();
+  const W = MAP_W, H = f.H;
   const geo = villages.filter((v) => Number.isFinite(v.lat) && Number.isFinite(v.lon));
-  if (!geo.length) return "";
-  const lats = geo.map((v) => v.lat), lons = geo.map((v) => v.lon);
-  const k = Math.cos((((Math.max(...lats) + Math.min(...lats)) / 2) * Math.PI) / 180);
-  const H = Math.round(((Math.max(...lats) - Math.min(...lats) + 1.2) / ((Math.max(...lons) - Math.min(...lons) + 1.2) * k)) * (W - 36) + 36);
-  const { pts, bounds, x, y } = project(villages, W, H);
-  if (!pts.length) return "";
-  const grid = [];
-  for (let lon = Math.ceil(bounds.w); lon <= bounds.e; lon += 2)
-    grid.push(`<line x1="${x(lon).toFixed(1)}" y1="0" x2="${x(lon).toFixed(1)}" y2="${H}"/><text x="${(x(lon) + 3).toFixed(1)}" y="${H - 6}">${lon}°E</text>`);
-  for (let lat = Math.ceil(bounds.s); lat <= bounds.n; lat += 2)
-    grid.push(`<line x1="0" y1="${y(lat).toFixed(1)}" x2="${W}" y2="${y(lat).toFixed(1)}"/><text x="4" y="${(y(lat) - 3).toFixed(1)}">${lat}°N</text>`);
-  const states = {};
-  for (const v of pts) (states[v.state] ||= []).push(v);
-  const labels = Object.entries(states).map(([name, vs]) => {
-    const lon = vs.reduce((a, v) => a + v.lon, 0) / vs.length, low = Math.min(...vs.map((v) => v.lat));
-    return `<text class="state-label" x="${x(lon).toFixed(1)}" y="${Math.min(H - 20, y(low) + 20).toFixed(1)}" text-anchor="middle">${e(name)}</text>`;
-  });
-  const dots = pts.map((v, i) => {
+  const neighbours = shapes.states.filter((st) => !st.focus)
+    .map((st) => '<path class="land-other" d="' + st.rings.map((r) => path(r, f, true)).join("") + '"/>').join("");
+  const focus = shapes.states.filter((st) => st.focus)
+    .map((st) => '<path class="land" d="' + st.rings.map((r) => path(r, f, true)).join("") + '"/>').join("");
+  const rivers = shapes.rivers.map((rv) => {
+    const major = rv.name === "Ganges" || rv.name === "Yamuna";
+    return rv.lines.map((ln) => '<path class="river' + (major ? " major" : "") + '" d="' + path(ln, f, false) + '"/>').join("");
+  }).join("");
+  // Each river is named at the point nearest an open stretch, clear of the cities and clusters
+  const RIVER_AT = { Ganges: [78.7, 28.1], Yamuna: [77.5, 28.15], Chambal: [76.4, 25.9] };
+  const riverLabels = shapes.rivers.filter((rv) => RIVER_NAMES[rv.name] && RIVER_AT[rv.name]).map((rv) => {
+    const [tx, ty] = RIVER_AT[rv.name];
+    const q = rv.lines.flat().reduce((a, p) => (!a || Math.hypot(p[0] - tx, p[1] - ty) < Math.hypot(a[0] - tx, a[1] - ty) ? p : a), null);
+    return q ?'<text class="river-label" x="' + fmt(f.x(q[0]) + 6) + '" y="' + fmt(f.y(q[1]) - 6) + '">' + e(pair(RIVER_NAMES[rv.name])) + "</text>" : "";
+  }).join("");
+  const LABEL_AT = { Rajasthan: [71.9, 27.15], "Uttar Pradesh": [80.7, 24.7] }; // open ground, clear of the clusters
+  const stateLabels = shapes.states.filter((st) => st.focus && LABEL_AT[st.name]).map((st) => {
+    const [lon, lat] = LABEL_AT[st.name];
+    return '<text class="state-label" x="' + fmt(f.x(lon)) + '" y="' + fmt(f.y(lat)) + '" text-anchor="middle">' + e(pair(STATE_NAMES[st.name] || [st.name, st.name])) + "</text>";
+  }).join("");
+  const shown = shapes.cities.filter((c) => !["Kanpur", "Kota"].includes(c.name)); // too close to Lucknow / a cluster
+  const cities = shown.map((c) => {
+    const cx = f.x(c.lon), cy = f.y(c.lat);
+    return '<rect class="city-mark" x="' + fmt(cx - 3) + '" y="' + fmt(cy - 3) + '" width="6" height="6" transform="rotate(45 ' + fmt(cx) + " " + fmt(cy) + ')"/>';
+  }).join("");
+  const cityNames = shown.map((c) => '<text class="city-name" x="' + fmt(f.x(c.lon) + 8) + '" y="' + fmt(f.y(c.lat) - 6) + '">' + e(c.name) + "</text>").join("");
+  const dots = geo.map((v, i) => {
     const approx = v.geo_precision !== "village";
     const [dx, dy] = approx ? spread(v.key) : [0, 0];
-    const cx = x(v.lon + dx).toFixed(1), cy = y(v.lat + dy).toFixed(1);
-    return `<circle class="dot ${e(v.status)}${approx ? " approx" : ""}" cx="${cx}" cy="${cy}" r="${approx ? 3.4 : 4}" style="--d:${(i % 60) * 18}ms"/>`;
-  });
-  const f = pts.find((v) => v.key === featured);
-  const mark = f
-    ? `<g class="featured"><circle class="pulse" cx="${x(f.lon).toFixed(1)}" cy="${y(f.lat).toFixed(1)}" r="9"/><circle class="core" cx="${x(f.lon).toFixed(1)}" cy="${y(f.lat).toFixed(1)}" r="6"/></g>`
-    : "";
-  return `<svg class="living-map" viewBox="0 0 ${W} ${H}" role="img" aria-label="${e(T("mapCaption"))}">
-    <g class="graticule">${grid.join("")}</g>${labels.join("")}<g>${dots.join("")}</g>${mark}</svg>`;
+    return '<circle class="dot ' + e(v.status) + (approx ? " approx" : "") + '" cx="' + fmt(f.x(v.lon + dx)) + '" cy="' + fmt(f.y(v.lat + dy)) + '" r="' + (approx ? 3 : 3.6) + '" style="--d:' + (i % 60) * 16 + 'ms"/>';
+  }).join("");
+  const glow = geo.filter((v) => v.status === "unsafe" && v.geo_precision === "village")
+    .map((v) => '<circle cx="' + fmt(f.x(v.lon)) + '" cy="' + fmt(f.y(v.lat)) + '" r="9"/>').join("");
+  // Featured village: pulse, a leader line, and a card in the empty north-east corner
+  const fv = geo.find((v) => v.key === featured);
+  let card = "";
+  if (fv) {
+    const px = f.x(fv.lon), py = f.y(fv.lat), cw = 196, ch = 92, cx0 = W - cw - 14, cy0 = 16;
+    const names = (fv.parameters || []).map((c) => pair(CODES[c] || [c, c])).join(", ");
+    card = '<g class="featured"><circle class="pulse" cx="' + fmt(px) + '" cy="' + fmt(py) + '" r="9"/><circle class="core" cx="' + fmt(px) + '" cy="' + fmt(py) + '" r="5.5"/></g>'
+      + '<path class="leader" d="M' + fmt(px + 6) + " " + fmt(py - 6) + " C " + fmt(px + 40) + " " + fmt(py - 60) + ", " + fmt(cx0 - 30) + " " + fmt(cy0 + ch + 30) + ", " + fmt(cx0 + 18) + " " + fmt(cy0 + ch) + '"/>'
+      + '<a class="svg-card" href="' + routeURL("village", fv.key) + '" data-nav>'
+      + '<rect x="' + cx0 + '" y="' + cy0 + '" width="' + cw + '" height="' + ch + '" rx="12"/>'
+      + '<text class="tag" x="' + (cx0 + 14) + '" y="' + (cy0 + 22) + '">⚠ ' + e(T("featured")) + "</text>"
+      + '<text class="name" x="' + (cx0 + 14) + '" y="' + (cy0 + 44) + '">' + e(fv.name) + "</text>"
+      + '<text class="where" x="' + (cx0 + 14) + '" y="' + (cy0 + 62) + '">' + e([fv.block, fv.district].filter(Boolean).join(", ")) + "</text>"
+      + '<text class="finding" x="' + (cx0 + 14) + '" y="' + (cy0 + 80) + '">' + e(names) + " ›</text></a>";
+  }
+  // North arrow and a 100 km scale bar (100 km of longitude at this latitude)
+  const kmPx = (100 / (111.32 * f.k)) * f.k * f.sc;
+  const furniture = '<g class="north" transform="translate(' + (W - 26) + " " + (H - 64) + ')"><path d="M0 -14 L6 6 L0 2 L-6 6 Z"/><text x="0" y="20" text-anchor="middle">N</text></g>'
+    + '<g class="scale" transform="translate(' + fmt(W - 24 - kmPx) + " " + (H - 18) + ')"><path d="M0 0 H' + fmt(kmPx) + " M0 -4 V0 M" + fmt(kmPx) + ' -4 V0"/><text x="' + fmt(kmPx / 2) + '" y="-7" text-anchor="middle">100 km</text></g>';
+  return '<svg class="living-map" viewBox="0 0 ' + W + " " + H + '" role="img" aria-label="' + e(T("mapCaption")) + '">'
+    + '<defs><filter id="soft" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="4"/></filter></defs>'
+    + '<rect class="sea" width="' + W + '" height="' + H + '"/>'
+    + "<g>" + neighbours + "</g><g>" + focus + "</g><g>" + rivers + "</g>" + riverLabels + stateLabels
+    + '<g class="glow" filter="url(#soft)">' + glow + "</g><g>" + cities + "</g><g>" + dots + "</g><g>" + cityNames + "</g>" + card + furniture + "</svg>";
+}
+
+function mapLegend(count) {
+  return '<ul class="map-legend">'
+    + '<li><i class="key unsafe"></i>' + e(T("legendUnsafe")) + "</li>"
+    + '<li><i class="key provisional"></i>' + e(T("legendProvisional")) + "</li>"
+    + '<li><i class="key approx"></i>' + e(T("legendApprox")) + "</li>"
+    + '<li class="count">' + e(String(count)) + " " + e(T("legendCount")) + "</li></ul>";
 }
 
 function featuredCard(f) {
   if (!f) return "";
-  const names = (f.parameters || []).map((p) => pair(CODES[p] || [p, p])).join(", ");
-  return `<a class="map-card" data-nav href="${routeURL("village", f.key)}">
-    <span class="map-card-tag">${icon("alert")} ${e(T("featured"))}</span>
-    <strong>${e(f.name)}</strong><small>${e([f.block, f.district].filter(Boolean).join(", "))}</small>
-    <span class="map-card-finding">${e(names)}</span>${icon("arrow")}</a>`;
+  const names = (f.parameters || []).map((c) => pair(CODES[c] || [c, c])).join(", ");
+  return '<a class="map-card" data-nav href="' + routeURL("village", f.key) + '">'
+    + '<span class="map-card-tag">' + icon("alert") + " " + e(T("featured")) + "</span>"
+    + "<strong>" + e(f.name) + "</strong><small>" + e([f.block, f.district].filter(Boolean).join(", ")) + "</small>"
+    + '<span class="map-card-finding">' + e(names) + "</span>" + icon("arrow") + "</a>";
 }
 
 export function aboutPage(stats, villages, overview) {
@@ -179,6 +231,7 @@ export function aboutPage(stats, villages, overview) {
     </div>
     <figure class="about-hero-map">
       ${villageMap(villages, FEATURED)}
+      ${mapLegend(villages.filter((v) => Number.isFinite(v.lat)).length)}
       ${featuredCard(f)}
       <figcaption>${e(T("mapCaption"))} <span>${e(T("source"))}${stats?.days_since_test?.as_of ? ` · ${e(stats.days_since_test.as_of)}` : ""}</span></figcaption>
     </figure>
