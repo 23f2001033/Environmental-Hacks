@@ -40,3 +40,15 @@ Advice in mock mode is imported from content/advice.json without rewriting it.
 Validation: model and rendering tests cover status interpretation, reopened cases,
 private timeline actors, unsafe links, route persistence and chemical advice. Verify
 desktop/mobile layouts and keyboard/poster interactions in a real browser before release.
+
+## About-first revision (Sat 10 Oct, from Umar's brief)
+
+The site now opens on About; Find my village is the primary action at the top right (`/?find`).
+Direction: warm editorial (references: Claude and Notion entries in VoltAgent/awesome-claude-design), adapted to water:
+ivory canvas #f7f4ec, ink #173f55 and teal #087a79 kept, earth #9a7655 and gold #c9a66b for cartographic detail.
+Display type Fraunces (Latin) and Tiro Devanagari Hindi; body type unchanged.
+No stock photography: the hero is a "living map" drawn from the real coordinates of every village with a failed test
+(hollow = approximate location), with the demo village marked. Figures come from the live API only (105 days, 87%,
+149); if a figure can't load, its block is hidden rather than invented. The brief's heritage framing ("reconnect with
+your roots") was not used: JalSaathi is about unsafe drinking water, and the page says so.
+Checked at 360, 390 and 1440 px with mobile emulation: no horizontal overflow on any page.

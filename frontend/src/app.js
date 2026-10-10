@@ -5,9 +5,14 @@ import "@fontsource/dm-sans/400.css";
 import "@fontsource/dm-sans/600.css";
 import "@fontsource/dm-sans/700.css";
 import "./styles.css";
+import "./about.css";
 import { get } from "./api.js";
 import { t, language, setLanguage } from "./i18n.js";
+import "@fontsource/fraunces/600.css";
+import "@fontsource/fraunces/700.css";
+import "@fontsource/tiro-devanagari-hindi/400.css";
 import { routeFrom, routeURL, escapeHTML as e } from "./model.js";
+import { aboutPage } from "./about.js";
 import {
   shell,
   villagePage,
@@ -25,7 +30,10 @@ let failed = false;
 let lastError = null;
 const main = document.querySelector("#main");
 try {
-  setLanguage(localStorage.getItem("jalsaathi-language") || "hi");
+  setLanguage(
+    localStorage.getItem("jalsaathi-language") ||
+      ((navigator.language || "").toLowerCase().startsWith("hi") ? "hi" : "en"),
+  );
 } catch {}
 
 function announce(message) {
@@ -50,12 +58,17 @@ function render() {
   }
   if (!data) return;
   main.innerHTML =
-    route.view === "village"
-      ? villagePage(data, route)
-      : route.view === "block"
-        ? blockPage(data, route)
-        : directoryPage(data.villages, route);
-  document.title = `${route.view === "village" ? data.village.name : t(route.view === "block" ? "block" : "villages")} | ${t("brand")}`;
+    route.view === "about"
+      ? aboutPage(data.stats, data.villages, data.overview)
+      : route.view === "village"
+        ? villagePage(data, route)
+        : route.view === "block"
+          ? blockPage(data, route)
+          : directoryPage(data.villages, route);
+  document.title =
+    route.view === "about"
+      ? `${t("brand")} | ${language === "hi" ? "गांव के पीने के पानी की सूचना" : "Lab-confirmed water alerts for villages"}`
+      : `${route.view === "village" ? data.village.name : t(route.view === "block" ? "block" : "villages")} | ${t("brand")}`;
   main.querySelectorAll("audio").forEach((audio) =>
     audio.addEventListener("error", () => {
       audio.hidden = true;
@@ -87,6 +100,7 @@ function wireDirectory() {
     document.querySelector("#result-count").textContent =
       `${villages.length} ${t("results")}`;
   };
+  if (route.q) search.value = route.q;
   search.addEventListener("input", update);
   filter.addEventListener("change", update);
   update();
@@ -133,6 +147,18 @@ async function load(focus = false) {
   main.setAttribute("aria-busy", "true");
   main.innerHTML = `<div class="loading-state" role="status"><span class="spinner"></span><p>${e(t("loading"))}</p><div class="skeleton"></div><div class="skeleton short"></div></div>`;
   try {
+    if (route.view === "about") {
+      const [stats, villages, overview] = await Promise.all([
+        get("/stats", { demo: route.demo, signal: thisRequest.signal }).catch(() => null),
+        get("/villages", { demo: route.demo, signal: thisRequest.signal }),
+        get("/overview", { demo: route.demo, signal: thisRequest.signal }).catch(() => null),
+      ]);
+      if (thisRequest !== request) return;
+      if (!Array.isArray(villages?.villages)) throw new Error("Invalid response");
+      data = { stats, villages: villages.villages, overview };
+      render();
+      return;
+    }
     const path =
       route.view === "village"
         ? `/villages/${encodeURIComponent(route.key)}`

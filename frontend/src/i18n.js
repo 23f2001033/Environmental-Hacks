@@ -1,7 +1,8 @@
 export const words = {
   brand: ["जलसाथी", "JalSaathi"],
   tagline: ["पानी की खबर, गांव तक", "Water information, within reach"],
-  villages: ["अपना गांव खोजें", "Find your village"],
+  villages: ["अपना गांव खोजें", "Find my village"],
+  about: ["परिचय", "About"],
   block: ["ब्लॉक की स्थिति", "Block dashboard"],
   preview: [
     "डिज़ाइन प्रीव्यू • नमूना डेटा और काल्पनिक घटनाएं। यह वर्तमान पानी की स्थिति नहीं है।",
