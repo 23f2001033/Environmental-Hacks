@@ -1,0 +1,120 @@
+"""Deploy code and site changes without CDK synth (for when this machine is too low on memory to run jsii).
+
+Pushes exactly what the CDK stack already declares, so the next `cdk deploy` finds nothing new to change:
+Lambda code and dependency layer, the CloudFront routing function, S3 CORS for photo uploads, the API's Bedrock
+permission, and the web app in frontend/dist. Run scripts/build.py and `npm run build` (in frontend/) first.
+
+Usage: python scripts/hotdeploy.py [--code] [--site] [--infra]   (no flags = everything)
+"""
+
+from __future__ import annotations
+
+import io
+import mimetypes
+import re
+import sys
+import time
+import zipfile
+from pathlib import Path
+
+import boto3
+
+from _common import outputs
+
+ROOT = Path(__file__).resolve().parent.parent
+REGION = "ap-south-1"
+FUNCTIONS = ("CaseSteps", "Ingest", "Webhook", "ApiHandler")
+
+
+def _zip(folder: Path) -> bytes:
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as z:
+        for path in sorted(folder.rglob("*")):
+            if path.is_file() and "__pycache__" not in path.parts:
+                z.write(path, path.relative_to(folder).as_posix())
+    return buf.getvalue()
+
+
+def _functions(lam) -> dict[str, dict]:
+    found = {}
+    for page in lam.get_paginator("list_functions").paginate():
+        for f in page["Functions"]:
+            for short in FUNCTIONS:
+                if f["FunctionName"].startswith(f"JalSaathi-{short}"):
+                    found[short] = f
+    return found
+
+
+def deploy_code() -> None:
+    lam = boto3.client("lambda", region_name=REGION)
+    funcs = _functions(lam)
+    layer_name = funcs["CaseSteps"]["Layers"][0]["Arn"].split(":layer:")[1].split(":")[0]
+    layer = lam.publish_layer_version(LayerName=layer_name, Content={"ZipFile": _zip(ROOT / "build" / "layer")},
+                                      CompatibleRuntimes=["python3.12"], CompatibleArchitectures=["arm64"],
+                                      Description="hotdeploy")
+    print("layer", layer["Version"])
+    code = _zip(ROOT / "build" / "lambda")
+    for short, f in funcs.items():
+        name = f["FunctionName"]
+        lam.update_function_code(FunctionName=name, ZipFile=code)
+        lam.get_waiter("function_updated_v2").wait(FunctionName=name)
+        lam.update_function_configuration(FunctionName=name, Layers=[layer["LayerVersionArn"]])
+        lam.get_waiter("function_updated_v2").wait(FunctionName=name)
+        print("updated", short)
+
+
+def deploy_infra() -> None:
+    out = outputs()
+    account = boto3.client("sts").get_caller_identity()["Account"]
+    funcs = _functions(boto3.client("lambda", region_name=REGION))
+    api_role = funcs["ApiHandler"]["Role"].split("/")[-1]
+    boto3.client("iam").put_role_policy(RoleName=api_role, PolicyName="app-photo-hint-bedrock", PolicyDocument=(
+        '{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Action":"bedrock:InvokeModel","Resource":['
+        f'"arn:aws:bedrock:{REGION}:{account}:inference-profile/apac.amazon.nova-pro-v1:0",'
+        '"arn:aws:bedrock:*::foundation-model/amazon.nova-pro-v1:0"]}]}'))
+    print("api role: bedrock")
+    boto3.client("s3", region_name=REGION).put_bucket_cors(Bucket=out["BucketName"], CORSConfiguration={"CORSRules": [
+        {"AllowedMethods": ["PUT"], "AllowedOrigins": ["*"], "AllowedHeaders": ["*"], "MaxAgeSeconds": 3000}]})
+    print("bucket: cors")
+    stack = (ROOT / "infra" / "stack.py").read_text(encoding="utf-8")
+    body = re.search(r"INDEX_REWRITE = \(\n(.*?)\n\)", stack, re.S).group(1)
+    js = "".join(re.findall(r'"(.*)"', body))
+    cf = boto3.client("cloudfront")
+    name = next(i["Name"] for i in cf.list_functions()["FunctionList"]["Items"] if "IndexRewrite" in i["Name"])
+    current = cf.describe_function(Name=name, Stage="DEVELOPMENT")
+    updated = cf.update_function(Name=name, IfMatch=current["ETag"], FunctionCode=js.encode(),
+                                 FunctionConfig=current["FunctionSummary"]["FunctionConfig"])
+    cf.publish_function(Name=name, IfMatch=updated["ETag"])
+    print("cloudfront function: published")
+
+
+def deploy_site() -> None:
+    out = outputs()
+    dist = ROOT / "frontend" / "dist"
+    s3 = boto3.client("s3", region_name=REGION)
+    for path in sorted(dist.rglob("*")):
+        if not path.is_file():
+            continue
+        rel = path.relative_to(dist).as_posix()
+        ctype = mimetypes.guess_type(rel)[0] or "application/octet-stream"
+        if rel.endswith(".webmanifest"):
+            ctype = "application/manifest+json"
+        cache = "public, max-age=31536000, immutable" if rel.startswith("assets/") else "no-cache"
+        s3.put_object(Bucket=out["BucketName"], Key=f"site/{rel}", Body=path.read_bytes(), ContentType=ctype,
+                      CacheControl=cache)
+    domain = out["SiteUrl"].replace("https://", "")
+    cf = boto3.client("cloudfront")
+    dist_id = next(d["Id"] for d in cf.list_distributions()["DistributionList"]["Items"] if d["DomainName"] == domain)
+    cf.create_invalidation(DistributionId=dist_id, InvalidationBatch={
+        "Paths": {"Quantity": 1, "Items": ["/*"]}, "CallerReference": str(time.time())})
+    print("site: uploaded and invalidated")
+
+
+if __name__ == "__main__":
+    flags = set(sys.argv[1:]) or {"--code", "--infra", "--site"}
+    if "--code" in flags:
+        deploy_code()
+    if "--infra" in flags:
+        deploy_infra()
+    if "--site" in flags:
+        deploy_site()

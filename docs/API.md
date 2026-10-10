@@ -109,6 +109,26 @@ A `CaseView` with timeline.
   deliberate pacing (about one case a second).
 - `scale_run` is `null` unless the last ingest used the ScaleRun state machine.
 
+## Web app (relays, engineers, officials)
+
+Relay and engineer actions need the **signed link token** `k` for that village or block (`/relay/<village>?k=…`, `/engineer/<block>?k=…`; generate with `POST /admin/links`). They go through the same code as the Telegram buttons, so Cedar decides the same way. Errors: `401` bad link, `404` case not in this village/block, `409` the case isn't waiting for that step.
+
+| Route | Body / query | Returns |
+|---|---|---|
+| `GET /access?role=e\|v&key=<block or village>&k=<token>` | | `{"valid": true}`: show action buttons only when valid |
+| `POST /engineer/{block}/fix` | `{"case_id", "action": "chlorination"\|"repair"\|"source_changed"\|"need_help", "k"}` | `{"ok": true}` |
+| `POST /engineer/{block}/close` | `{"case_id", "k"}` | Cedar decision `{"allowed": false, "policies": [], "reason": "..."}`: always denied without a lab pass; show it |
+| `POST /relay/{village}/upload` | `{"case_id", "k"}` | `{"upload_url", "photo_key"}`: then `PUT upload_url` with the JPEG (`content-type: image/jpeg`, under 6 MB) |
+| `POST /relay/{village}/hint` | `{"case_id", "k", "photo_key", "lang": "hi"\|"en"}` | `{"hint": {"colour": "black"\|"yellow"\|"unclear", "confidence", "reason", "model"}, "message": "<html>"}`: Amazon Nova reads the vial; advice only |
+| `POST /relay/{village}/kit` | `{"case_id", "k", "result": "clean"\|"contaminated", "photo_key"}` | `{"ok": true}`: the person decides; the timeline records whether they agreed with the AI |
+| `POST /push/subscribe` | `{"scope": "village"\|"block", "key", "subscription": PushSubscription.toJSON(), "lang"}` | `{"subscribed": true}`: app notifications (Web Push) next to Telegram. Key: `GET /config` → `push.vapid_public_key`. Service worker: `frontend/public/sw.js` |
+| `GET /overview` | | `{"totals": {"open", "closed", "provisional", "escalated", "villages"}, "districts": [{"state", "district", "open", "escalated", "closed", "provisional", "villages", "chemical_share", "by_severity", "by_code", "blocks": [{"block_key", "block", "open", "escalated", "villages"}]}]}`, most overdue first |
+| `GET /activity?limit=40` | | `{"events": [{"at", "kind", "actor", "note", "decision", "action", "result", "case_id", "code", "village", "village_key", "block", "district", "state"}]}`, newest first (the live feed) |
+
+`CaseView` also has: `audio: {"hi", "en"}` (voice notes in both languages), `deadline_at` (current wait's deadline, `null` after the last escalation), `warned_at`, `escalations`, `engineer_fix: {"hi", "en"}`, `source`. `GET /blocks/{key}/cases` returns cases with timelines plus `block` (name).
+
+Page paths: CloudFront serves `/index.html` for any path without a file extension (except `/test/…`), so a single-page app can use `/village/<key>`, `/engineer/<block>`, `/relay/<village>`, `/officials`, `/impact`. Keep `/?v=<key>` redirecting to the village page.
+
 ## Admin (header `x-admin-token`)
 
 | Route | Body | Effect |
@@ -116,6 +136,7 @@ A `CaseView` with timeline.
 | `POST /admin/ingest` | `{"source": "fixtures"\|"snapshot"\|"live", "start_cases": true, "villages": ["optional names or keys"]}` | Starts the ingest asynchronously (202). Over 25 new cases go through the ScaleRun state machine |
 | `POST /admin/scale-run` | `{}` | Ingests every FY 2026-27 failure in the WQMIS snapshot (about 580 cases, real deadlines) and starts their workflows at a steady pace (202) |
 | `POST /admin/restart-demo` | `{}` | Asynchronous (202): stops and deletes only the 13 demo cases, then opens them again on the demo clock. Real cases, villages and Telegram subscriptions stay. Use before each phone test or recording |
+| `POST /admin/links` | `{"role": "v"\|"e", "key"}` | `{"url"}`: the signed app link for a village relay or block engineer |
 | `POST /admin/reset` | `{}` | Asynchronous (202): stops all workflows, deletes villages, cases, events, tokens and runs; keeps Telegram subscriptions. Takes up to a minute at scale |
 | `POST /admin/restart-case` | `{"case_id"}` | Starts a fresh workflow for an existing case (for a workflow that failed) |
 | `POST /admin/engineer-action` | `{"case_id", "action": "chlorination"\|"repair"\|"source_changed"\|"need_help"}` | Same as the engineer's Telegram button |

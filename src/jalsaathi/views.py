@@ -51,6 +51,7 @@ def case_view(case: dict, with_timeline: bool = True) -> dict:
         "scheme_name": case.get("scheme_name"),
         "advice": {"hi": advice.lines(code, "hi"), "en": advice.lines(code, "en")},
         "actions": advice.actions(code),
+        "engineer_fix": (advice.entry(code) or {}).get("engineer_fix"),
         "audio_url": voice.public_url(case.get("audio_path")),
         "audio": {"hi": voice.public_url(case.get("audio_path")), "en": voice.public_url(case.get("audio_path_en"))},
         "village_key": case.get("village_key"),
