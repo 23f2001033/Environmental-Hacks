@@ -1,34 +1,89 @@
-# Frontend build space
+# JalSaathi public frontend
 
-This folder belongs to the product UI. Build it with whatever stack the frontend lead chooses (React, Svelte, Astro, plain HTML…). The backend will not change under you as long as you follow the contract below.
+Hindi-first village reports, a searchable directory, scoped block queues, case
+progress, Hindi audio and printable posters. Built with Vite and JavaScript modules.
 
-## The contract
+## Run locally
 
-| Rule | Why |
-|---|---|
-| Your production build goes to **`frontend/dist/`**, with `index.html` at its root | CDK deploys `frontend/dist` to `/` when it exists; otherwise it deploys `frontend/placeholder` |
-| Call the API only at **`/api/v1/...`** (same origin) | CloudFront routes `/api/*` to the backend, so there's no CORS and no hard-coded URLs |
-| Use only the endpoints and fields in **[docs/API.md](../docs/API.md)** | The `/api/v1` contract is versioned; breaking changes get a new version, never silent edits |
-| Keep `/?v=<village key>` opening that village | Telegram alerts and printed posters link to it |
-| Don't write to `/test/` | The test console lives there and is deployed separately |
-| Audio and media come from `audio_url` (`/media/...`) | Served by CloudFront from S3 |
-| Hindi first, English toggle; works on a low-end Android phone | PRD.md, section 8 |
+Node.js 22 or newer is recommended (the map dependency declares Node 22).
+The core build was also checked on the workstation's Node 20.18.
 
-## Local development
+```powershell
+cd frontend
+npm ci
+npm run dev
+```
 
-1. Point your dev server's proxy at the deployed API so `/api/v1` works locally. For Vite:
-   ```js
-   // vite.config.js
-   export default { server: { proxy: { "/api": { target: "https://<SiteUrl domain>", changeOrigin: true } } } }
-   ```
-   Get the domain from the stack outputs (`SiteUrl`) or from `state.md`.
-2. `npm run build` must write to `frontend/dist`.
-3. Deploy: `python scripts/build.py` then `npx -y aws-cdk@2 deploy` from the repo root (Aman runs deploys).
+Open **http://127.0.0.1:4173/?demo=1&v=412558** for the village preview.
+Open **http://127.0.0.1:4173/?demo=1** for the directory (13 fixture villages).
 
-## Routing note
+Preview measurements come from the repository fixtures and advice comes directly
+from `content/advice.json`. Workflow events are simulated and visibly labelled.
+Preview has no audio recording or map connection. Clicking a Telegram link opens
+the existing bot; the frontend itself sends no messages.
 
-CloudFront rewrites `/path/` and `/path` (no file extension) to `/path/index.html`. For a single-page app, prefer query-string or hash routing (`/?v=412558`, `/#/block/5037`), or ask for a CloudFront change so every unknown path serves `/index.html`.
+For the deployed public API, set a development proxy before starting Vite:
 
-## What the screens need
+```powershell
+$env:JALSAATHI_API_ORIGIN = 'https://d2735023v3xj6.cloudfront.net'
+npm run dev
+```
 
-See PRD.md section 7 (FR-11 village page, FR-12 block view) and the poster requirement (FR-11). The test console at `/test/` shows every field in use and is a working reference.
+Open http://127.0.0.1:4173/?v=412558 without `demo=1`. Requests to `/api` and
+`/media` are proxied. Public GETs need no credentials. Failed requests show a retry
+screen and never silently substitute mock results.
+
+## Routes and architecture
+
+| Route             | Screen                                                     |
+| ----------------- | ---------------------------------------------------------- |
+| `/`               | Searchable village directory; optional Amazon Location map |
+| `/?v=<key>`       | Village status, advice, audio, history and poster          |
+| `/?b=<block_key>` | That block's cases, ordered by severity and age            |
+| Add `demo=1`      | Explicit fixture preview, preserved across navigation      |
+
+Query routing preserves the CloudFront and Telegram contracts. Hindi is the initial
+language; subsequent choices persist locally.
+
+- `src/app.js`: routing, cancellation, loading/error state, interaction binding.
+- `src/components.js`: shared shell, village page, six-stage timeline, expandable
+  history/test details, directory and block dashboard.
+- `src/api.js`: same-origin requests with a 15-second timeout.
+- `src/mock.js`: API-shaped fixture adapter, loaded only for preview.
+- `src/model.js`: sorting, status, escaping and route helpers.
+- `src/i18n.js`: bilingual interface copy. Safety advice comes from the API.
+- `src/poster.js`: preview dialog, local QR generation and A4 print styling.
+- `src/map.js`: optional MapLibre integration, loaded on demand.
+- `src/styles.css`: responsive layout, focus, reduced-motion and print styles.
+
+The map uses `/api/v1/config`. Hollow points indicate approximate block/district
+centres. All villages remain available in the list without the map.
+
+## Build and verification
+
+```powershell
+npm test
+npm run build
+npm run preview
+```
+
+Vite writes **frontend/dist/**, including self-hosted fonts. Generated files are
+ignored by Git; commit source and the lockfile. Build the frontend before running
+the repository's Lambda build and CDK deploy commands, which require its AWS setup.
+The original test console at `/test/` is unchanged.
+
+Tests cover routing, reopening, sorting, safe/provisional/unknown status, escaping,
+unsafe URL schemes, chemical advice, closed cases and private timeline actors.
+
+Browser checks: desktop and 390px village layouts, block language switching,
+directory search, nitrate advice, expandable history, poster preview/QR, and live
+API failure without mock fallback. Live Polly playback, map tiles and physical
+printer output still need deployed-system validation. Hindi needs native review.
+
+## Credits
+
+JJM-WQMIS for test data; the repository's sourced advice library for advice.
+Noto Sans Devanagari and DM Sans (SIL OFL) via Fontsource; MapLibre GL JS
+(BSD-3-Clause); node-qrcode and Vite (MIT). Illustrations are project-local SVG.
+
+See [DESIGN.md](DESIGN.md) and [the API contract](../docs/API.md).

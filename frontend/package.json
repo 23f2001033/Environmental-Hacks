@@ -1,0 +1,23 @@
+{
+  "name": "jalsaathi-public",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1 --port 4173 --strictPort",
+    "build": "vite build",
+    "preview": "vite preview --host 127.0.0.1 --port 4173 --strictPort",
+    "test": "node --test tests/model.test.js",
+    "format": "prettier --write src tests index.html vite.config.js"
+  },
+  "dependencies": {
+    "@fontsource/dm-sans": "5.3.0",
+    "@fontsource/noto-sans-devanagari": "5.3.0",
+    "maplibre-gl": "6.13.0",
+    "qrcode": "1.5.4"
+  },
+  "devDependencies": {
+    "prettier": "3.9.10",
+    "vite": "6.4.4"
+  }
+}
