@@ -1,19 +1,35 @@
 <!doctype html>
-<html lang="en">
+<html lang="hi">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <title>JalSaathi · Lab-confirmed water alerts</title>
-    <meta name="description" content="Failed government drinking-water lab tests become village alerts in Hindi and English, followed until a re-test proves the water safe." />
-    <meta name="theme-color" content="#0b2a3c" />
-    <link rel="icon" href="/icon.svg" type="image/svg+xml" />
-    <link rel="manifest" href="/manifest.webmanifest" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=Noto+Sans+Devanagari:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#173f55" />
+    <meta
+      name="description"
+      content="जलसाथी: गांव की पानी जांच, सही सलाह और सुधार की जानकारी।"
+    />
+    <title>जलसाथी | JalSaathi</title>
+    <link rel="icon" type="image/svg+xml" href="/drop.svg" />
   </head>
   <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
+    <a class="skip-link" href="#main"
+      >मुख्य जानकारी पर जाएं / Skip to content</a
+    >
+    <header id="header"></header>
+    <div id="preview-notice"></div>
+    <main id="main" tabindex="-1"></main>
+    <footer id="footer"></footer>
+    <div
+      id="announcement"
+      class="sr-only"
+      role="status"
+      aria-live="polite"
+    ></div>
+    <dialog id="poster-dialog" aria-labelledby="poster-heading"></dialog>
+    <noscript
+      >पानी की जानकारी देखने के लिए JavaScript चालू करें। Enable JavaScript to
+      view water test information.</noscript
+    >
+    <script type="module" src="/src/app.js"></script>
   </body>
 </html>

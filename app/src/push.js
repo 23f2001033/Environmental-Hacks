@@ -19,7 +19,7 @@ export function isSubscribed(scope, key) {
 
 export async function subscribe(scope, key, lang) {
   if (!pushSupported()) throw new Error("unsupported");
-  const reg = await navigator.serviceWorker.register("/sw.js");
+  const reg = await navigator.serviceWorker.register("/app/sw.js", { scope: "/app/" });
   const permission = await Notification.requestPermission();
   if (permission !== "granted") throw new Error("denied");
   const cfg = await get("/config");

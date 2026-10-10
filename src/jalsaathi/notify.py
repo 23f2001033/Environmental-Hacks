@@ -40,8 +40,8 @@ def push(scope_pk: str, key: str, case: dict, url_path: str, **kw) -> int:
 
 
 def village(case: dict, key: str, **kw) -> int:
-    return push(f"VILLAGE#{case['village_key']}", key, case, f"/village/{case['village_key']}", **kw)
+    return push(f"VILLAGE#{case['village_key']}", key, case, f"/?v={case['village_key']}", **kw)
 
 
 def block(case: dict, key: str, **kw) -> int:
-    return push(f"BLOCK#{case['block_key']}", key, case, f"/engineer/{case['block_key']}", **kw)
+    return push(f"BLOCK#{case['block_key']}", key, case, f"/app/engineer/{case['block_key']}", **kw)

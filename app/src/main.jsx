@@ -16,7 +16,7 @@ function Header() {
   return (
     <header className="top">
       <div className="wrap">
-        <a className="brand" href="/"><img src="/icon.svg" alt="" /><span>JalSaathi</span></a>
+        <a className="brand" href="/app/"><img src="/app/icon.svg" alt="" /><span>JalSaathi</span></a>
         <nav className="nav">
           <NavLink to="/" end>{t("nav_map")}</NavLink>
           <NavLink to="/officials">{t("nav_officials")}</NavLink>
@@ -57,11 +57,11 @@ function App() {
 createRoot(document.getElementById("root")).render(
   <StrictMode>
     <LangProvider>
-      <BrowserRouter><App /></BrowserRouter>
+      <BrowserRouter basename="/app"><App /></BrowserRouter>
     </LangProvider>
   </StrictMode>,
 );
 
 if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () => navigator.serviceWorker.register("/sw.js").catch(() => {}));
+  window.addEventListener("load", () => navigator.serviceWorker.register("/app/sw.js", { scope: "/app/" }).catch(() => {}));
 }

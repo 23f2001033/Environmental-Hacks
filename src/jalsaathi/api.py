@@ -213,7 +213,7 @@ def handler(event, context=None):
                      for c in store.block_cases(parts[4])]
             return _resp(200, {"block_key": parts[4], "block": cases[0]["block"] if cases else None, "cases": cases,
                                "links": {"engineer_join": config.join_link("e", parts[4]),
-                                         "app_page": f"{config.public_base()}/engineer/{parts[4]}"}})
+                                         "app_page": f"{config.public_base()}/app/engineer/{parts[4]}"}})
         if len(parts) == 5 and parts[3] == "cases":
             case = store.get_case(parts[4])
             return _resp(200, views.case_view(case)) if case else _resp(404, {"error": "case not found"})

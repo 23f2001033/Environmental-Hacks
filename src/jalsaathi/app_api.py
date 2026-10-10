@@ -192,6 +192,6 @@ def route(method: str, parts: list[str], body: dict, query: dict) -> dict | None
 
 def village_extras(bundle: dict) -> dict:
     """Bundle additions for the app: the app links people can open (public ones only)."""
-    bundle["links"]["app_page"] = f"{config.public_base()}/village/{bundle['village']['key']}"
+    bundle["links"]["app_page"] = f"{config.public_base()}/?v={bundle['village']['key']}"
     return bundle
 

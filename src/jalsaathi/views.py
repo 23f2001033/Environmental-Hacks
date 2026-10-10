@@ -40,7 +40,7 @@ def case_view(case: dict, with_timeline: bool = True) -> dict:
         "escalations": case.get("escalations", 0),
         "source": case.get("source"),
         "value": case.get("value"),
-        "unit": case.get("unit"),
+        "unit": (case.get("unit") or "").replace("/ ", "/") or None,
         "acceptable_limit": case.get("acceptable_limit"),
         "permissible_limit": case.get("permissible_limit"),
         "lab": case.get("lab"),
@@ -86,6 +86,9 @@ def village_bundle(key: str, make_audio: bool = False) -> dict | None:
     samples = [{k: s.get(k) for k in ("parameter", "value", "unit", "acceptable_limit", "permissible_limit", "lab",
                                        "lab_approval", "sample_id", "source_type", "scheme_id", "scheme_name")}
                for s in items if s["sk"].startswith("SAMPLE#")]
+    for s in samples:
+        if s.get("unit"):
+            s["unit"] = s["unit"].replace("/ ", "/")
     return {
         "village": {k: meta.get(k) for k in ("key", "name", "gram_panchayat", "block", "block_key", "district", "state",
                                              "village_id", "block_id", "district_id", "state_id", "lat", "lon",

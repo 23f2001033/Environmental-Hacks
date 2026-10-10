@@ -77,7 +77,7 @@ def deploy_infra() -> None:
         {"AllowedMethods": ["PUT"], "AllowedOrigins": ["*"], "AllowedHeaders": ["*"], "MaxAgeSeconds": 3000}]})
     print("bucket: cors")
     stack = (ROOT / "infra" / "stack.py").read_text(encoding="utf-8")
-    body = re.search(r"INDEX_REWRITE = \(\n(.*?)\n\)", stack, re.S).group(1)
+    body = re.search(r"INDEX_REWRITE = \(\r?\n(.*?)\r?\n\)", stack, re.S).group(1)
     js = "".join(re.findall(r'"(.*)"', body))
     cf = boto3.client("cloudfront")
     name = next(i["Name"] for i in cf.list_functions()["FunctionList"]["Items"] if "IndexRewrite" in i["Name"])
@@ -90,7 +90,18 @@ def deploy_infra() -> None:
 
 def deploy_site() -> None:
     out = outputs()
-    dist = ROOT / "frontend" / "dist"
+    _upload(out, ROOT / "frontend" / "dist", "site/")
+    if (ROOT / "app" / "dist" / "index.html").exists():
+        _upload(out, ROOT / "app" / "dist", "site/app/")
+    domain = out["SiteUrl"].replace("https://", "")
+    cf = boto3.client("cloudfront")
+    dist_id = next(d["Id"] for d in cf.list_distributions()["DistributionList"]["Items"] if d["DomainName"] == domain)
+    cf.create_invalidation(DistributionId=dist_id, InvalidationBatch={
+        "Paths": {"Quantity": 1, "Items": ["/*"]}, "CallerReference": str(time.time())})
+    print("site: uploaded and invalidated")
+
+
+def _upload(out: dict, dist: Path, prefix: str) -> None:
     s3 = boto3.client("s3", region_name=REGION)
     for path in sorted(dist.rglob("*")):
         if not path.is_file():
@@ -100,14 +111,9 @@ def deploy_site() -> None:
         if rel.endswith(".webmanifest"):
             ctype = "application/manifest+json"
         cache = "public, max-age=31536000, immutable" if rel.startswith("assets/") else "no-cache"
-        s3.put_object(Bucket=out["BucketName"], Key=f"site/{rel}", Body=path.read_bytes(), ContentType=ctype,
+        s3.put_object(Bucket=out["BucketName"], Key=f"{prefix}{rel}", Body=path.read_bytes(), ContentType=ctype,
                       CacheControl=cache)
-    domain = out["SiteUrl"].replace("https://", "")
-    cf = boto3.client("cloudfront")
-    dist_id = next(d["Id"] for d in cf.list_distributions()["DistributionList"]["Items"] if d["DomainName"] == domain)
-    cf.create_invalidation(DistributionId=dist_id, InvalidationBatch={
-        "Paths": {"Quantity": 1, "Items": ["/*"]}, "CallerReference": str(time.time())})
-    print("site: uploaded and invalidated")
+    print(f"uploaded {dist.parent.name} -> {prefix}")
 
 
 if __name__ == "__main__":

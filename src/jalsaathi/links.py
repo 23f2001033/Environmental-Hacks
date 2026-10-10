@@ -27,4 +27,4 @@ def verify(role: str, key: str, supplied: str | None) -> bool:
 
 def url(role: str, key: str) -> str:
     path = "relay" if role == "v" else "engineer"
-    return f"{config.public_base()}/{path}/{key}?k={token(role, key)}"
+    return f"{config.public_base()}/app/{path}/{key}?k={token(role, key)}"
