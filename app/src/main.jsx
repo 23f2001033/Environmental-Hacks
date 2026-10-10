@@ -16,11 +16,12 @@ function Header() {
   return (
     <header className="top">
       <div className="wrap">
-        <a className="brand" href="/app/"><img src="/app/icon.svg" alt="" /><span>JalSaathi</span></a>
+        <a className="brand" href="/"><img src="/app/icon.svg" alt="" /><span>JalSaathi</span></a>
         <nav className="nav">
-          <NavLink to="/" end>{t("nav_map")}</NavLink>
+          <a href="/">{t("nav_about")}</a>
           <NavLink to="/officials">{t("nav_officials")}</NavLink>
           <NavLink to="/impact">{t("nav_impact")}</NavLink>
+          <a className="nav-primary" href="/?find">{t("nav_find")}</a>
         </nav>
         <button className="lang" onClick={() => setLang(lang === "hi" ? "en" : "hi")}>{t("lang_switch")}</button>
       </div>

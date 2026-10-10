@@ -3,7 +3,7 @@ import { createContext, useContext, useEffect, useState } from "react";
 // Every UI sentence in English and Hindi. Case advice and status text come from the API in both languages.
 const T = {
   en: {
-    nav_map: "Map", nav_officials: "Officials", nav_impact: "Impact", lang_switch: "हिंदी",
+    nav_map: "Map", nav_officials: "Officials", nav_impact: "Impact", lang_switch: "हिंदी", nav_about: "About", nav_find: "Find my village",
     search_label: "Is your village's water safe?", search_try: "Try:", map_title: "Every failed test, on the map",
     use_title: "Use JalSaathi", use_body: "Four people make a case close. Open each screen and act: the 13 demo villages are open to everyone; real villages need the signed link we send their relay and engineer.",
     role_villager: "Villager", role_villager_does: "Find your village: is the water safe, what to do now, in Hindi or English, with a voice note. Turn on alerts.", role_villager_go: "Check a village",
@@ -74,7 +74,7 @@ const T = {
     class_microbial: "bacteria", class_chemical: "chemical", class_physical: "physical", class_aesthetic: "taste", relay_link_ok: "Signed in by your village link",
   },
   hi: {
-    nav_map: "नक्शा", nav_officials: "अधिकारी", nav_impact: "असर", lang_switch: "English",
+    nav_map: "नक्शा", nav_officials: "अधिकारी", nav_impact: "असर", lang_switch: "English", nav_about: "परिचय", nav_find: "अपना गांव खोजें",
     search_label: "क्या आपके गाँव का पानी सुरक्षित है?", search_try: "देखें:", map_title: "हर फेल जांच, नक्शे पर",
     use_title: "JalSaathi इस्तेमाल करें", use_body: "एक मामला चार लोगों से बंद होता है। हर स्क्रीन खोलें और काम करें: 13 डेमो गाँव सबके लिए खुले हैं; असली गाँवों के लिए उनके संपर्क व्यक्ति और इंजीनियर को लिंक भेजा जाता है।",
     role_villager: "गाँव के लोग", role_villager_does: "अपना गाँव खोजें: पानी सुरक्षित है या नहीं, अभी क्या करें, हिंदी या English में, आवाज़ के साथ। सूचनाएं चालू करें।", role_villager_go: "गाँव देखें",
