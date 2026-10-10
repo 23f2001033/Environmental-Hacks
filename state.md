@@ -1,6 +1,6 @@
 # State: what's built so far
 
-Last updated: Sat 10 Oct 2026, 00:30 IST · Deadline Sun 11 Oct, 20:00 IST · Feature freeze Sat 18:00 · Submit by Sun 16:00
+Last updated: Sat 10 Oct 2026, 21:45 IST · Deadline Sun 11 Oct, 20:00 IST · Feature freeze Sat 18:00 · Submit by Sun 16:00
 
 Owner: lane 4 (Umar). Everyone updates it when they finish something, start something big, or get blocked.
 
@@ -47,6 +47,14 @@ Admin token for the test console's demo controls: SSM `/jalsaathi/console-token`
 | Sat 00:00 | Repeat-failure analysis (`scripts/analyze_repeats.py`) | 149 villages failed again |
 | Sat 00:10 | Paced scale run, validated geocoding, voice notes on first need, `/config`, richer `/stats`, map in test console | 560/560, see above |
 | Sat 00:25 | AI reads the field-kit photo (suggestion only; the person decides). Claude Haiku first, Amazon Nova Pro fallback | 138 tests; Nova tested live |
+| Sat 15:00 | Late joiners catch up (engineer gets open cases); restart only the 13 demo villages; Reshma's ingestion guard merged (#5, #6) | Live |
+| Sat 16:00 | Bot in Hindi and English (one tap), combined village alerts, Hindi review (#7) | English voice notes served |
+| Sat 18:00 | Web app: signed links, engineer/relay actions, Web Push, officials' overview, activity feed (#8–#10); Faiz's village site at `/`, role screens at `/app/` (#11) | Full demo loop run live |
+| Sat 20:40 | **Ask JalSaathi**: Hindi voice questions → Transcribe → Translate → Strands agent on Bedrock → Guardrails → Cedar → Polly (#15) | Live; grounded answers, unsafe ones replaced |
+| Sat 20:50 | X-Ray tracing and the JalSaathi CloudWatch dashboard (#16); video script (#17) | Metrics flowing |
+| Sat 21:05 | About-first site from Umar's brief, adapted to the water story (#18) | No overflow at 360/390 px |
+| Sat 21:30 | District digest (SES + EventBridge Scheduler), Cedar in Amazon Verified Permissions, **real `cdk deploy`** (#19) | Decisions show `engine: verified-permissions` |
+| Sat 21:40 | README to judging standard (#20); submission answers in `docs/SUBMISSION.md` (#21) | 226 + 9 tests |
 
 ## Bugs found and fixed while testing
 
@@ -65,14 +73,13 @@ Admin token for the test console's demo controls: SSM `/jalsaathi/console-token`
 
 | Item | Who | Needed by |
 |---|---|---|
-| **Test the bot on real phones** (steps below) | Umar (relay), Faiz (engineer) | Sat 16:00 |
-| Hindi review: `content/advice.json` (Umar); bot messages in `webhook.py`, `case_steps.py`, `vision.py` (Faiz) | Umar, Faiz | Sat 17:00 |
-| L1.4 manual check of the 13 demo village pins (`data/fixtures/coordinates.json`), then L1.5 proof numbers | Reshma | Sat 17:00 |
-| Frontend stack and direction (build space: `frontend/`, contract: `docs/API.md`; `/api/v1/config` gives the map style) | Frontend lead | Sat 10:00 |
-| Optional: add a payment card in AWS Billing so Bedrock can use Claude (Marketplace refuses with `INVALID_PAYMENT_INSTRUMENT`). Nova Pro already covers the kit hint | Aman | any time |
-| Approve a Lambda concurrency increase request (10 → 1000; free). No longer blocking: the scale run is paced | Aman | optional |
-| WQMIS WQ2 (Remedial Action) browser check for Hardoi, Harpalpur | Umar | Sat 09:00 |
-| Accept GitHub invites | Umar, @faizsaleem8 | now |
+| **Record the demo video** from `video/SCRIPT.md` (two phones; restart the demo villages first) | Umar, Faiz | Sun 12:00 |
+| **Phone test**, including a Hindi voice question from the nitrate village (`t.me/Srott_bot?start=v_651384`) | Umar, Faiz | Sun 10:00 |
+| **Email addresses** for the district digest: `python scripts/setup_email.py --sender <you> --to <a,b>`, then click the SES verification emails | Aman | Sun 10:00 |
+| **Submission TODOs** in `docs/SUBMISSION.md`: WeMakeDevs usernames, LinkedIn, resumes, YouTube link | Everyone | Sun 15:00 |
+| Check your own line in README "Team" and in `docs/SUBMISSION.md` | Everyone | Sun 12:00 |
+| Make the repo public; add a licence (MIT proposed) | Aman | Sun 15:00 |
+| Verify the 13 demo village pins (`data/fixtures/coordinates.json`, `verified: true` + source) | Reshma | optional |
 
 ### Phone test (Umar = village relay phone, Faiz = engineer phone; both read Hindi)
 
@@ -87,14 +94,12 @@ Demo clock: if nobody acts, the fix deadline passes after 4 minutes and an escal
 
 ## Next
 
-1. Merge PR `l1/snapshot-scale-run` after CI passes
-2. Phone tests and Hindi review → fixes
-3. Frontend with the frontend lead (map, village page, block dashboard)
-4. Demo video script and recording (Sat evening)
+1. Phone test and video recording (Sun morning); fixes only after Sun 12:00
+2. Submit by Sun 16:00
 
 ## Open issues
 
-- WQMIS is flaky (HTTP 500, partial data). The snapshot is complete (manifest says nothing missing); the daily live ingest stays off.
+- WQMIS is flaky (HTTP 500, partial data). The snapshot is complete (manifest says nothing missing); a daily live ingest is not switched on (a full pull takes longer than one Lambda run; next step: a Distributed Map per state and parameter).
 - The remedial-action report can't be read by script; the app records fixes itself.
 - 3 old failed workflows from Fri 23:12 (before the retry fix) still show as FAILED in Step Functions; their cases were reset since.
-- Not built (D-31): Hindi video alert (S1), SES email escalation (S4, SES is in sandbox).
+- Not built (D-31): Hindi video alert (S1). SES email is built (district digest) but waits for verified addresses (sandbox).
