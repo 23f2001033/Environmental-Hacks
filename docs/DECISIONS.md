@@ -308,3 +308,15 @@ Only after the Saturday 18:00 freeze is green, in this order:
 **Why.** Many of the people affected read little; a voice question in their language ("can I boil it?", "my child has diarrhoea") is how they would actually ask. The model is useful for understanding the question and phrasing the answer, never for deciding the advice: grounding and Cedar keep it to our facts.
 
 **Learned.** Guardrails *denied topics* block any answer that merely discusses the topic ("not fixed yet" was blocked as a false all-clear), and the *relevance* filter scored correct answers to "is it fixed?" near zero; both were dropped. Grounding alone blocks the unsafe cases (a false all-clear or a medicine name scores near zero, since neither is in our facts). Nova sometimes emits `<thinking>` text; it is stripped before any check. Batch Transcribe took 42 s for a 3 s question; streaming takes about 3 s.
+
+## D-33 Cedar policies in Amazon Verified Permissions
+
+**Decision.** The four case rules in `policies/case.cedar` are loaded by the CDK stack into an Amazon Verified Permissions policy store (one policy per statement, its `@id` as the description). Every decision (close a case, mark provisional, send a message, answer a question) calls `IsAuthorized`; the result records which engine decided. If the service can't be reached, the local Cedar engine evaluates the very same file. Both fail closed: any evaluation error is a deny, never a quiet allow.
+
+**Why.** The rules are the heart of the product ("only a lab re-test closes a case", "never tell people to boil nitrate"). Managed policies give one AWS-side place to read and audit them, separate from the code that asks.
+
+## D-34 District digest by email, not one email per escalation
+
+**Decision.** An EventBridge Scheduler schedule (every 15 minutes with the demo clock, hourly otherwise) runs the digest: each district official gets one Amazon SES email listing every overdue case in their district, and only if something changed since their last email. The admin console can send one at once (`POST /admin/digest`). Recipients and sender are in SSM, set with `scripts/setup_email.py`; SES is in sandbox, so addresses are verified first.
+
+**Why.** Escalations on Telegram reach the block engineer; accountability needs the person above them. One email per escalation would send about 40 emails per demo run; a digest reads like a report an official would actually act on.

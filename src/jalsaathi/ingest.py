@@ -180,6 +180,10 @@ def handler(event, context=None):
         return reset()
     if event.get("action") == "restart_demo":
         return restart_demo()
+    if event.get("action") == "district_digest":  # EventBridge Scheduler, or the admin console
+        from . import digest
+
+        return digest.run(force=bool(event.get("force")))
     source = event.get("source", "fixtures")
     started_at = time.time()
     run_id = f"{datetime.now(timezone.utc):%Y%m%dT%H%M%S}-{source}"

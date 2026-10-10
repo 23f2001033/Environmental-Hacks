@@ -137,6 +137,7 @@ Page paths: the village site (`frontend/`) is at `/` with `/?v=<village key>` an
 | `POST /admin/ingest` | `{"source": "fixtures"\|"snapshot"\|"live", "start_cases": true, "villages": ["optional names or keys"]}` | Starts the ingest asynchronously (202). Over 25 new cases go through the ScaleRun state machine |
 | `POST /admin/scale-run` | `{}` | Ingests every FY 2026-27 failure in the WQMIS snapshot (about 580 cases, real deadlines) and starts their workflows at a steady pace (202) |
 | `POST /admin/restart-demo` | `{}` | Asynchronous (202): stops and deletes only the 13 demo cases, then opens them again on the demo clock. Real cases, villages and Telegram subscriptions stay. Use before each phone test or recording |
+| `POST /admin/digest` | `{}` | Sends the district digest now (Amazon SES), even if nothing changed. Normally EventBridge Scheduler runs it every 15 min (demo) or hourly |
 | `POST /admin/links` | `{"role": "v"\|"e", "key"}` | `{"url"}`: the signed app link for a village relay or block engineer |
 | `POST /admin/reset` | `{}` | Asynchronous (202): stops all workflows, deletes villages, cases, events, tokens and runs; keeps Telegram subscriptions. Takes up to a minute at scale |
 | `POST /admin/restart-case` | `{"case_id"}` | Starts a fresh workflow for an existing case (for a workflow that failed) |

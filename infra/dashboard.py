@@ -41,6 +41,7 @@ def body(region: str, functions: dict[str, str], case_machine_arn: str, scale_ma
         expr(_total("FieldTests", "Result", "Field-kit re-tests")),
         expr(_total("CasesClosed", "", "Closed by lab re-test")),
         expr(_total("Escalations", "Reason", "Deadlines missed → escalated")),
+        expr(_total("DistrictEmails", "District", "District officials emailed")),
     ]
     widgets = [
         {"type": "text", "x": 0, "y": 0, "width": 24, "height": 3, "properties": {"markdown": (
