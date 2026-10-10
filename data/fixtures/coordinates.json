@@ -68,8 +68,8 @@
       "geo_title": "Behta Lakhi, Sawayajpur, Uttar Pradesh, India",
       "source": "amazon-location-geocode",
       "verified": false,
-      "checked_with": null,
-      "todo": "confirm the pin is this village"
+      "checked_with": "https://www.google.com/maps?q=27.23725,79.77993",
+      "todo": "Google Maps coordinate match checked; official village-level confirmation pending"
     },
     "412542": {
       "name": "Basi",

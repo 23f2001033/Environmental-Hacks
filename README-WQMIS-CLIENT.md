@@ -1,10 +1,19 @@
-# Lane 1.1 — WQMIS client
+# Lane 1.1 — WQMIS Client
 
-This adds a defensive, standard-library HTTP/JSON client plus pytest tests.
-It does **not** guess the live WQMIS endpoint. Before connecting it to production,
-confirm the exact report URL, query parameters, and response/pagination shape from
-a recorded successful request. The live WQMIS portal was reported as returning
-HTTP 500, so tests use recorded fixtures and simulated HTTP responses only.
+This contribution provides two WQMIS-related clients with defensive handling and automated tests.
+
+## Clients
+
+* **Generic JSON client:** `src/jalsaathi/wqmis.py` provides configurable HTTP/JSON requests, retries, pagination, and completeness warnings. Its endpoint and pagination parameters must be confirmed before production use.
+* **Portal-specific client:** `src/jalsaathi/wqmis_portal.py` implements the public JJM-WQMIS contaminant-report requests, encrypted parameters, session handling, pagination, and sample-value parsing.
+
+## Important limitations
+
+The live portal has been reported to return HTTP 500 errors for some requests. Automated tests use mocked HTTP responses and do not establish that every live endpoint works.
+
+Before production ingestion, verify the endpoint contracts and response shapes against successful recorded requests. Treat empty or suspiciously reduced results as potentially incomplete, not as proof that a water-quality issue has been resolved.
+
+Callers should preserve existing cases and raise an appropriate warning when a result is marked partial.
 
 ## Run tests (PowerShell)
 
@@ -14,7 +23,7 @@ python -m venv .venv
 .\.venv\Scripts\python.exe -m pytest -q
 ```
 
-If `uv` is installed, the team's documented commands also work:
+If `uv` is installed:
 
 ```powershell
 uv venv
@@ -22,26 +31,31 @@ uv pip install -r requirements-dev.txt
 uv run pytest -q
 ```
 
-## Example (after confirming the endpoint)
+## Generic client example
+
+Use only after confirming the exact JSON endpoint and pagination contract.
 
 ```python
 from jalsaathi.wqmis import WQMISClient
 
 client = WQMISClient(
-    endpoint_url="https://REPLACE-WITH-CONFIRMED-WQMIS-JSON-ENDPOINT",
-    page_param="page",       # replace if the portal uses different names
+    endpoint_url="https://REPLACE-WITH-CONFIRMED-ENDPOINT",
+    page_param="page",
     page_size_param="page_size",
     page_size=100,
 )
+
 result = client.fetch_records(previous_count=13)
 if result.partial:
     # Do not resolve/close cases from this run; inspect result.warnings.
     print(result.warnings)
 else:
-    print(f"Fetched {len(result.records)} records across {result.pages_fetched} pages")
-```
+    print(
+        f"Fetched {len(result.records)} records "
+        f"across {result.pages_fetched} pages"
+    )
 
-The completeness guard is a warning signal, not proof that a run is complete.
+The completeness guard is a warning signal, not proof that a run is complete. Live portal connectivity and production readiness remain unverified.
 
 ## Ingestion validation
 
