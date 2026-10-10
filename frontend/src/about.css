@@ -150,7 +150,8 @@ body { background: var(--ivory); }
   .about-try { grid-template-columns: 1fr; }
 }
 @media (max-width: 760px) {
-  .header-inner nav { gap: 18px; }
+  .header-inner nav { gap: 6px 16px; flex-wrap: wrap; }
+  .header-inner nav a.nav-primary { padding: 7px 12px; }
   .why-grid { grid-template-columns: 1fr; gap: 28px; }
   .why-grid article { border-right: 0; margin-right: 0; padding: 0 0 24px; border-bottom: 1px solid var(--rule); }
   .gazetteer { grid-template-columns: 1fr; }
