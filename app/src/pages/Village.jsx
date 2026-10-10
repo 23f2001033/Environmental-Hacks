@@ -43,7 +43,7 @@ export function CaseCard({ c, children, showTimeline = true }) {
             {c.advice[lang].map((line, i) => <li key={i} className={c.actions[i]}>{line}</li>)}
           </ol>
           {audio && (
-            <div className="audio-row"><span className="small muted">🔊 {t("village_listen")}</span><audio controls preload="none" src={audio} /></div>
+            <div className="audio-row"><span className="small muted">🔊 {t("village_listen")}</span><audio controls preload="metadata" src={audio} /></div>
           )}
         </div>
       )}

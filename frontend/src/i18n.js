@@ -38,7 +38,7 @@ export const words = {
   limit: ["स्वीकार्य सीमा", "Acceptable limit"],
   labDate: ["लैब जांच", "Lab test"],
   asOf: ["जानकारी की तारीख", "Data as of"],
-  listen: ["हिंदी में सुनें", "Listen in Hindi"],
+  listen: ["हिंदी में सुनें", "Listen in English"],
   noAudio: [
     "इस मामले की आवाज़ उपलब्ध नहीं है। लिखी हुई सलाह पढ़ें।",
     "Audio is unavailable for this case. Read the written advice.",
