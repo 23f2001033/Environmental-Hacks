@@ -137,5 +137,5 @@ Setup details and secrets: [docs/SETUP.md](docs/SETUP.md). API contract: [docs/A
 ## Data, credits and AI tools
 
 - **Data:** Jal Jeevan Mission Water Quality Management Information System (JJM-WQMIS), Department of Drinking Water and Sanitation, Ministry of Jal Shakti, Government of India. Limits per IS 10500:2012 as returned with each sample. JalSaathi relays government test information; it does not certify water and is not a government service.
-- **Libraries and fonts:** MapLibre GL JS (BSD-3-Clause), React, Vite, node-qrcode (MIT), cedarpy, Strands Agents, Amazon Transcribe streaming SDK (Apache-2.0); Fraunces, Tiro Devanagari Hindi, Noto Sans Devanagari, DM Sans, Inter (SIL OFL); map tiles © AWS, HERE.
+- **Libraries and fonts:** MapLibre GL JS (BSD-3-Clause), React, Vite, node-qrcode (MIT), cedarpy, Strands Agents, Amazon Transcribe streaming SDK (Apache-2.0); Fraunces, Tiro Devanagari Hindi, Noto Sans Devanagari, DM Sans, Inter (SIL OFL); map tiles © AWS, HERE; About-page state outlines and rivers from Natural Earth 1:10m v5.1.2 (public domain), built by `scripts/build_map_shapes.py`.
 - **AI tools used:** **Claude Code** (Anthropic) for research, planning, documentation and most of the code, driven and reviewed by the team. At runtime the product uses Amazon Bedrock (Nova Pro), always behind Guardrails and Cedar.
