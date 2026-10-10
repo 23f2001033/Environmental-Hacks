@@ -9,6 +9,7 @@ REGION = os.environ.get("AWS_REGION", "ap-south-1")
 SSM_BOT_TOKEN = "/jalsaathi/telegram/bot-token"
 SSM_WEBHOOK_SECRET = "/jalsaathi/telegram/webhook-secret"
 SSM_CONSOLE_TOKEN = "/jalsaathi/console-token"
+SSM_VAPID_PRIVATE = "/jalsaathi/webpush/vapid-private"
 
 
 def env(name: str, default: str | None = None) -> str | None:

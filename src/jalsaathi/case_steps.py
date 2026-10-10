@@ -8,8 +8,10 @@ from __future__ import annotations
 
 import logging
 import secrets
+import time
+from datetime import datetime, timezone
 
-from . import advice, config, i18n, policy, rules, store, telegram, voice
+from . import advice, config, i18n, notify, policy, rules, store, telegram, voice
 
 log = logging.getLogger()
 log.setLevel(logging.INFO)
@@ -45,6 +47,14 @@ def _new_token(case_id: str, kind: str, token: str) -> str:
     short = secrets.token_urlsafe(6)
     store.put_token(short, case_id, kind, token)
     return short
+
+
+def _deadline(case: dict, event: dict, timer: str) -> str | None:
+    """When the current wait times out (shown in the app). None after the last escalation: it waits without a deadline."""
+    seconds = (case.get("timers") or {}).get(timer)
+    if event.get("no_deadline") or not seconds:
+        return None
+    return datetime.fromtimestamp(time.time() + float(seconds), timezone.utc).isoformat(timespec="seconds")
 
 
 def group_by_advice(cases: list[dict]) -> list[list[dict]]:
@@ -114,8 +124,10 @@ def step_alert(case: dict, event: dict) -> dict:
     if case.get("source") == "fixtures":
         voice.ensure_audio(case)  # demo villages always have their voice note ready; others get one on first need
     sent = send_alert(case)
+    pushed = notify.village(case, "push_alert")
     store.update_case(case["case_id"], status="WARNED", warned_at=store.now_iso())
-    store.add_event(case["case_id"], "warned", note=f"alert sent to {sent} village contact(s)")
+    note = f"alert sent to {sent} village contact(s) on Telegram" + (f" and {pushed} in the app" if pushed else "")
+    store.add_event(case["case_id"], "warned", note=note)
     return {"sent": sent}
 
 
@@ -168,7 +180,8 @@ def step_await_fix(case: dict, event: dict) -> None:
     engineers = _engineers(case)
     for e in engineers:
         _engineer_card(e["chat_id"], case, short)
-    store.update_case(case["case_id"], status="AWAITING_FIX")
+    notify.block(case, "push_new_case")
+    store.update_case(case["case_id"], status="AWAITING_FIX", deadline_at=_deadline(case, event, "fix_seconds"))
     store.add_event(case["case_id"], "awaiting_fix",
                     note=f"asked {len(engineers)} engineer(s)" if engineers else "no engineer subscribed yet; waiting")
 
@@ -192,6 +205,7 @@ def step_escalate(case: dict, event: dict) -> dict:
     targets = _engineers(case) if reason in ("fix", "lab") else _relays(case)
     for t in targets:
         _tell(t["chat_id"], message, village=case["village"])
+    (notify.block if reason in ("fix", "lab") else notify.village)(case, message)
     return {"escalations": n}
 
 
@@ -200,7 +214,8 @@ def step_await_kit(case: dict, event: dict) -> None:
     for r in _relays(case):
         text, buttons = kit_message(case, short, store.chat_lang(r["chat_id"]))
         _send_safely(r["chat_id"], text, buttons)
-    store.update_case(case["case_id"], status="AWAITING_RETEST")
+    notify.village(case, "kit_request")
+    store.update_case(case["case_id"], status="AWAITING_RETEST", deadline_at=_deadline(case, event, "retest_seconds"))
     store.add_event(case["case_id"], "awaiting_retest", note="field-kit re-test requested")
 
 
@@ -209,6 +224,7 @@ def step_reopen(case: dict, event: dict) -> None:
     store.add_event(case["case_id"], "reopened", note=event.get("reason", "re-test not clean"))
     for r in _relays(case):
         _tell(r["chat_id"], "reopened", village=case["village"])
+    notify.village(case, "reopened")
 
 
 def step_provisional(case: dict, event: dict) -> dict:
@@ -219,11 +235,13 @@ def step_provisional(case: dict, event: dict) -> dict:
         store.update_case(case["case_id"], status="PROVISIONALLY_SAFE")
         for r in _relays(case):
             _tell(r["chat_id"], "provisional", village=case["village"])
+        notify.village(case, "provisional")
     return {"allowed": d["allowed"]}
 
 
 def step_await_lab(case: dict, event: dict) -> None:
     _new_token(case["case_id"], "lab", event["token"])
+    store.update_case(case["case_id"], deadline_at=_deadline(case, event, "lab_seconds"))
     store.add_event(case["case_id"], "awaiting_lab", note="lab re-test requested")
 
 
@@ -233,10 +251,11 @@ def step_close(case: dict, event: dict) -> dict:
                     policies=d["policies"], reason=d["reason"])
     if not d["allowed"]:
         raise RuntimeError("close denied by policy: " + d["reason"])
-    store.update_case(case["case_id"], status="CLOSED", closed_at=store.now_iso())
+    store.update_case(case["case_id"], status="CLOSED", closed_at=store.now_iso(), deadline_at=None)
     store.add_event(case["case_id"], "closed", note="lab re-test passed")
     for r in _relays(case):
         _tell(r["chat_id"], "closed", village=case["village"])
+    notify.village(case, "closed")
     return {"closed": True}
 
 

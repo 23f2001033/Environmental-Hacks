@@ -16,6 +16,7 @@ node_modules/
 # AWS CDK
 cdk.out/
 cdk.context.json
+cdk-outputs.json
 .cdk.staging/
 
 # Local config and secrets

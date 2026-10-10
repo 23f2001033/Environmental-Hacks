@@ -153,12 +153,26 @@ def update_case(case_id: str, **fields) -> None:
                      ExpressionAttributeNames=names, ExpressionAttributeValues=values)
 
 
+FEED_DAYS = 14
+
+
 def add_event(case_id: str, kind: str, actor: str = "system", **details) -> dict:
-    ts = now_iso()
-    item = {"pk": f"CASE#{case_id}", "sk": f"EVT#{time.time_ns():020d}", "type": "event",
+    ts, ns = now_iso(), time.time_ns()
+    item = {"pk": f"CASE#{case_id}", "sk": f"EVT#{ns:020d}", "type": "event",
             "kind": kind, "actor": actor, "at": ts, **details}
     _t().put_item(Item=to_ddb(item))
+    # The same event in the system-wide activity feed (officials' view), newest first by sort key
+    feed = {k: v for k, v in item.items() if k in ("kind", "actor", "at", "note", "decision", "action", "result", "reason")}
+    _t().put_item(Item=to_ddb({"pk": "FEED", "sk": f"{ns:020d}#{case_id}", "type": "feed", "case_id": case_id,
+                               "ttl": int(time.time()) + FEED_DAYS * 86400, **feed}))
     return item
+
+
+def feed(limit: int = 50) -> list[dict]:
+    from boto3.dynamodb.conditions import Key
+
+    resp = _t().query(KeyConditionExpression=Key("pk").eq("FEED"), ScanIndexForward=False, Limit=limit)
+    return [from_ddb(i) for i in resp.get("Items", [])]
 
 
 def events(case_id: str) -> list[dict]:
@@ -205,6 +219,36 @@ def token_for_case(case_id: str, kind: str) -> dict | None:
 def delete_token(short: str, case_id: str, kind: str) -> None:
     _t().delete_item(Key={"pk": f"TOK#{short}", "sk": "META"})
     _t().delete_item(Key={"pk": f"CASE#{case_id}", "sk": f"TOKREF#{kind}"})
+
+
+# Web app push subscriptions (Web Push), next to the Telegram subscribers of the same village or block
+
+def push_subscribe(scope_pk: str, subscription: dict, lang: str) -> None:
+    import hashlib
+    import json
+
+    sid = hashlib.sha1(subscription["endpoint"].encode()).hexdigest()[:20]
+    _t().put_item(Item={"pk": scope_pk, "sk": f"PUSH#{sid}", "type": "push", "subscription": json.dumps(subscription),
+                        "lang": lang, "at": now_iso()})
+
+
+def push_subscribers(scope_pk: str) -> list[dict]:
+    import json
+
+    return [{**i, "subscription": json.loads(i["subscription"])} for i in _query(scope_pk, "PUSH#")]
+
+
+def push_unsubscribe(scope_pk: str, sk: str) -> None:
+    _t().delete_item(Key={"pk": scope_pk, "sk": sk})
+
+
+def put_photo_hint(photo_key: str, hint: dict | None) -> None:
+    _t().put_item(Item=to_ddb({"pk": f"PHOTO#{photo_key}", "sk": "META", "type": "photohint", "hint": hint,
+                               "ttl": int(time.time()) + 7 * 86400}))
+
+
+def photo_hint(photo_key: str) -> dict | None:
+    return (_get(f"PHOTO#{photo_key}", "META") or {}).get("hint")
 
 
 # Telegram subscribers
@@ -294,7 +338,7 @@ def latest_run(scale_only: bool = False) -> dict | None:
 
 def reset_demo() -> int:
     """Delete cases, samples, villages, events, tokens and runs. Keeps subscriptions so demo phones stay joined."""
-    keep = {"sub", "chatsub", "pref"}
+    keep = {"sub", "chatsub", "pref", "push"}
     deleted, start = 0, None
     while True:
         kwargs = {"ProjectionExpression": "pk, sk, #t", "ExpressionAttributeNames": {"#t": "type"}}

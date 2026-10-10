@@ -10,7 +10,7 @@ import statistics
 from datetime import datetime
 from functools import lru_cache
 
-from . import __version__, actions, config, paths, store, views
+from . import __version__, actions, app_api, config, links, paths, store, views, webpush
 
 log = logging.getLogger()
 log.setLevel(logging.INFO)
@@ -119,7 +119,8 @@ def _config():
     style = (f"https://maps.geo.{config.REGION}.amazonaws.com/v2/styles/Standard/descriptor?key={key}&color-scheme=Light"
              if key else None)
     return {"bot": config.bot_username(), "demo_clock": config.demo_clock(),
-            "map": {"style_url": style, "provider": "Amazon Location Service", "center": [78.5, 26.5], "zoom": 5}}
+            "map": {"style_url": style, "provider": "Amazon Location Service", "center": [78.5, 26.5], "zoom": 5},
+            "push": {"vapid_public_key": webpush.public_key()}}
 
 
 def _admin_route(method: str, path: str, body: dict):
@@ -138,6 +139,11 @@ def _admin_route(method: str, path: str, body: dict):
         config.client("lambda").invoke(FunctionName=config.env("INGEST_FUNCTION"), InvocationType="Event",
                                        Payload=json.dumps(payload).encode())
         return _resp(202, {"started": True, "request": payload})
+    if path == "/api/v1/admin/links":
+        role, key = body.get("role"), str(body.get("key") or "")
+        if role not in links.ROLES or not key:
+            return _resp(400, {"error": "role must be v (relay) or e (engineer), with a village or block key"})
+        return _resp(200, {"role": links.ROLES[role], "key": key, "url": links.url(role, key)})
     case_id = body.get("case_id", "")
     case = store.get_case(case_id)
     if not case:
@@ -180,6 +186,16 @@ def handler(event, context=None):
             if not _admin(event):
                 return _resp(401, {"error": "admin token required (x-admin-token)"})
             return _admin_route(method, path, _body(event))
+        if len(parts) > 3:
+            try:
+                result = app_api.route(method, parts, _body(event) if method == "POST" else {},
+                                       event.get("queryStringParameters") or {})
+            except app_api.AppError as exc:
+                return _resp(exc.status, {"error": str(exc)})
+            except actions.ActionError as exc:
+                return _resp(409, {"error": str(exc)})
+            if result is not None:
+                return _resp(200, result)
         if method != "GET":
             return _resp(405, {"error": "method not allowed"})
         if path == "/api/v1/health":
@@ -191,10 +207,13 @@ def handler(event, context=None):
             return _resp(200, {"villages": _villages()})
         if len(parts) == 5 and parts[3] == "villages":
             bundle = views.village_bundle(parts[4], make_audio=True)
-            return _resp(200, bundle) if bundle else _resp(404, {"error": "village not found"})
+            return _resp(200, app_api.village_extras(bundle)) if bundle else _resp(404, {"error": "village not found"})
         if len(parts) == 6 and parts[3] == "blocks" and parts[5] == "cases":
-            cases = [views.case_view(c, with_timeline=False) for c in store.block_cases(parts[4])]
-            return _resp(200, {"block_key": parts[4], "cases": cases, "links": {"engineer_join": config.join_link("e", parts[4])}})
+            cases = [views.case_view(c, with_timeline=True)
+                     for c in store.block_cases(parts[4])]
+            return _resp(200, {"block_key": parts[4], "block": cases[0]["block"] if cases else None, "cases": cases,
+                               "links": {"engineer_join": config.join_link("e", parts[4]),
+                                         "app_page": f"{config.public_base()}/engineer/{parts[4]}"}})
         if len(parts) == 5 and parts[3] == "cases":
             case = store.get_case(parts[4])
             return _resp(200, views.case_view(case)) if case else _resp(404, {"error": "case not found"})

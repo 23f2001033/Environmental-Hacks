@@ -25,10 +25,13 @@ from constructs import Construct
 
 ROOT = Path(__file__).resolve().parent.parent
 
-# Directory index for the static site: /test/ -> /test/index.html, /about -> /about/index.html.
+# The web app is a single-page app: every page path without a file extension (/village/412558, /officials) serves
+# /index.html. The test console keeps its own directory index: /test/ -> /test/index.html.
 INDEX_REWRITE = (
-    "function handler(event){var r=event.request;var u=r.uri;"
-    "if(u.endsWith('/')){r.uri=u+'index.html';}else if(u.split('/').pop().indexOf('.')===-1){r.uri=u+'/index.html';}"
+    "function handler(event){var r=event.request;var u=r.uri;var last=u.split('/').pop();"
+    "if(u==='/test'||u.indexOf('/test/')===0){if(u.endsWith('/')){r.uri=u+'index.html';}"
+    "else if(last.indexOf('.')===-1){r.uri=u+'/index.html';}return r;}"
+    "if(last.indexOf('.')===-1){r.uri='/index.html';}"
     "return r;}"
 )
 
@@ -57,6 +60,9 @@ class JalSaathiStack(Stack):
             enforce_ssl=True,
             removal_policy=RemovalPolicy.DESTROY,
             auto_delete_objects=True,
+            # Relays upload field-kit photos straight from the app with a 5-minute presigned PUT URL
+            cors=[s3.CorsRule(allowed_methods=[s3.HttpMethods.PUT], allowed_origins=["*"], allowed_headers=["*"],
+                              max_age=3000)],
         )
 
         # Web: CloudFront in front of the site (s3://bucket/site), media (s3://bucket/media) and the API (/api/*)
@@ -167,7 +173,7 @@ class JalSaathiStack(Stack):
         def waiting(sid: str, name: str, kind: str, timer: str, result: str):
             """A wait step that escalates on each deadline, at most 3 times, then keeps waiting without a deadline."""
             timed = step(sid, name, wait=True, timeout_path=f"$.timers.{timer}", result_path=result)
-            final = step(f"{sid}NoDeadline", name, wait=True, result_path=result)
+            final = step(f"{sid}NoDeadline", name, wait=True, result_path=result, extra={"no_deadline": True})
             escalate = step(f"{sid}Escalate", "escalate", result_path="$.esc", extra={"reason": kind})
             timed.add_catch(escalate, errors=["States.Timeout"], result_path="$.timeout")
             escalate.next(sfn.Choice(self, f"{sid}EscalationLimit")
@@ -266,9 +272,7 @@ class JalSaathiStack(Stack):
         webhook_fn.add_to_role_policy(polly)
         webhook_fn.add_to_role_policy(iam.PolicyStatement(
             actions=["bedrock:InvokeModel"],
-            resources=[f"arn:aws:bedrock:{self.region}:{self.account}:inference-profile/in.anthropic.claude-haiku-4-5-*",
-                       "arn:aws:bedrock:*::foundation-model/anthropic.claude-haiku-4-5-*",
-                       f"arn:aws:bedrock:{self.region}:{self.account}:inference-profile/apac.amazon.nova-pro-v1:0",
+            resources=[f"arn:aws:bedrock:{self.region}:{self.account}:inference-profile/apac.amazon.nova-pro-v1:0",
                        "arn:aws:bedrock:*::foundation-model/amazon.nova-pro-v1:0"]))
         webhook_url = webhook_fn.add_function_url(auth_type=lambda_.FunctionUrlAuthType.NONE)
 
@@ -283,6 +287,10 @@ class JalSaathiStack(Stack):
             resources=[f"arn:aws:states:{self.region}:{self.account}:mapRun:{scale_machine.state_machine_name}/*"]))
         api_fn.add_to_role_policy(iam.PolicyStatement(actions=["geo:DescribeKey"], resources=[map_key.attr_key_arn]))
         api_fn.add_to_role_policy(polly)
+        api_fn.add_to_role_policy(iam.PolicyStatement(  # the app's field-kit photo hint
+            actions=["bedrock:InvokeModel"],
+            resources=[f"arn:aws:bedrock:{self.region}:{self.account}:inference-profile/apac.amazon.nova-pro-v1:0",
+                       "arn:aws:bedrock:*::foundation-model/amazon.nova-pro-v1:0"]))
         ingest_fn.grant_invoke(api_fn)
         http_api.add_routes(path="/api/{proxy+}", methods=[apigw.HttpMethod.ANY],
                             integration=integ.HttpLambdaIntegration("ApiIntegration", api_fn))
