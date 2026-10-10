@@ -7,11 +7,11 @@ self.addEventListener("push", (event) => {
   try { data = event.data ? event.data.json() : {}; } catch { data = { body: event.data && event.data.text() }; }
   event.waitUntil(self.registration.showNotification(data.title || "JalSaathi", {
     body: data.body || "",
-    icon: "/icon.svg",
-    badge: "/icon.svg",
+    icon: "/app/icon.svg",
+    badge: "/app/icon.svg",
     tag: data.tag,
     renotify: true,
-    data: { url: data.url || "/" },
+    data: { url: data.url || "/app/" },
   }));
 });
 

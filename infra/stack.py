@@ -31,6 +31,7 @@ INDEX_REWRITE = (
     "function handler(event){var r=event.request;var u=r.uri;var last=u.split('/').pop();"
     "if(u==='/test'||u.indexOf('/test/')===0){if(u.endsWith('/')){r.uri=u+'index.html';}"
     "else if(last.indexOf('.')===-1){r.uri=u+'/index.html';}return r;}"
+    "if(u==='/app'||u.indexOf('/app/')===0){if(last.indexOf('.')===-1){r.uri='/app/index.html';}return r;}"
     "if(last.indexOf('.')===-1){r.uri='/index.html';}"
     "return r;}"
 )
@@ -306,9 +307,16 @@ class JalSaathiStack(Stack):
         s3d.BucketDeployment(
             self, "Frontend",
             sources=[s3d.Source.asset(str(frontend_dir))],
-            destination_bucket=bucket, destination_key_prefix="site", exclude=["test/*"],
+            destination_bucket=bucket, destination_key_prefix="site", exclude=["test/*", "app/*"],
             distribution=dist, distribution_paths=["/*"], memory_limit=256,
         )
+        if (ROOT / "app" / "dist" / "index.html").exists():  # role screens: engineer, relay, officials, impact
+            s3d.BucketDeployment(
+                self, "RoleApp",
+                sources=[s3d.Source.asset(str(ROOT / "app" / "dist"))],
+                destination_bucket=bucket, destination_key_prefix="site/app",
+                distribution=dist, distribution_paths=["/app/*"], memory_limit=256,
+            )
         if (ROOT / "data" / "snapshot" / "manifest.json").exists():
             s3d.BucketDeployment(
                 self, "Snapshot",

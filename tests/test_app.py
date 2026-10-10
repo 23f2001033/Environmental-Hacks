@@ -63,7 +63,7 @@ def test_gone_subscriptions_are_removed(monkeypatch):
     monkeypatch.setattr(webpush, "send", lambda sub, msg: sent.append(msg) or next(statuses))
     case = {"case_id": "c1", "village": "Behta Lakhi", "village_key": "412558", "code": "ecoli"}
     assert notify.village(case, "push_alert") == 1 and removed == ["PUSH#b"]
-    assert sent[0]["body"].startswith("Behta Lakhi: the water test found E. coli") and sent[0]["url"].endswith("/village/412558")
+    assert sent[0]["body"].startswith("Behta Lakhi: the water test found E. coli") and sent[0]["url"].endswith("/?v=412558")
     assert "<" not in sent[1]["body"]
 
 

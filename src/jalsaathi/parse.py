@@ -85,7 +85,7 @@ def sample_from_portal(village_row: dict, sample_row: dict, param: str) -> dict:
         "village_id": village_row.get("VillageId"),
         "parameter": param,
         "value": value,
-        "unit": unit,
+        "unit": unit.replace("/ ", "/") if unit else unit,
         "acceptable_limit": parse_limit(sample_row.get("Acceptablelimit")),
         "permissible_limit": parse_limit(sample_row.get("Permissiblelimit")),
         "lab": (sample_row.get("labname") or "").strip() or None,

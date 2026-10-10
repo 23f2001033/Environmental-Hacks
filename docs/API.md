@@ -127,7 +127,7 @@ Relay and engineer actions need the **signed link token** `k` for that village o
 
 `CaseView` also has: `audio: {"hi", "en"}` (voice notes in both languages), `deadline_at` (current wait's deadline, `null` after the last escalation), `warned_at`, `escalations`, `engineer_fix: {"hi", "en"}`, `source`. `GET /blocks/{key}/cases` returns cases with timelines plus `block` (name).
 
-Page paths: CloudFront serves `/index.html` for any path without a file extension (except `/test/…`), so a single-page app can use `/village/<key>`, `/engineer/<block>`, `/relay/<village>`, `/officials`, `/impact`. Keep `/?v=<key>` redirecting to the village page.
+Page paths: the village site (`frontend/`) is at `/` with `/?v=<village key>` and `/?b=<block key>`. The role screens (`app/`) are under `/app/`: `/app/engineer/<block>?k=…`, `/app/relay/<village>?k=…`, `/app/officials`, `/app/impact` (`k=demo` works on the 13 demo villages). CloudFront serves `/app/index.html` for extension-less paths under `/app/`, `/test/…/index.html` under `/test/`, and `/index.html` for everything else. Signed links (`POST /admin/links`) and app notifications point to these paths.
 
 ## Admin (header `x-admin-token`)
 

@@ -8,7 +8,8 @@ Owner: lane 4 (Umar). Everyone updates it when they finish something, start some
 
 | What | Where |
 |---|---|
-| Site (frontend build space; placeholder for now) | https://d2735023v3xj6.cloudfront.net |
+| **Village site** (Faiz's design, `frontend/`): find your village, what to do now, voice note, block queue, poster | https://d2735023v3xj6.cloudfront.net (`/?v=412558`, `/?b=5037`) |
+| **Role screens** (`app/`): engineer, health worker, officials + live feed, impact | https://d2735023v3xj6.cloudfront.net/app/ (`/app/engineer/5037?k=demo`, `/app/relay/412558?k=demo`) |
 | **Test console** (map, stats, every feature, demo controls) | https://d2735023v3xj6.cloudfront.net/test/ |
 | API v1 ([contract](docs/API.md)) | https://d2735023v3xj6.cloudfront.net/api/v1/health |
 | Telegram bot | [@Srott_bot](https://t.me/Srott_bot) |
