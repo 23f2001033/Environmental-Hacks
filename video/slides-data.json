@@ -10,20 +10,12 @@
       "source": "/api/v1/stats"
     },
     {
-      "id": "scale_run",
-      "label": "Successful workflows",
-      "value": 560,
-      "unit": "of 560",
-      "context": "0 failures; run completed in 611 seconds.",
-      "source": "scale_run"
-    },
-    {
-      "id": "estimated_cost",
-      "label": "Estimated scale-run cost",
-      "value": 0.43,
-      "unit": "USD",
-      "context": "Estimated cost, not a confirmed final bill.",
-      "source": "last_run.cost_estimate"
+      "id": "chemical_share",
+      "label": "Cases boiling can't fix",
+      "value": 87,
+      "unit": "% of open cases",
+      "context": "499 of 573 open cases are nitrate (279), fluoride (211) or arsenic (9); boiling concentrates nitrate and does nothing for fluoride or arsenic.",
+      "source": "/api/v1/stats -> open_by_code"
     },
     {
       "id": "repeat_failures",
@@ -34,12 +26,29 @@
       "source": "data/analysis/repeat_failures.json"
     },
     {
+      "id": "scale_run",
+      "label": "Successful workflows",
+      "value": 560,
+      "unit": "of 560",
+      "context": "0 failures; run completed in 611 seconds.",
+      "source": "/api/v1/stats -> scale_run (Step Functions map run, 2026-10-09 18:33:04-18:43:15 UTC)"
+    },
+    {
+      "id": "estimated_cost",
+      "label": "Estimated scale-run cost",
+      "value": 0.43,
+      "unit": "USD",
+      "context": "Estimated, not a final bill: $0.0008 per case; geocoding is most of it. Voice notes are made only when someone listens.",
+      "source": "Scale run's RUN record cost_estimate (src/jalsaathi/costs.py, approximate list prices); state.md 'Scale run, measured'"
+    },
+    {
       "id": "village_precision",
       "label": "Village-level map pins",
       "value": 172,
       "unit": "of 496 villages",
       "context": "Only 172 of 496 pins are village-level; the rest have lower geographic precision.",
-      "source": "data/fixtures/coordinates.json"
+      "source": "/api/v1/villages -> geo_precision (172 village, 202 block, 119 district, 3 none)"
     }
-  ]
+  ],
+  "checked_at": "2026-10-10T19:55+05:30 against the live API"
 }
