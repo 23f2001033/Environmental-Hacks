@@ -1,0 +1,121 @@
+{
+  "question": "Of the villages whose drinking-water samples failed in FY 2025-26, how many failed again for the same parameter in FY 2026-27 (April to 9 Oct 2026)?",
+  "source": "JJM-WQMIS Format WQ6, piped-water sources, lab tests; snapshot 2026-10-09T23:37:53",
+  "caveats": [
+    "FY 2026-27 covers only April to early October, so the repeat share will rise as the year goes on.",
+    "A village counts once per parameter even if several samples failed.",
+    "Failing again does not prove nothing was fixed; it shows the problem was still there at the next test."
+  ],
+  "totals": {
+    "last_year": 1233,
+    "this_year": 580,
+    "both": 149,
+    "share_of_last_year_failing_again": 0.121
+  },
+  "by_state_and_parameter": [
+    {
+      "state": "Rajasthan",
+      "parameter": "Coliform",
+      "failed_last_year": 1,
+      "failed_this_year": 11,
+      "failed_both_years": 0,
+      "share_of_last_year_failing_again": 0.0,
+      "examples": []
+    },
+    {
+      "state": "Rajasthan",
+      "parameter": "Fluoride",
+      "failed_last_year": 456,
+      "failed_this_year": 131,
+      "failed_both_years": 26,
+      "share_of_last_year_failing_again": 0.057,
+      "examples": [
+        "Sonasar (Alsisar, Jhunjhunu)",
+        "Dhatarwala (Chirawa, Jhunjhunu)",
+        "Bola Ki Dhani (Pilani, Jhunjhunu)",
+        "MANDRELLA (Pilani, Jhunjhunu)",
+        "Peepli (Pilani, Jhunjhunu)"
+      ]
+    },
+    {
+      "state": "Rajasthan",
+      "parameter": "Nitrate",
+      "failed_last_year": 608,
+      "failed_this_year": 274,
+      "failed_both_years": 89,
+      "share_of_last_year_failing_again": 0.146,
+      "examples": [
+        "Hemera (Bikaner, Bikaner)",
+        "Jaisingh Desar Magra (Panchoo, Bikaner)",
+        "Panchoo (Panchoo, Bikaner)",
+        "Nokhagaon (Nokha, Bikaner)",
+        "Mukam (Nokha, Bikaner)"
+      ]
+    },
+    {
+      "state": "Uttar Pradesh",
+      "parameter": "Coliform",
+      "failed_last_year": 70,
+      "failed_this_year": 51,
+      "failed_both_years": 3,
+      "share_of_last_year_failing_again": 0.043,
+      "examples": [
+        "AEJA (BAWAN, Hardoi)",
+        "Kathgawan (Barhpura, Etawah)",
+        "Kushgawan Badashpur (Bharthana, Etawah)"
+      ]
+    },
+    {
+      "state": "Uttar Pradesh",
+      "parameter": "Ecoil",
+      "failed_last_year": 13,
+      "failed_this_year": 19,
+      "failed_both_years": 0,
+      "share_of_last_year_failing_again": 0.0,
+      "examples": []
+    },
+    {
+      "state": "Uttar Pradesh",
+      "parameter": "Fluoride",
+      "failed_last_year": 62,
+      "failed_this_year": 80,
+      "failed_both_years": 24,
+      "share_of_last_year_failing_again": 0.387,
+      "examples": [
+        "Behata Kachh (Ganj Moradabad, Unnao)",
+        "Roori Saidik Pur (Ganj Moradabad, Unnao)",
+        "Behtamaujawar (Ganj Moradabad, Unnao)",
+        "Fatehpur Chaorasi Gramin (Fatehpur Chaurasi, Unnao)",
+        "Awagojha (Hasanganj, Unnao)"
+      ]
+    },
+    {
+      "state": "Uttar Pradesh",
+      "parameter": "Nitrate",
+      "failed_last_year": 12,
+      "failed_this_year": 5,
+      "failed_both_years": 2,
+      "share_of_last_year_failing_again": 0.167,
+      "examples": [
+        "DEHELI (Shivgarh, Rae Bareli)",
+        "Bahuda Khurd (Shivgarh, Rae Bareli)"
+      ]
+    },
+    {
+      "state": "Uttar Pradesh",
+      "parameter": "Total arsenic",
+      "failed_last_year": 11,
+      "failed_this_year": 9,
+      "failed_both_years": 5,
+      "share_of_last_year_failing_again": 0.455,
+      "examples": [
+        "Ghuri (Bhitaura, Fatehpur)",
+        "Gaazipur Khurd (Hathgaon, Fatehpur)",
+        "Ukathu (Dhata, Fatehpur)",
+        "Chandpura (Dubhar, Ballia)",
+        "IBRAHIMPUR (Bhitaura, Fatehpur)"
+      ]
+    }
+  ],
+  "generated_at": "2026-10-09T18:09:14+00:00"
+}

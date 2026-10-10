@@ -4,7 +4,7 @@ from urllib.error import HTTPError
 
 import pytest
 
-from jalsaathi.wqmis import WQMISClient, WQMISClientError
+from jalsaathi.wqmis_http import WQMISClient, WQMISClientError
 
 
 def make_client(responses, *, page_size=2, max_retries=0, sleep=lambda _: None):
