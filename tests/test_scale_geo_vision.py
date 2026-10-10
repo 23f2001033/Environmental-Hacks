@@ -146,16 +146,16 @@ def test_reset_is_handled_by_ingest(monkeypatch, aws):
 
 def test_no_voice_note_when_nobody_is_listening(monkeypatch):
     made = []
-    monkeypatch.setattr(voice, "synthesize", lambda text, key: made.append(key) or "/media/x")
+    monkeypatch.setattr(voice, "synthesize", lambda text, key, lang="hi": made.append(key) or "/media/x")
     monkeypatch.setattr(case_steps, "_relays", lambda case: [])
     assert case_steps.send_alert({"case_id": "c1", "village_key": "9"}) == 0 and made == []
 
 
 def test_voice_note_is_made_once(monkeypatch):
     made, updates = [], []
-    monkeypatch.setattr(voice, "synthesize", lambda text, key: made.append(key) or f"/media/{key}")
+    monkeypatch.setattr(voice, "synthesize", lambda text, key, lang="hi": made.append(key) or f"/media/{key}")
     monkeypatch.setattr("jalsaathi.store.update_case", lambda cid, **f: updates.append(f))
-    monkeypatch.setattr("jalsaathi.advice.voice_script", lambda case: "नमस्ते")
+    monkeypatch.setattr("jalsaathi.advice.voice_script", lambda case, lang="hi": "नमस्ते")
     case = {"case_id": "c1"}
     assert voice.ensure_audio(case) == voice.ensure_audio(case) == "/media/audio/c1.mp3"
     assert made == ["audio/c1.mp3"] and updates == [{"audio_path": "/media/audio/c1.mp3"}]
@@ -172,6 +172,7 @@ def test_parse_hint():
 
 def test_hint_message_says_it_is_only_a_suggestion():
     assert "सुझाव" in vision.hint_message({"colour": "black", "confidence": "high"})
+    assert "only a suggestion" in vision.hint_message({"colour": "yellow", "confidence": "low"}, "en")
     assert "AI" not in vision.hint_message(None)
 
 
@@ -234,19 +235,22 @@ def test_cost_estimate_has_assumptions():
     assert costs.estimate(0, 0, 0)["usd_per_case"] is None
 
 
-def test_kit_hint_falls_back_when_claude_is_not_subscribed(monkeypatch):
+def test_kit_hint_uses_nova_and_stops_asking_a_refused_model(monkeypatch):
     asked = []
 
     class Bedrock:
+        def __init__(self, deny):
+            self.deny = deny
+
         def converse(self, modelId, **kw):
             asked.append(modelId)
-            if "anthropic" in modelId:
-                raise RuntimeError("AccessDeniedException: INVALID_PAYMENT_INSTRUMENT")
+            if self.deny:
+                raise RuntimeError("AccessDeniedException: model access")
             return {"output": {"message": {"content": [{"text": '{"colour": "black", "confidence": "high", "reason": "dark"}'}]}}}
 
     monkeypatch.setattr(vision, "_unavailable", set())
-    monkeypatch.setattr(config, "client", lambda n: Bedrock())
-    first = vision.kit_hint(b"jpeg")
-    second = vision.kit_hint(b"jpeg")
-    assert first["model"] == vision.FALLBACK_MODEL_ID and second["colour"] == "black"
-    assert asked == [vision.MODEL_ID, vision.FALLBACK_MODEL_ID, vision.FALLBACK_MODEL_ID]  # Claude not retried
+    monkeypatch.setattr(config, "client", lambda n: Bedrock(deny=False))
+    assert vision.kit_hint(b"jpeg") == {"colour": "black", "confidence": "high", "reason": "dark", "model": vision.MODEL_ID}
+    monkeypatch.setattr(config, "client", lambda n: Bedrock(deny=True))
+    assert vision.kit_hint(b"jpeg") is None and vision.kit_hint(b"jpeg") is None
+    assert asked == [vision.MODEL_ID, vision.MODEL_ID]  # refused once, then not asked again

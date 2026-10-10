@@ -47,44 +47,75 @@ def _fmt(value) -> str:
     return f"{value:g}" if isinstance(value, (int, float)) else str(value)
 
 
-def _date(iso: str | None) -> str:
-    return iso[:10] if iso else "?"
+def _date(iso: str | None, lang: str = "hi") -> str:
+    """15-06-2026 for Hindi readers, 15 Jun 2026 in English."""
+    if not iso:
+        return "?"
+    y, m, d = iso[:10].split("-")
+    if lang == "hi":
+        return f"{d}-{m}-{y}"
+    months = "Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec".split()
+    return f"{int(d)} {months[int(m) - 1]} {y}"
+
+
+def _unit(case: dict) -> str:
+    return (case.get("unit") or "").replace("/ ", "/").strip()
+
+
+def _measured(case: dict) -> str:
+    return f"{_fmt(case.get('value'))} {_unit(case)}".strip()
+
+
+def same_advice(a: dict, b: dict) -> bool:
+    """Cases can share one alert only when the advice is identical (never 'boil' next to 'never boil')."""
+    return actions(a["code"]) == actions(b["code"])
 
 
 def alert_text(case: dict, lang: str = "hi", page_url: str | None = None, data_as_of: str | None = None) -> str:
     """Telegram HTML message for the village relay."""
-    code, esc = case["code"], html.escape
+    return alert_text_group([case], lang, page_url, data_as_of)
+
+
+def alert_text_group(cases: list[dict], lang: str = "hi", page_url: str | None = None, data_as_of: str | None = None) -> str:
+    """One alert for one or more cases in a village that share the same advice. The first case is the worst."""
+    esc, case = html.escape, cases[0]
     place = f"{case['village']} ({case.get('block') or '-'}, {case.get('district') or '-'})"
-    measured = f"{_fmt(case.get('value'))} {case.get('unit') or ''}".strip()
-    limit = _fmt(case.get("acceptable_limit"))
-    if lang == "hi":
-        head = f"⚠️ <b>{esc(place)}</b>\nपानी की जांच में <b>{esc(name(code, 'hi'))}</b> मिला।"
-        facts = f"मात्रा: {esc(measured)} (सीमा: {esc(limit)}) · लैब जांच: {_date(case.get('lab_approval'))}"
-        todo = "अभी क्या करें:"
-        tail = "जांच दोबारा पास होने तक यह सूचना लागू रहेगी।"
-        asof = f"डेटा: JJM-WQMIS, {data_as_of}" if data_as_of else ""
-        link = f"पूरी जानकारी: {page_url}" if page_url else ""
+    lab = _date(max((c.get("lab_approval") or "" for c in cases)) or None, lang)
+    hi = lang == "hi"
+    if len(cases) == 1:
+        found = (f"पानी की जांच में <b>{esc(name(case['code'], 'hi'))}</b> मिला।" if hi
+                 else f"The water test found <b>{esc(name(case['code'], 'en'))}</b>.")
+        facts = (f"मात्रा: {esc(_measured(case))} (सीमा: {esc(_fmt(case.get('acceptable_limit')))}) · लैब जांच: {lab}" if hi
+                 else f"Measured: {esc(_measured(case))} (limit: {esc(_fmt(case.get('acceptable_limit')))}) · Lab test: {lab}")
     else:
-        head = f"⚠️ <b>{esc(place)}</b>\nThe water test found <b>{esc(name(code, 'en'))}</b>."
-        facts = f"Measured: {esc(measured)} (limit: {esc(limit)}) · Lab test: {_date(case.get('lab_approval'))}"
-        todo = "What to do now:"
-        tail = "This alert stays until a re-test passes."
-        asof = f"Data: JJM-WQMIS, as of {data_as_of}" if data_as_of else ""
-        link = f"Details: {page_url}" if page_url else ""
-    numbered = "\n".join(f"{i}. {esc(t)}" for i, t in enumerate(lines(code, lang), 1))
-    parts = [head, facts, "", f"<b>{todo}</b>", numbered, "", tail, link, asof]
+        found = "पानी की जांच में ये मिले:" if hi else "The water test found:"
+        rows = [f"• <b>{esc(name(c['code'], lang))}</b>: {esc(_measured(c))} "
+                + (f"(सीमा {esc(_fmt(c.get('acceptable_limit')))})" if hi else f"(limit {esc(_fmt(c.get('acceptable_limit')))})")
+                for c in cases]
+        facts = "\n".join(rows) + ("\nलैब जांच: " if hi else "\nLab test: ") + lab
+    todo = "अभी क्या करें:" if hi else "What to do now:"
+    tail = "जांच दोबारा पास होने तक यह सूचना लागू रहेगी।" if hi else "This alert stays until a re-test passes."
+    asof = ((f"स्रोत: जल जीवन मिशन (JJM-WQMIS), {_date(data_as_of, lang)}" if hi
+             else f"Source: Jal Jeevan Mission (JJM-WQMIS), as of {_date(data_as_of, lang)}") if data_as_of else "")
+    link = (f"पूरी जानकारी: {page_url}" if hi else f"Details: {page_url}") if page_url else ""
+    numbered = "\n".join(f"{i}. {esc(t)}" for i, t in enumerate(lines(case["code"], lang), 1))
+    parts = [f"⚠️ <b>{esc(place)}</b>\n{found}", facts, "", f"<b>{todo}</b>", numbered, "", tail, link, asof]
     return "\n".join(p for p in parts if p is not None).strip()
 
 
-def voice_script(case: dict) -> str:
-    """Short Hindi script for Polly (Kajal, hi-IN). Plain text, no symbols."""
-    code = case["code"]
-    say = [
-        f"{case['village']} गाँव के लिए ज़रूरी सूचना।",
-        f"पानी की जांच में {name(code, 'hi')} मिला है।",
-        *lines(code, "hi"),
-        "जांच दोबारा पास होने तक यह सूचना लागू रहेगी।",
-    ]
+def voice_script(case: dict | list[dict], lang: str = "hi") -> str:
+    """Short script for Polly (Kajal speaks hi-IN and en-IN). Plain text, no symbols."""
+    cases = case if isinstance(case, list) else [case]
+    first = cases[0]
+    names = [name(c["code"], lang) for c in cases]
+    if lang == "hi":
+        found = " और ".join(names)
+        say = [f"{first['village']} गाँव के लिए ज़रूरी सूचना।", f"पानी की जांच में {found} मिला है।",
+               *lines(first["code"], "hi"), "जांच दोबारा पास होने तक यह सूचना लागू रहेगी।"]
+    else:
+        found = " and ".join(names)
+        say = [f"Important notice for {first['village']} village.", f"The water test found {found}.",
+               *lines(first["code"], "en"), "This notice stays until a re-test passes."]
     return " ".join(s.replace("·", ",") for s in say)
 
 
@@ -95,10 +126,10 @@ def engineer_card(case: dict, lang: str = "hi") -> str:
     sev = SEVERITY_LABEL.get(case.get("severity", "review"), SEVERITY_LABEL["review"])[lang]
     if lang == "hi":
         return (f"🛠 <b>{esc(case['village'])}</b> ({esc(case.get('block') or '-')})\n"
-                f"{esc(name(code, 'hi'))}: {_fmt(case.get('value'))} {esc(case.get('unit') or '')} · {sev}\n"
+                f"{esc(name(code, 'hi'))}: {esc(_measured(case))} · {sev}\n"
                 f"सुझाया गया काम: {esc(fix)}\nकाम करने के बाद नीचे बटन दबाएं।")
     return (f"🛠 <b>{esc(case['village'])}</b> ({esc(case.get('block') or '-')})\n"
-            f"{esc(name(code, 'en'))}: {_fmt(case.get('value'))} {esc(case.get('unit') or '')} · {sev}\n"
+            f"{esc(name(code, 'en'))}: {esc(_measured(case))} · {sev}\n"
             f"Suggested fix: {esc(fix)}\nTap a button after the work is done.")
 
 

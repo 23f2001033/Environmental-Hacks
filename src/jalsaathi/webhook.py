@@ -1,7 +1,8 @@
-"""Telegram webhook (Lambda Function URL). Joins with consent, status, stop, engineer and field-kit buttons.
+"""Telegram webhook (Lambda Function URL). Joins with consent, status, stop, language, engineer and field-kit buttons.
 
 Callback data (max 64 bytes): s:<v|e>:<key>:<y|n> consent · j:<village key> pick village ·
-f:<short>:<action> fix · x:<case id> close attempt · k:<short>:<clean|contaminated> kit result.
+f:<short>:<action> fix · x:<case id> close attempt · k:<short>:<clean|contaminated> kit result ·
+l:<hi|en>:<village key> read the village's alerts in another language · g:<hi|en>:<v|e>:<key> consent in another language.
 """
 
 from __future__ import annotations
@@ -11,14 +12,10 @@ import hmac
 import json
 import logging
 
-from . import actions, case_steps, config, store, telegram, views, vision
+from . import actions, case_steps, config, i18n, store, telegram, views, vision
 
 log = logging.getLogger()
 log.setLevel(logging.INFO)
-
-HELP = ("💧 <b>JalSaathi</b>\nसरकारी लैब जांच में गाँव का पानी असुरक्षित पाया जाए, तो हम हिंदी में सूचना देते हैं "
-        "और ठीक होने तक मामले पर नज़र रखते हैं।\n\nजुड़ने के लिए गाँव के पोस्टर का QR कोड स्कैन करें, या नीचे गाँव चुनें।\n"
-        "/status गाँव के पानी की स्थिति · /stop सदस्यता बंद करें")
 
 
 def _ok(body: str = "ok"):
@@ -31,57 +28,71 @@ def _authorised(event) -> bool:
     return hmac.compare_digest(supplied, config.secret(config.SSM_WEBHOOK_SECRET))
 
 
-def _consent(chat_id: int, role: str, key: str, label: str) -> None:
-    who = "गाँव" if role == "v" else "ब्लॉक (इंजीनियर)"
-    text = (f"<b>{label}</b> के {who} की सूचनाएं पाने के लिए आपकी अनुमति चाहिए।\n"
-            "हम सिर्फ़ आपकी Telegram चैट आईडी और चुना गया गाँव या ब्लॉक रखेंगे। /stop से कभी भी हटा सकते हैं।")
-    telegram.send_message(chat_id, text, [[("✅ हाँ", f"s:{role}:{key}:y"), ("❌ नहीं", f"s:{role}:{key}:n")]])
+def _block_name(block_key: str, lang: str) -> str:
+    cases = store.block_cases(block_key)
+    name = cases[0].get("block") if cases else None
+    return i18n.t("block_label", lang, name=name or block_key)
 
 
-def _village_picker(chat_id: int) -> None:
+def _consent(chat_id: int, role: str, key: str, lang: str) -> None:
+    if role == "v":
+        v = store.get_village(key)
+        label, who = (v or {}).get("name", key), i18n.t("who_village", lang)
+    else:
+        label, who = _block_name(key, lang), i18n.t("who_block", lang)
+    rows = [[(i18n.t("yes", lang), f"s:{role}:{key}:y"), (i18n.t("no", lang), f"s:{role}:{key}:n")]]
+    switch = f"g:{i18n.other(lang)}:{role}:{key}"
+    if len(switch) <= 64:
+        rows.append([(i18n.t("switch_to", lang), switch)])
+    telegram.send_message(chat_id, i18n.t("consent", lang, label=label, who=who), rows)
+
+
+def _village_picker(chat_id: int, lang: str) -> None:
     villages = sorted(store.list_villages(),
                       key=lambda v: (v.get("source") != "fixtures", v.get("district") or "", v.get("name") or ""))[:12]
     rows = [[(f"{v['name']} ({v.get('block') or v.get('district')})", f"j:{v['key']}")] for v in villages]
-    telegram.send_message(chat_id, HELP, rows or None)
+    telegram.send_message(chat_id, i18n.t("help", lang), rows or None)
 
 
-def _status(chat_id: int) -> None:
+def _status(chat_id: int, lang: str) -> None:
     subs = store.chat_subscriptions(chat_id)
     if not subs:
-        telegram.send_message(chat_id, "आप अभी किसी गाँव से नहीं जुड़े हैं। /start से जुड़ें।")
+        telegram.send_message(chat_id, i18n.t("not_joined", lang))
         return
     lines = []
     for s in subs:
         kind, key = s["scope_pk"].split("#", 1)
         if kind == "VILLAGE" and (b := views.village_bundle(key)):
-            lines.append(f"• <b>{b['village']['name']}</b>: {b['status_text']['hi']}")
+            lines.append(f"• <b>{b['village']['name']}</b>: {b['status_text'][lang]}")
         elif kind == "BLOCK":
             open_cases = [c for c in store.block_cases(key) if c.get("status") in store.OPEN_STATUSES]
-            lines.append(f"• ब्लॉक {key}: {len(open_cases)} खुले मामले")
+            lines.append(i18n.t("status_block", lang, block=_block_name(key, lang), n=len(open_cases)))
     telegram.send_message(chat_id, "\n".join(lines))
 
 
 def _command(u: dict) -> None:
     chat, cmd, arg = u["chat_id"], u["command"], u.get("arg", "")
+    if cmd in ("/english", "/hindi", "/lang"):
+        lang = {"/english": "en", "/hindi": "hi"}.get(cmd) or i18n.other(store.chat_lang(chat))
+        store.set_chat_lang(chat, lang)
+        telegram.send_message(chat, i18n.t("lang_set", lang))
+        return
+    lang = store.chat_lang(chat)
     if cmd == "/start" and arg[:2] in ("v_", "e_"):
         role, key = arg[0], arg[2:]
-        if role == "v":
-            v = store.get_village(key)
-            if not v:
-                telegram.send_message(chat, "यह गाँव हमारे रिकॉर्ड में नहीं मिला।")
-                return
-            _consent(chat, "v", key, v["name"])
-        else:
-            _consent(chat, "e", key, f"ब्लॉक {key}")
+        if role == "v" and not store.get_village(key):
+            telegram.send_message(chat, i18n.t("village_not_found", lang))
+            return
+        _consent(chat, role, key, lang)
     elif cmd in ("/start", "/help"):
-        _village_picker(chat)
+        _village_picker(chat, lang)
     elif cmd == "/status":
-        _status(chat)
+        _status(chat, lang)
     elif cmd == "/stop":
         n = store.unsubscribe_all(chat)
-        telegram.send_message(chat, f"आपकी {n} सदस्यता और जानकारी हटा दी गई। धन्यवाद।")
+        telegram.send_message(chat, i18n.t("stopped", lang, n=n))
     else:
-        telegram.send_message(chat, HELP)
+        telegram.send_message(chat, i18n.t("help", lang))
 
 
 def _store_kit_photo(chat_id: int, case_id: str) -> tuple[str | None, dict | None]:
@@ -100,61 +111,66 @@ def _photo(u: dict) -> None:
     if any(s["scope_pk"].startswith("VILLAGE#") for s in store.chat_subscriptions(u["chat_id"])):
         hint = vision.kit_hint(telegram.download_file(u["file_id"]))
     store.put_pending_photo(u["chat_id"], u["file_id"], hint)
-    telegram.send_message(u["chat_id"], vision.hint_message(hint))
+    telegram.send_message(u["chat_id"], vision.hint_message(hint, store.chat_lang(u["chat_id"])))
 
 
 def _callback(u: dict) -> None:
     chat, data, cb = u["chat_id"], u["data"], u["callback_id"]
     actor = f"tg:{chat}"
     parts = data.split(":")
+    lang = store.chat_lang(chat)
     try:
-        if parts[0] == "j" and len(parts) == 2:
-            v = store.get_village(parts[1])
+        if parts[0] == "l" and len(parts) == 3 and parts[1] in i18n.LANGS:
+            store.set_chat_lang(chat, parts[1])
+            telegram.answer_callback(cb, i18n.t("lang_set", parts[1]))
+            case_steps.send_village_alerts(parts[2], chat, parts[1])
+        elif parts[0] == "g" and len(parts) == 4 and parts[1] in i18n.LANGS:
+            store.set_chat_lang(chat, parts[1])
+            telegram.clear_buttons(chat, u["message_id"])
             telegram.answer_callback(cb)
-            if v:
-                _consent(chat, "v", v["key"], v["name"])
+            _consent(chat, parts[2], parts[3], parts[1])
+        elif parts[0] == "j" and len(parts) == 2:
+            telegram.answer_callback(cb)
+            if store.get_village(parts[1]):
+                _consent(chat, "v", parts[1], lang)
         elif parts[0] == "s" and len(parts) == 4:
             role, key, yes = parts[1], parts[2], parts[3] == "y"
             telegram.clear_buttons(chat, u["message_id"])
             if not yes:
                 store.unsubscribe_all(chat)
-                telegram.answer_callback(cb, "ठीक है, कुछ भी सेव नहीं किया गया।")
+                telegram.answer_callback(cb, i18n.t("declined", lang))
                 return
             scope = f"VILLAGE#{key}" if role == "v" else f"BLOCK#{key}"
             store.subscribe(chat, "relay" if role == "v" else "engineer", scope, u.get("name"))
-            telegram.answer_callback(cb, "जुड़ गए ✅")
+            telegram.answer_callback(cb, i18n.t("joined_toast", lang))
             if role == "v":
                 bundle = views.village_bundle(key)
-                telegram.send_message(chat, f"✅ आप <b>{bundle['village']['name']}</b> से जुड़ गए।\nअभी की स्थिति: {bundle['status_text']['hi']}")
-                for c in bundle["cases"]:
-                    if c["status"] in store.OPEN_STATUSES:
-                        case = store.get_case(c["case_id"])
-                        case_steps.send_alert(case, [chat])
-                        case_steps.catch_up_relay(chat, case)
+                telegram.send_message(chat, i18n.t("joined_village", lang, name=bundle["village"]["name"],
+                                                   status=bundle["status_text"][lang]))
+                case_steps.send_village_alerts(key, chat)
             else:
-                telegram.send_message(chat, "✅ आप इंजीनियर के रूप में जुड़ गए। खुले मामलों के कार्ड नीचे हैं; नए मामले भी यहीं आएंगे।")
+                telegram.send_message(chat, i18n.t("joined_engineer", lang, block=_block_name(key, lang)))
                 if not case_steps.catch_up_engineer(chat, key):
-                    telegram.send_message(chat, "इस ब्लॉक में अभी कोई खुला मामला नहीं है।")
+                    telegram.send_message(chat, i18n.t("no_open_cases", lang))
         elif parts[0] == "f" and len(parts) == 3:
             case_id = actions.case_for_short(parts[1], "fix")
             actions.log_fix(case_id, parts[2], actor)
             telegram.clear_buttons(chat, u["message_id"])
-            telegram.answer_callback(cb, "दर्ज हो गया ✅")
-            telegram.send_message(chat, f"✅ दर्ज: {actions.FIX_ACTIONS[parts[2]]}। अब गाँव में दोबारा जांच होगी।")
+            telegram.answer_callback(cb, i18n.t("logged_toast", lang))
+            telegram.send_message(chat, i18n.t("fix_logged", lang, action=i18n.t(f"fix_{parts[2]}", lang)))
         elif parts[0] == "x" and len(parts) == 2:
             d = actions.try_close(parts[1], actor)
-            msg = ("केस बंद नहीं हो सकता: सिर्फ़ लैब की पास जांच से ही केस बंद होता है।" if not d["allowed"] else "केस बंद करने की अनुमति है।")
-            telegram.answer_callback(cb, msg, alert=True)
+            telegram.answer_callback(cb, i18n.t("close_allowed" if d["allowed"] else "close_denied", lang), alert=True)
         elif parts[0] == "k" and len(parts) == 3:
             case_id = actions.case_for_short(parts[1], "kit")
             if config.kit_photo_required() and not store.has_pending_photo(chat):
-                telegram.answer_callback(cb, "पहले शीशी की फ़ोटो भेजें, फिर बटन दबाएं।", alert=True)
+                telegram.answer_callback(cb, i18n.t("photo_first", lang), alert=True)
                 return
             actions.require_waiting(case_id, "kit")  # fail before the photo is consumed
             photo, hint = _store_kit_photo(chat, case_id)
             actions.kit_result(case_id, parts[2], actor, photo, hint)
             telegram.clear_buttons(chat, u["message_id"])
-            telegram.answer_callback(cb, "नतीजा दर्ज ✅")
+            telegram.answer_callback(cb, i18n.t("result_logged", lang))
         else:
             telegram.answer_callback(cb)
     except actions.ActionError as exc:
@@ -178,7 +194,7 @@ def handler(event, context=None):
         elif u["kind"] == "photo":
             _photo(u)
         elif u["kind"] == "text":
-            telegram.send_message(u["chat_id"], HELP)
+            telegram.send_message(u["chat_id"], i18n.t("help", store.chat_lang(u["chat_id"])))
     except Exception:  # noqa: BLE001 - always 200 so Telegram doesn't retry forever
         log.exception("webhook handling failed")
     return _ok()
