@@ -42,3 +42,41 @@ else:
 ```
 
 The completeness guard is a warning signal, not proof that a run is complete.
+
+## Ingestion validation
+
+`src/jalsaathi/ingestion.py` validates a fetched record batch before it is
+passed downstream. It returns `ok` only for a non-empty batch of non-empty,
+JSON-compatible dictionaries with no suspicious count drop. Empty batches are
+`partial`, including when there is no previous count, because an empty response
+does not establish that a water-quality case has been resolved. A zero count
+or a drop greater than 50% from the previous count is also `partial`; mixed
+valid and invalid records are reduced to the valid records and flagged
+`partial`. If no record is valid, the result is `invalid`.
+
+The portal's report-specific row schema is not fully confirmed. Supply
+`required_fields` to `validate_ingestion` for the exact report contract that
+the caller has verified; without it, validation checks basic dictionary shape
+and JSON compatibility but cannot guarantee that a record is semantically
+complete. Result metadata includes received/accepted/invalid counts, invalid
+row indexes, and the drop fraction. Partial and invalid results explicitly
+require preserving existing cases. This validation layer never resolves or
+deletes cases, even for an `ok` batch. Live WQMIS connectivity remains
+unverified, and successful offline tests do not verify live response shapes.
+
+## Fetch and validate
+
+`orchestrate_ingestion` in `src/jalsaathi/ingestion.py` adapts the existing
+client methods without choosing a report, endpoint, or schema. Pass the client,
+the method name (`fetch_records`, `fetch_villages`, or `fetch_samples`), and
+that method's own keyword arguments. For example, `fetch_records` accepts
+`params`, while portal fetches accept `parameter`, `financial_year`, and
+`state_id` plus their optional filters. The adapter normalizes `records`,
+`pages_fetched`, `partial`, and `warnings`, then validates the records.
+
+Only an `ok` result contains records for normal downstream processing.
+Partial/invalid results keep their warning and count metadata but return an
+empty `records` list and cannot authorize case resolution or deletion. The
+optional `previous_count` is supplied by the caller; this module does not
+persist counts or cases. Offline tests use fake clients and do not contact
+WQMIS. Live portal availability and report contracts remain unverified.
