@@ -73,7 +73,7 @@ def test_links_are_specific_to_role_and_place():
     t = links.token("e", "5037")
     assert links.verify("e", "5037", t)
     assert not links.verify("e", "5038", t) and not links.verify("v", "5037", t) and not links.verify("e", "5037", None)
-    assert _call("GET", "/api/v1/access", query={"role": "e", "key": "5037", "k": t}) == (200, {"valid": True})
+    assert _call("GET", "/api/v1/access", query={"role": "e", "key": "5037", "k": t}) == (200, {"valid": True, "demo": False})
 
 
 # --- engineer and relay actions --------------------------------------------------------------------------------
@@ -176,3 +176,12 @@ def test_deadline_is_set_while_waiting_and_cleared_after_last_escalation(monkeyp
     case = {"timers": {"fix_seconds": 240}}
     assert case_steps._deadline(case, {}, "fix_seconds") > store.now_iso()
     assert case_steps._deadline(case, {"no_deadline": True}, "fix_seconds") is None
+
+
+def test_demo_link_works_only_on_demo_cases(monkeypatch, recorded):
+    demo_case = dict(CASE, source="fixtures")
+    real_case = dict(CASE, case_id="c-real", source="snapshot")
+    monkeypatch.setattr(store, "get_case", lambda cid: {"c-31-412558-ecoli": demo_case, "c-real": real_case}.get(cid))
+    assert _call("POST", "/api/v1/engineer/5037/fix", {"case_id": demo_case["case_id"], "action": "chlorination", "k": "demo"})[0] == 200
+    assert _call("POST", "/api/v1/engineer/5037/fix", {"case_id": "c-real", "action": "chlorination", "k": "demo"})[0] == 401
+    assert _call("GET", "/api/v1/access", query={"role": "e", "key": "5037", "k": "demo"}) == (200, {"valid": True, "demo": True})

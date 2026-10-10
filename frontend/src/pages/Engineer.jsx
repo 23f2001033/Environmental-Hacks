@@ -47,7 +47,9 @@ export default function Engineer() {
   const [busy, setBusy] = useState("");
   const [msg, setMsg] = useState({});
   const [denied, setDenied] = useState(null);
-  const canAct = !!(access.data && access.data.valid);
+  const valid = !!(access.data && access.data.valid);
+  const demo = !!(access.data && access.data.demo);
+  const canActOn = (c) => valid && (!demo || c.source === "fixtures");
 
   const act = async (c, kind, action) => {
     setBusy(`${c.case_id}:${kind}:${action || ""}`);
@@ -63,7 +65,8 @@ export default function Engineer() {
 
   if (loading && !data) return <div className="wrap" style={{ padding: "24px 16px" }}><Loading /></div>;
   if (error && !data) return <div className="wrap" style={{ padding: "24px 16px" }}><ErrorBox error={error} onRetry={reload} /></div>;
-  const cases = [...data.cases].sort(compare);
+  const cases = [...data.cases].sort((a, b) =>
+    demo ? (a.source === "fixtures" ? 0 : 1) - (b.source === "fixtures" ? 0 : 1) || compare(a, b) : compare(a, b));
   const open = cases.filter((c) => OPEN.has(c.status));
   const overdue = open.filter((c) => c.status === "ESCALATED" || (c.escalations || 0) > 0);
 
@@ -75,7 +78,8 @@ export default function Engineer() {
         <div className="status">{open.length} {t("eng_open")} · {overdue.length} {t("eng_overdue")}</div>
       </div>
       <div className="row">
-        {canAct ? <span className="pill green">✓ {t("eng_link_ok")}</span> : <span className="notice" style={{ flex: 1 }}>{t("eng_readonly")}</span>}
+        {demo ? <span className="notice" style={{ flex: 1 }}>🧪 {t("demo_mode")}</span>
+          : valid ? <span className="pill green">✓ {t("eng_link_ok")}</span> : <span className="notice" style={{ flex: 1 }}>{t("eng_readonly")}</span>}
         <span className="spacer" />
         <PushButton scope="block" keyName={block} />
       </div>
@@ -86,7 +90,7 @@ export default function Engineer() {
           {c.engineer_fix && OPEN.has(c.status) && (
             <div className="notice"><b>{t("eng_suggested")}:</b> {c.engineer_fix[lang]}</div>
           )}
-          {canAct && OPEN.has(c.status) && (
+          {canActOn(c) && OPEN.has(c.status) && (
             <div>
               <div className="small muted">{t("eng_log")}</div>
               <div className="actions">

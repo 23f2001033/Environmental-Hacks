@@ -80,7 +80,9 @@ export default function Relay() {
   const k = linkToken("v", village, search);
   const access = useApi(k ? `/access?role=v&key=${encodeURIComponent(village)}&k=${encodeURIComponent(k)}` : null);
   const { data: b, error, loading, reload } = useApi(`/villages/${encodeURIComponent(village)}`, { poll: 15000 });
-  const canAct = !!(access.data && access.data.valid);
+  const valid = !!(access.data && access.data.valid);
+  const demo = !!(access.data && access.data.demo);
+  const canActOn = (c) => valid && (!demo || c.source === "fixtures");
 
   if (loading && !b) return <div className="wrap" style={{ padding: "24px 16px" }}><Loading /></div>;
   if (error && !b) return <div className="wrap" style={{ padding: "24px 16px" }}><ErrorBox error={error} onRetry={reload} /></div>;
@@ -93,14 +95,15 @@ export default function Relay() {
         <div className="status">{b.status_text[lang]}</div>
       </div>
       <div className="row">
-        {canAct ? <span className="pill green">✓ {t("relay_link_ok")}</span> : <span className="notice" style={{ flex: 1 }}>{t("relay_readonly")}</span>}
+        {demo ? <span className="notice" style={{ flex: 1 }}>🧪 {t("demo_mode")}</span>
+          : valid ? <span className="pill green">✓ {t("relay_link_ok")}</span> : <span className="notice" style={{ flex: 1 }}>{t("relay_readonly")}</span>}
         <span className="spacer" />
         <PushButton scope="village" keyName={b.village.key} />
       </div>
-      {canAct && waiting.length === 0 && <div className="notice">{t("relay_nothing")}</div>}
+      {valid && waiting.length === 0 && <div className="notice">{t("relay_nothing")}</div>}
       {b.cases.filter((c) => c.status !== "CLOSED").map((c) => (
         <CaseCard key={c.case_id} c={c}>
-          {canAct && c.status === "AWAITING_RETEST" && <KitTest c={c} village={village} k={k} onDone={reload} />}
+          {canActOn(c) && c.status === "AWAITING_RETEST" && <KitTest c={c} village={village} k={k} onDone={reload} />}
         </CaseCard>
       ))}
     </div>

@@ -42,14 +42,20 @@ def _case_in(scope: str, key: str, case_id: str) -> dict:
     return case
 
 
-def _require(role: str, key: str, body: dict) -> None:
+DEMO = "demo"
+
+
+def _require(role: str, key: str, body: dict, case: dict) -> None:
+    """A signed link for this place, or the public demo link, which only works on the 13 demo cases."""
+    if body.get("k") == DEMO and case.get("source") == "fixtures":
+        return
     if not links.verify(role, key, body.get("k")):
         raise AppError(401, "this link is not valid for this " + ("block" if role == "e" else "village"))
 
 
 def engineer(block: str, action: str, body: dict) -> dict:
-    _require("e", block, body)
     case = _case_in("e", block, body.get("case_id"))
+    _require("e", block, body, case)
     actor = "web app (engineer)"
     if action == "fix":
         actions.log_fix(case["case_id"], body.get("action", ""), actor)
@@ -60,8 +66,8 @@ def engineer(block: str, action: str, body: dict) -> dict:
 
 
 def relay(village: str, action: str, body: dict) -> dict:
-    _require("v", village, body)
     case = _case_in("v", village, body.get("case_id"))
+    _require("v", village, body, case)
     prefix = f"private/kit/{case['case_id']}/"
     if action == "upload":
         actions.require_waiting(case["case_id"], "kit")
@@ -178,7 +184,9 @@ def route(method: str, parts: list[str], body: dict, query: dict) -> dict | None
         return overview()
     if method == "GET" and parts[3:] == ["access"]:
         role, key = query.get("role", ""), query.get("key", "")
-        return {"valid": role in links.ROLES and links.verify(role, key, query.get("k"))}
+        if query.get("k") == DEMO:
+            return {"valid": True, "demo": True}  # acts only on demo cases (checked per action)
+        return {"valid": role in links.ROLES and links.verify(role, key, query.get("k")), "demo": False}
     return None
 
 

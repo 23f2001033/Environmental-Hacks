@@ -6,7 +6,8 @@ import json
 
 from . import config, policy, store
 
-FIX_ACTIONS = {"chlorination": "क्लोरीनेशन", "repair": "मरम्मत", "source_changed": "स्रोत बदला", "need_help": "मदद चाहिए"}
+FIX_ACTIONS = {"chlorination": "chlorination (क्लोरीनेशन)", "repair": "repair (मरम्मत)", "source_changed": "source changed (स्रोत बदला)",
+               "need_help": "needs help (मदद चाहिए)"}
 
 
 class ActionError(Exception):
