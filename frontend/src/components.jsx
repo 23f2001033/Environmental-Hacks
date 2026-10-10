@@ -122,7 +122,8 @@ export function QR({ text, size = 140 }) {
   const ref = useRef(null);
   useEffect(() => {
     let alive = true;
-    import("qrcode").then((QRCode) => {
+    import("qrcode").then((mod) => {
+      const QRCode = mod.default || mod;
       if (alive && ref.current) QRCode.toCanvas(ref.current, text, { width: size, margin: 1 });
     });
     return () => { alive = false; };

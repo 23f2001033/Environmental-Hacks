@@ -86,6 +86,24 @@ section.block { padding: 40px 0; }
 .callout b.big { font-family: var(--display); font-size: 56px; color: var(--water); line-height: 1; }
 @media (max-width: 560px) { .callout { grid-template-columns: 1fr; } }
 
+.hero-grid { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 32px; align-items: center; }
+@media (max-width: 860px) { .hero-grid { grid-template-columns: 1fr; gap: 20px; } }
+.hero-search { position: relative; background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.18); border-radius: 18px; padding: 20px; }
+.hero-search label { display: block; font-weight: 700; font-size: 19px; margin-bottom: 10px; }
+.search.big { font-size: 17px; padding: 14px 16px; }
+.hero-search .results { position: absolute; left: 20px; right: 20px; z-index: 10; margin-top: 6px; color: var(--text); }
+.role { text-decoration: none; color: var(--text); display: flex; flex-direction: column; gap: 8px; transition: transform 0.15s, box-shadow 0.15s; }
+.role:hover { transform: translateY(-3px); box-shadow: 0 12px 30px rgba(11, 42, 60, 0.14); }
+.role-icon { font-size: 30px; }
+.role h3 { font-size: 18px; }
+.role p { margin: 0; color: var(--muted); font-size: 15px; flex: 1; }
+.role-go { color: var(--ink-3); font-weight: 700; }
+.loop { background: linear-gradient(135deg, #ffffff, var(--water-soft)); }
+.loop-steps { list-style: none; padding: 0; margin: 8px 0 0; display: grid; gap: 10px; }
+.loop-steps li { display: grid; grid-template-columns: 30px 1fr auto; gap: 12px; align-items: center; background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; }
+.loop-steps .num { width: 28px; height: 28px; border-radius: 50%; background: var(--ink); color: #fff; display: grid; place-items: center; font-weight: 700; font-size: 14px; }
+.loop-steps .btn { padding: 7px 14px; }
+
 /* Map */
 .map-card { padding: 0; overflow: hidden; position: relative; }
 .map { height: 520px; width: 100%; background: #e6eef0; }
