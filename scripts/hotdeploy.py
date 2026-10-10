@@ -49,7 +49,10 @@ def deploy_code() -> None:
     lam = boto3.client("lambda", region_name=REGION)
     funcs = _functions(lam)
     layer_name = funcs["CaseSteps"]["Layers"][0]["Arn"].split(":layer:")[1].split(":")[0]
-    layer = lam.publish_layer_version(LayerName=layer_name, Content={"ZipFile": _zip(ROOT / "build" / "layer")},
+    # Through S3: the layer zip can be over Lambda's 50 MB direct-upload limit
+    bucket, key = outputs()["BucketName"], "deploy/layer.zip"
+    boto3.client("s3", region_name=REGION).put_object(Bucket=bucket, Key=key, Body=_zip(ROOT / "build" / "layer"))
+    layer = lam.publish_layer_version(LayerName=layer_name, Content={"S3Bucket": bucket, "S3Key": key},
                                       CompatibleRuntimes=["python3.12"], CompatibleArchitectures=["arm64"],
                                       Description="hotdeploy")
     print("layer", layer["Version"])
@@ -68,6 +71,19 @@ def deploy_infra() -> None:
     account = boto3.client("sts").get_caller_identity()["Account"]
     funcs = _functions(boto3.client("lambda", region_name=REGION))
     api_role = funcs["ApiHandler"]["Role"].split("/")[-1]
+    webhook = funcs["Webhook"]
+    iam = boto3.client("iam")
+    ask = ('{"Version":"2012-10-17","Statement":['
+           '{"Effect":"Allow","Action":"translate:TranslateText","Resource":"*"},'
+           f'{{"Effect":"Allow","Action":"bedrock:ApplyGuardrail","Resource":"arn:aws:bedrock:{REGION}:{account}:guardrail/*"}}')
+    iam.put_role_policy(RoleName=api_role, PolicyName="ask-jalsaathi", PolicyDocument=ask + "]}")
+    iam.put_role_policy(RoleName=webhook["Role"].split("/")[-1], PolicyName="ask-jalsaathi", PolicyDocument=ask + (
+        ',{"Effect":"Allow","Action":"transcribe:StartStreamTranscription","Resource":"*"},'
+        f'{{"Effect":"Allow","Action":"lambda:InvokeFunction","Resource":"{webhook["FunctionArn"]}"}}]}}'))
+    lam = boto3.client("lambda", region_name=REGION)
+    lam.update_function_configuration(FunctionName=webhook["FunctionName"], Timeout=90, MemorySize=1024)
+    lam.get_waiter("function_updated_v2").wait(FunctionName=webhook["FunctionName"])
+    print("ask jalsaathi: permissions, webhook 90 s / 1024 MB")
     boto3.client("iam").put_role_policy(RoleName=api_role, PolicyName="app-photo-hint-bedrock", PolicyDocument=(
         '{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Action":"bedrock:InvokeModel","Resource":['
         f'"arn:aws:bedrock:{REGION}:{account}:inference-profile/apac.amazon.nova-pro-v1:0",'

@@ -300,3 +300,11 @@ Only after the Saturday 18:00 freeze is green, in this order:
 - **S1 Hindi video alert:** needs an ffmpeg layer and Devanagari text rendering in Lambda. The voice note plus the printable poster cover the same need for now.
 - **S4 SES email escalation:** SES is in sandbox, so it could only email verified addresses. Telegram escalation to the block engineer is in place.
 - **S5 Repeat-failure analysis** was built as a script plus bundled results (`data/analysis/repeat_failures.json`, shown in `/stats`) rather than a live job, because last year's data does not change.
+
+## D-32 Ask JalSaathi: a checked voice assistant, not a chatbot
+
+**Decision.** Village members can ask a question by Telegram voice note or text (or in the app). Amazon Transcribe (streaming, hi-IN, Telegram's OGG/Opus as is) → Amazon Translate → a Strands agent on Bedrock (Nova Pro) whose only tools read this village's case and our advice library → Bedrock Guardrails contextual grounding check against exactly what the agent read (threshold 0.7) → the same Cedar rule as the alerts (no "boil" when every open case is chemical) → Amazon Translate → Amazon Polly. Any failed check, error or model refusal sends the official advice for the village instead of the model's words. Each question is recorded on the case timeline and in the officials' feed.
+
+**Why.** Many of the people affected read little; a voice question in their language ("can I boil it?", "my child has diarrhoea") is how they would actually ask. The model is useful for understanding the question and phrasing the answer, never for deciding the advice: grounding and Cedar keep it to our facts.
+
+**Learned.** Guardrails *denied topics* block any answer that merely discusses the topic ("not fixed yet" was blocked as a false all-clear), and the *relevance* filter scored correct answers to "is it fixed?" near zero; both were dropped. Grounding alone blocks the unsafe cases (a false all-clear or a medicine name scores near zero, since neither is in our facts). Nova sometimes emits `<thinking>` text; it is stripped before any check. Batch Transcribe took 42 s for a 3 s question; streaming takes about 3 s.
