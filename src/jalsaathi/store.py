@@ -124,6 +124,18 @@ def create_case(case: dict) -> bool:
     return created
 
 
+def delete_case(case_id: str, village_key: str) -> int:
+    """Remove one case completely: record, timeline, task tokens and the village's reference to it."""
+    items = _query(f"CASE#{case_id}")
+    with _t().batch_writer() as batch:
+        for item in items:
+            if item["sk"].startswith("TOKREF#"):
+                batch.delete_item(Key={"pk": f"TOK#{item['short']}", "sk": "META"})
+            batch.delete_item(Key={"pk": item["pk"], "sk": item["sk"]})
+        batch.delete_item(Key={"pk": f"VILLAGE#{village_key}", "sk": f"CASEREF#{case_id}"})
+    return len(items)
+
+
 def get_case(case_id: str) -> dict | None:
     return _get(f"CASE#{case_id}", "META")
 
@@ -251,7 +263,8 @@ def put_run(run: dict) -> None:
     _t().put_item(Item=to_ddb({"pk": f"RUN#{run['run_id']}", "sk": "META", "type": "run", **run}))
 
 
-def latest_run() -> dict | None:
+def latest_run(scale_only: bool = False) -> dict | None:
+    """The most recent ingest run; with scale_only, the most recent one that used the ScaleRun state machine."""
     from boto3.dynamodb.conditions import Attr
 
     items, start = [], None
@@ -264,7 +277,7 @@ def latest_run() -> dict | None:
         start = resp.get("LastEvaluatedKey")
         if not start:
             break
-    items = [from_ddb(i) for i in items]
+    items = [from_ddb(i) for i in items if not scale_only or i.get("scale_execution_arn")]
     return max(items, key=lambda r: r.get("finished_at", ""), default=None)
 
 

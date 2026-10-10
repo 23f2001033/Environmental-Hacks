@@ -64,23 +64,25 @@ Admin token for the test console's demo controls: SSM `/jalsaathi/console-token`
 
 | Item | Who | Needed by |
 |---|---|---|
-| **Test the bot on real phones** (links below) | Reshma, Umar | Sat 09:00 |
-| Hindi review of `content/advice.json` and bot messages in `src/jalsaathi/webhook.py`, `case_steps.py`, `vision.py` | Umar | Sat 12:00 |
+| **Test the bot on real phones** (steps below) | Umar (relay), Faiz (engineer) | Sat 16:00 |
+| Hindi review: `content/advice.json` (Umar); bot messages in `webhook.py`, `case_steps.py`, `vision.py` (Faiz) | Umar, Faiz | Sat 17:00 |
+| L1.4 manual check of the 13 demo village pins (`data/fixtures/coordinates.json`), then L1.5 proof numbers | Reshma | Sat 17:00 |
 | Frontend stack and direction (build space: `frontend/`, contract: `docs/API.md`; `/api/v1/config` gives the map style) | Frontend lead | Sat 10:00 |
 | Optional: add a payment card in AWS Billing so Bedrock can use Claude (Marketplace refuses with `INVALID_PAYMENT_INSTRUMENT`). Nova Pro already covers the kit hint | Aman | any time |
 | Approve a Lambda concurrency increase request (10 → 1000; free). No longer blocking: the scale run is paced | Aman | optional |
 | WQMIS WQ2 (Remedial Action) browser check for Hardoi, Harpalpur | Umar | Sat 09:00 |
 | Accept GitHub invites | Umar, @faizsaleem8 | now |
 
-### Phone test links
+### Phone test (Umar = village relay phone, Faiz = engineer phone; both read Hindi)
 
-1. Relay (village worker): open <https://t.me/Srott_bot?start=v_412558> (Behta Lakhi) → tap हाँ → you get the Hindi alert and the voice note.
-2. Engineer (Harpalpur block): on a second phone open <https://t.me/Srott_bot?start=e_5037> → tap हाँ. New case cards arrive there; after a demo reset and seed, every Harpalpur case sends one.
-3. Engineer taps "✅ केस बंद करें" → Cedar refuses. Taps "🧪 क्लोरीनेशन किया" → the relay phone is asked for the field-kit photo.
-4. Relay sends a photo of the vial (any photo works for testing) → the bot replies with an **AI suggestion** of the colour → relay taps 🟡 पीली (साफ़) → "provisionally safe". The timeline records the suggestion and whether the person agreed.
-5. Test console → the village → "Lab: pass (simulated)" → both phones hear "safe again".
+0. Aman: test console → **Restart the 13 demo villages** (or `python scripts/demo.py restart-demo`). Fresh timers; real cases untouched. Phones already joined get the alert again.
+1. Umar opens <https://t.me/Srott_bot?start=v_412558> (Behta Lakhi) → taps हाँ → Hindi alert + voice note (same words in both).
+2. Faiz opens <https://t.me/Srott_bot?start=e_5037> (Harpalpur block) → taps हाँ → gets the 10 worst open cases as cards with buttons (Behta Lakhi among them) and "17 more".
+3. Faiz taps "✅ केस बंद करें" on Behta Lakhi → refused (only a lab re-test closes). Then "🧪 क्लोरीनेशन किया".
+4. Umar gets the field-kit request → sends any photo → AI suggestion of the colour → taps 🟡 पीली (साफ़) → "provisionally safe".
+5. Aman: test console → Behta Lakhi → "Lab: pass (simulated)" → both phones get "safe again".
 
-`python scripts/demo.py links` prints links for every demo village. `python scripts/demo.py scale` re-runs the scale run (after `reset`).
+Demo clock: if nobody acts, the fix deadline passes after 4 minutes and an escalation arrives (at most 3). Report each step ✅/❌ with screenshots.
 
 ## Next
 
