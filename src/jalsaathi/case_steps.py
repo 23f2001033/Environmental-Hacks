@@ -8,7 +8,7 @@ from __future__ import annotations
 import logging
 import secrets
 
-from . import advice, config, policy, store, telegram, voice
+from . import advice, config, policy, rules, store, telegram, voice
 
 log = logging.getLogger()
 log.setLevel(logging.INFO)
@@ -76,10 +76,49 @@ def step_alert(case: dict, event: dict) -> dict:
     return {"sent": sent}
 
 
+def fix_buttons(case_id: str, short: str) -> list:
+    buttons = [[(label, f"f:{short}:{action}") for label, action in row] for row in FIX_BUTTONS]
+    buttons.append([("✅ केस बंद करें", f"x:{case_id}")])
+    return buttons
+
+
+def kit_message(case: dict, short: str) -> tuple[str, list]:
+    text = (f"🧪 <b>{case['village']}</b>: मरम्मत दर्ज हो गई है।\n"
+            "H2S शीशी से पानी की जांच करें। 24 से 48 घंटे बाद शीशी की फ़ोटो भेजें, फिर नतीजा चुनें।")
+    return text, [[("⚫ काली (दूषित)", f"k:{short}:contaminated"), ("🟡 पीली (साफ़)", f"k:{short}:clean")]]
+
+
+def _short(case_id: str, kind: str) -> str | None:
+    tok = store.token_for_case(case_id, kind)
+    return tok["pk"].split("#", 1)[1] if tok else None
+
+
+CATCH_UP_LIMIT = 10
+
+
+def catch_up_engineer(chat_id: int, block_key: str) -> int:
+    """An engineer who joins after cases opened gets a card for each open case in the block, worst first."""
+    open_cases = [c for c in store.block_cases(block_key) if c.get("status") in store.OPEN_STATUSES]
+    open_cases.sort(key=lambda c: (rules.SEVERITY_ORDER.get(c.get("severity"), 9), c.get("opened_at", "")))
+    sent = 0
+    for c in open_cases[:CATCH_UP_LIMIT]:
+        short = _short(c["case_id"], "fix") if c.get("status") in ("AWAITING_FIX", "ESCALATED") else None
+        sent += _send_safely(chat_id, advice.engineer_card(c, "hi"), fix_buttons(c["case_id"], short) if short else None)
+    if len(open_cases) > CATCH_UP_LIMIT:
+        _send_safely(chat_id, f"इस ब्लॉक में {len(open_cases) - CATCH_UP_LIMIT} और खुले मामले हैं। /status से गिनती देखें।")
+    return sent
+
+
+def catch_up_relay(chat_id: int, case: dict) -> None:
+    """A relay who joins while the village is waiting for a field-kit re-test gets the kit request too."""
+    if case.get("status") == "AWAITING_RETEST" and (short := _short(case["case_id"], "kit")):
+        text, buttons = kit_message(case, short)
+        _send_safely(chat_id, text, buttons)
+
+
 def step_await_fix(case: dict, event: dict) -> None:
     short = _new_token(case["case_id"], "fix", event["token"])
-    buttons = [[(label, f"f:{short}:{action}") for label, action in row] for row in FIX_BUTTONS]
-    buttons.append([("✅ केस बंद करें", f"x:{case['case_id']}")])
+    buttons = fix_buttons(case["case_id"], short)
     engineers = _engineers(case)
     for e in engineers:
         _send_safely(e["chat_id"], advice.engineer_card(case, "hi"), buttons)
@@ -112,9 +151,7 @@ def step_escalate(case: dict, event: dict) -> dict:
 
 def step_await_kit(case: dict, event: dict) -> None:
     short = _new_token(case["case_id"], "kit", event["token"])
-    text = (f"🧪 <b>{case['village']}</b>: मरम्मत दर्ज हो गई है।\n"
-            "H2S शीशी से पानी की जांच करें। 24 से 48 घंटे बाद शीशी की फ़ोटो भेजें, फिर नतीजा चुनें।")
-    buttons = [[("⚫ काली (दूषित)", f"k:{short}:contaminated"), ("🟡 पीली (साफ़)", f"k:{short}:clean")]]
+    text, buttons = kit_message(case, short)
     for r in _relays(case):
         _send_safely(r["chat_id"], text, buttons)
     store.update_case(case["case_id"], status="AWAITING_RETEST")

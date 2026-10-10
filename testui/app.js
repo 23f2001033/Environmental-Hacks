@@ -192,6 +192,7 @@
   $("#save-token").addEventListener("click", () => { try { localStorage.setItem("js-admin-token", $("#token").value.trim()); } catch {} $("#admin-out").textContent = "Token saved in this browser."; });
   document.querySelectorAll("[data-admin]").forEach((b) => b.addEventListener("click", () => {
     if (b.dataset.admin === "scale-run" && !confirm("Start a workflow for every real WQMIS failure in the snapshot (about 580 cases, real deadlines)?")) return;
+    if (b.dataset.admin === "restart-demo" && !confirm("Restart the 13 demo cases from the beginning? Their timelines are cleared; real cases and phone subscriptions stay.")) return;
     if (b.dataset.admin === "reset" && !confirm("Stop all workflows and delete all cases and villages?")) return;
     admin(b.dataset.admin, b.dataset.admin === "ingest" ? { source: "fixtures" } : {});
   }));

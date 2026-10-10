@@ -1,4 +1,4 @@
-"""Demo controls. Usage: python scripts/demo.py reset | seed | scale | status | links"""
+"""Demo controls. Usage: python scripts/demo.py restart-demo | reset | seed | scale | status | links"""
 
 import json
 import sys
@@ -17,6 +17,10 @@ if cmd == "reset":
             break
     else:
         print("reset still running; check /stats")
+elif cmd == "restart-demo":
+    print(api("/admin/restart-demo", "POST", {}, admin=True))  # asynchronous
+    time.sleep(25)
+    print(json.dumps(api("/stats")[1]["by_status"]))
 elif cmd == "seed":
     print(api("/admin/ingest", "POST", {"source": "fixtures"}, admin=True))
     time.sleep(20)

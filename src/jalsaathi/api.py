@@ -88,7 +88,7 @@ def _stats():
     count = lambda key, items: {k: sum(1 for c in items if c.get(key) == k) for k in sorted({c.get(key) for c in items})}
     run = {k: v for k, v in (store.latest_run() or {}).items() if k not in ("pk", "sk", "type")} or None
     try:
-        scale = _scale_status(run)
+        scale = _scale_status(store.latest_run(scale_only=True))
     except Exception as exc:  # noqa: BLE001 - stats must still load
         log.warning("scale status failed: %s", exc)
         scale = None
@@ -123,9 +123,11 @@ def _config():
 
 
 def _admin_route(method: str, path: str, body: dict):
-    if path in ("/api/v1/admin/ingest", "/api/v1/admin/scale-run", "/api/v1/admin/reset"):
+    if path in ("/api/v1/admin/ingest", "/api/v1/admin/scale-run", "/api/v1/admin/reset", "/api/v1/admin/restart-demo"):
         if path.endswith("/reset"):
             payload = {"action": "reset"}
+        elif path.endswith("/restart-demo"):
+            payload = {"action": "restart_demo"}
         elif path.endswith("/scale-run"):
             payload = {"source": "snapshot", "scale": True}
         else:

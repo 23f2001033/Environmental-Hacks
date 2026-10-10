@@ -128,9 +128,13 @@ def _callback(u: dict) -> None:
                 telegram.send_message(chat, f"✅ आप <b>{bundle['village']['name']}</b> से जुड़ गए।\nअभी की स्थिति: {bundle['status_text']['hi']}")
                 for c in bundle["cases"]:
                     if c["status"] in store.OPEN_STATUSES:
-                        case_steps.send_alert(store.get_case(c["case_id"]), [chat])
+                        case = store.get_case(c["case_id"])
+                        case_steps.send_alert(case, [chat])
+                        case_steps.catch_up_relay(chat, case)
             else:
-                telegram.send_message(chat, "✅ आप इंजीनियर के रूप में जुड़ गए। नए मामलों के कार्ड यहाँ आएंगे।")
+                telegram.send_message(chat, "✅ आप इंजीनियर के रूप में जुड़ गए। खुले मामलों के कार्ड नीचे हैं; नए मामले भी यहीं आएंगे।")
+                if not case_steps.catch_up_engineer(chat, key):
+                    telegram.send_message(chat, "इस ब्लॉक में अभी कोई खुला मामला नहीं है।")
         elif parts[0] == "f" and len(parts) == 3:
             case_id = actions.case_for_short(parts[1], "fix")
             actions.log_fix(case_id, parts[2], actor)

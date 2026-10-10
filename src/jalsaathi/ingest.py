@@ -3,6 +3,8 @@
 event = {"source": "fixtures" | "snapshot" | "live", "start_cases": true, "villages": [optional names or keys],
          "scale": optional bool, "geocode": optional bool, "demo_clock": optional bool}
 event = {"action": "reset"} stops all workflows and deletes demo data (too slow for the 29 s API limit at scale).
+event = {"action": "restart_demo"} restarts only the 13 demo cases (fresh workflows and demo timers); real cases,
+villages and Telegram subscriptions stay.
 
 Small runs start workflows directly. Large runs (or scale=true) hand the list to the ScaleRun state machine, which
 starts them at a steady pace so a new account's Lambda concurrency limit of 10 is not swamped.
@@ -116,7 +118,8 @@ def _start_scale_run(items: list[dict], run_id: str) -> str:
                                input=json.dumps({"run_id": run_id, "items": len(items)}))["executionArn"]
 
 
-def _stop_all(arn: str) -> int:
+def _stop_all(arn: str, case_ids: set[str] | None = None) -> int:
+    """Stop running executions; with case_ids, only those whose name starts with one of the case ids."""
     from botocore.exceptions import ClientError
 
     if not arn:
@@ -124,6 +127,8 @@ def _stop_all(arn: str) -> int:
     sfn, stopped = config.client("stepfunctions"), 0
     for page in sfn.get_paginator("list_executions").paginate(stateMachineArn=arn, statusFilter="RUNNING"):
         for ex in page["executions"]:
+            if case_ids is not None and not any(ex["name"].startswith(f"{cid}-") for cid in case_ids):
+                continue
             for attempt in range(6):
                 try:
                     sfn.stop_execution(executionArn=ex["executionArn"], cause="demo reset")
@@ -140,6 +145,19 @@ def reset() -> dict:
     stopped = _stop_all(config.scale_run_arn()) + _stop_all(config.state_machine_arn())
     result = {"workflows_stopped": stopped, "deleted": store.reset_demo(), "finished_at": store.now_iso()}
     log.info("reset done %s", result)
+    return result
+
+
+def restart_demo() -> dict:
+    """Stop and delete the demo cases, then ingest the fixtures again so they start fresh on the demo clock."""
+    records, _ = load("fixtures")
+    demo = {c["case_id"]: c["village_key"] for c in plan(records)}
+    stopped = _stop_all(config.state_machine_arn(), set(demo))
+    removed = sum(1 for cid, vkey in demo.items() if store.get_case(cid) and store.delete_case(cid, vkey))
+    run = handler({"source": "fixtures"})
+    result = {"cases_removed": removed, "workflows_stopped": stopped, "cases_started": run["new_cases"],
+              "finished_at": store.now_iso()}
+    log.info("demo restart done %s", result)
     return result
 
 
@@ -160,6 +178,8 @@ def handler(event, context=None):
     event = event or {}
     if event.get("action") == "reset":
         return reset()
+    if event.get("action") == "restart_demo":
+        return restart_demo()
     source = event.get("source", "fixtures")
     started_at = time.time()
     run_id = f"{datetime.now(timezone.utc):%Y%m%dT%H%M%S}-{source}"

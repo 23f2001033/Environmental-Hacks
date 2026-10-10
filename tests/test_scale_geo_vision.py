@@ -214,8 +214,9 @@ def test_admin_scale_run_and_reset_run_async(monkeypatch, admin_ok):
     monkeypatch.setattr(config, "client", lambda n: type("L", (), {"invoke": lambda self, **k: invoked.append(json.loads(k["Payload"]))})())
     assert _post("/api/v1/admin/scale-run")["statusCode"] == 202
     assert _post("/api/v1/admin/reset")["statusCode"] == 202
+    assert _post("/api/v1/admin/restart-demo")["statusCode"] == 202
     assert _post("/api/v1/admin/ingest", {"source": "s3://evil"})["statusCode"] == 400
-    assert invoked == [{"source": "snapshot", "scale": True}, {"action": "reset"}]
+    assert invoked == [{"source": "snapshot", "scale": True}, {"action": "reset"}, {"action": "restart_demo"}]
 
 
 def test_config_without_map_key(monkeypatch):
