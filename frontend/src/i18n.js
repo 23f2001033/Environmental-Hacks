@@ -192,4 +192,7 @@ export const eventNames = {
   lab_result: ["लैब दोबारा जांच दर्ज हुई", "Lab re-test recorded"],
   closed: ["मामला बंद हुआ", "Case closed"],
   policy: ["नियम की जांच", "Rule check"],
+  question: ["गांव से सवाल पूछा गया", "A villager asked a question"],
+  district_notified: ["ज़िला अधिकारी को ईमेल भेजा", "District official emailed"],
+  restarted: ["मामला फिर शुरू हुआ", "Case restarted"],
 };

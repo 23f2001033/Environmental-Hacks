@@ -110,7 +110,7 @@ body { background: var(--ivory); }
 .gazetteer .icon { width: 16px; height: 16px; color: var(--teal); }
 
 /* Built on AWS */
-.tech-grid { list-style: none; margin: 0 0 28px; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1px; background: var(--rule); border: 1px solid var(--rule); border-radius: 20px; overflow: hidden; }
+.tech-grid { list-style: none; margin: 0 0 28px; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1px; background: var(--rule); border: 1px solid var(--rule); border-radius: 20px; overflow: hidden; }
 .tech-grid li { background: var(--paper); padding: 22px 20px; }
 .tech-grid h3 { font-size: 16px; margin: 0 0 6px; color: var(--ink); }
 .tech-grid .service { font-size: 12px; font-weight: 700; color: var(--teal); margin: 0 0 8px; }

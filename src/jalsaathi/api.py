@@ -134,9 +134,12 @@ def _config():
 
 
 def _admin_route(method: str, path: str, body: dict):
-    if path in ("/api/v1/admin/ingest", "/api/v1/admin/scale-run", "/api/v1/admin/reset", "/api/v1/admin/restart-demo"):
+    if path in ("/api/v1/admin/ingest", "/api/v1/admin/scale-run", "/api/v1/admin/reset", "/api/v1/admin/restart-demo",
+                "/api/v1/admin/digest"):
         if path.endswith("/reset"):
             payload = {"action": "reset"}
+        elif path.endswith("/digest"):
+            payload = {"action": "district_digest", "force": True}
         elif path.endswith("/restart-demo"):
             payload = {"action": "restart_demo"}
         elif path.endswith("/scale-run"):

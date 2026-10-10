@@ -314,6 +314,14 @@ def pop_pending_photo(chat_id: int) -> dict | None:
 
 # Runs and demo reset
 
+def digest_sent_at(district: str) -> str | None:
+    return (_get(f"DIGEST#{district}", "META") or {}).get("at")
+
+
+def set_digest_sent(district: str) -> None:
+    _t().put_item(Item={"pk": f"DIGEST#{district}", "sk": "META", "type": "digest", "at": now_iso()})
+
+
 def put_run(run: dict) -> None:
     _t().put_item(Item=to_ddb({"pk": f"RUN#{run['run_id']}", "sk": "META", "type": "run", **run}))
 

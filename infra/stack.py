@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import sys
 from pathlib import Path
 
 from aws_cdk import CfnOutput, Duration, RemovalPolicy, Stack
@@ -19,11 +20,16 @@ from aws_cdk import aws_location as location
 from aws_cdk import aws_logs as logs
 from aws_cdk import aws_s3 as s3
 from aws_cdk import aws_s3_deployment as s3d
+from aws_cdk import aws_scheduler as scheduler
+from aws_cdk import aws_verifiedpermissions as avp
 from aws_cdk import aws_stepfunctions as sfn
 from aws_cdk import aws_stepfunctions_tasks as tasks
 from constructs import Construct
 
 from dashboard import body as dashboard_body
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
+from jalsaathi.policy import statements as cedar_statements  # noqa: E402 - one source of truth: policies/case.cedar
 
 ROOT = Path(__file__).resolve().parent.parent
 
@@ -123,6 +129,18 @@ class JalSaathiStack(Stack):
             resources=[f"arn:aws:ssm:{self.region}:{self.account}:parameter/jalsaathi/*"],
         )
 
+        # Cedar policies in Amazon Verified Permissions: every case decision is made (and recorded) by AWS
+        policy_store = avp.CfnPolicyStore(
+            self, "CasePolicies", description="JalSaathi case rules (policies/case.cedar)",
+            validation_settings=avp.CfnPolicyStore.ValidationSettingsProperty(mode="OFF"))
+        for pid, statement in cedar_statements((ROOT / "policies" / "case.cedar").read_text(encoding="utf-8")):
+            avp.CfnPolicy(self, "Policy-" + pid, policy_store_id=policy_store.attr_policy_store_id,
+                          definition=avp.CfnPolicy.PolicyDefinitionProperty(
+                              static=avp.CfnPolicy.StaticPolicyDefinitionProperty(statement=statement, description=pid)))
+        env["AVP_POLICY_STORE_ID"] = policy_store.attr_policy_store_id
+        avp_policy = iam.PolicyStatement(actions=["verifiedpermissions:IsAuthorized", "verifiedpermissions:ListPolicies"],
+                                         resources=[policy_store.attr_arn])
+
         def fn(name: str, handler: str, timeout: int = 30, memory: int = 512, extra: dict | None = None) -> lambda_.Function:
             f = lambda_.Function(
                 self, name,
@@ -141,6 +159,7 @@ class JalSaathiStack(Stack):
             table.grant_read_write_data(f)
             bucket.grant_read_write(f)
             f.add_to_role_policy(ssm_policy)
+            f.add_to_role_policy(avp_policy)
             return f
 
         steps_fn = fn("CaseSteps", "jalsaathi.case_steps.handler", timeout=60)
@@ -355,6 +374,22 @@ class JalSaathiStack(Stack):
             metric=ingest_fn.metric_errors(period=Duration.minutes(5)),
             threshold=1, evaluation_periods=1,
             alarm_description="JalSaathi ingest failed",
+        )
+
+        # District digest: Amazon SES email to district officials about overdue cases, on an EventBridge schedule
+        ingest_fn.add_to_role_policy(iam.PolicyStatement(
+            actions=["ses:SendEmail"], resources=[f"arn:aws:ses:{self.region}:{self.account}:identity/*"]))
+        digest_role = iam.Role(self, "DigestScheduleRole", assumed_by=iam.ServicePrincipal("scheduler.amazonaws.com"))
+        ingest_fn.grant_invoke(digest_role)
+        scheduler.CfnSchedule(
+            self, "DistrictDigest",
+            description="JalSaathi: email each district official the overdue water cases (only when something changed)",
+            schedule_expression="rate(15 minutes)" if demo_clock else "rate(1 hour)",
+            flexible_time_window=scheduler.CfnSchedule.FlexibleTimeWindowProperty(mode="OFF"),
+            target=scheduler.CfnSchedule.TargetProperty(
+                arn=ingest_fn.function_arn, role_arn=digest_role.role_arn,
+                input='{"action": "district_digest"}',
+                retry_policy=scheduler.CfnSchedule.RetryPolicyProperty(maximum_retry_attempts=2)),
         )
 
         cw.CfnDashboard(self, "Dashboard", dashboard_name="JalSaathi", dashboard_body=self.to_json_string(dashboard_body(
