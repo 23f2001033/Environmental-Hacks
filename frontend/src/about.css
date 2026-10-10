@@ -1,0 +1,172 @@
+/* ===================================================================================================
+   About-first redesign: a warm editorial layer over the village site (loaded after styles.css).
+   Palette: deep-water ink and teal (the product), warm ivory canvas, earth and gold for cartographic
+   detail, sage. Display type: Fraunces (Latin) / Tiro Devanagari Hindi; body stays DM Sans / Noto Sans.
+   =================================================================================================== */
+:root {
+  --ivory: #f7f4ec;
+  --paper: #fffdf8;
+  --earth: #9a7655;
+  --gold: #c9a66b;
+  --sage: #a7b9a0;
+  --charcoal: #252b28;
+  --rule: #e7e0d0;
+  --body: #3b5563;
+  --display: "Fraunces", "Tiro Devanagari Hindi", Georgia, serif;
+  background: var(--ivory);
+}
+body { background: var(--ivory); }
+.display { font-family: var(--display); font-weight: 700; letter-spacing: -0.02em; }
+:lang(hi) .display { font-family: "Tiro Devanagari Hindi", var(--display); font-weight: 400; letter-spacing: 0; }
+:focus-visible { outline: 3px solid var(--gold); outline-offset: 3px; border-radius: 4px; }
+
+/* Header: brand left, About, and Find my village as the primary action on the right */
+#header { background: rgba(255, 253, 248, 0.94); backdrop-filter: saturate(1.2) blur(6px); position: sticky; top: 0; z-index: 20; border-bottom: 1px solid var(--rule); }
+.header-inner nav { align-items: center; gap: 22px; }
+.header-inner nav a.nav-primary {
+  display: inline-flex; align-items: center; gap: 8px; padding: 9px 16px; border-radius: 999px;
+  background: var(--ink); color: #fff; border: 1px solid var(--ink); transition: background 0.2s, transform 0.2s;
+}
+.header-inner nav a.nav-primary .icon { width: 16px; height: 16px; }
+.header-inner nav a.nav-primary:hover { background: var(--teal); border-color: var(--teal); color: #fff; transform: translateY(-1px); }
+.header-inner nav a.nav-primary[aria-current] { background: var(--teal); border-color: var(--teal); color: #fff; box-shadow: inset 0 -3px 0 var(--gold); }
+#footer { background: var(--paper); border-top: 1px solid var(--rule); }
+
+/* Buttons */
+.button.large { min-height: 52px; padding: 13px 22px; font-size: 16px; border-radius: 999px; }
+.button.quiet { background: transparent; color: var(--ink); border: 1px solid #cfc6b2; }
+.button.quiet:hover { border-color: var(--ink); background: var(--paper); }
+.button.quiet.on-dark { color: #fff; border-color: rgba(255, 255, 255, 0.45); }
+.button.quiet.on-dark:hover { background: rgba(255, 255, 255, 0.08); border-color: #fff; }
+.text-link { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; color: var(--teal); text-decoration: none; border-bottom: 1px solid currentColor; }
+.text-link .icon { width: 16px; height: 16px; }
+
+/* Hero */
+.about-hero { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); gap: 48px; align-items: center; padding: 28px 0 56px; }
+.eyebrow { font-size: 13px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--earth); margin: 0 0 14px; }
+:lang(hi) .eyebrow { letter-spacing: 0; text-transform: none; font-size: 15px; }
+.about-hero h1 { font-family: var(--display); font-size: clamp(40px, 5.6vw, 68px); line-height: 1.04; letter-spacing: -0.025em; margin: 0 0 22px; color: var(--ink); }
+:lang(hi) .about-hero h1 { font-family: "Tiro Devanagari Hindi", var(--display); font-weight: 400; font-size: clamp(34px, 4.6vw, 56px); line-height: 1.3; letter-spacing: 0; }
+.lede { font-size: 19px; line-height: 1.6; color: var(--body); max-width: 34em; margin: 0 0 30px; }
+.hero-actions { display: flex; flex-wrap: wrap; gap: 12px; }
+.about-hero-map { position: relative; margin: 0; background: var(--paper); border: 1px solid var(--rule); border-radius: 28px; padding: 18px 18px 14px; box-shadow: 0 30px 60px -40px rgba(23, 63, 85, 0.45); }
+.about-hero-map::before { content: ""; position: absolute; inset: 10px; border: 1px dashed #e3d7bd; border-radius: 22px; pointer-events: none; }
+.living-map { display: block; width: 100%; height: auto; }
+.living-map .graticule line { stroke: #e6dcc6; stroke-width: 0.8; stroke-dasharray: 2 4; }
+.living-map .graticule text { fill: #b49f7c; font: 9px "DM Sans", sans-serif; }
+.living-map .state-label { fill: var(--earth); font: 600 13px "DM Sans", sans-serif; letter-spacing: 0.14em; text-transform: uppercase; opacity: 0.8; }
+.living-map .dot { fill: var(--red); opacity: 0; animation: dot-in 0.6s ease-out forwards; animation-delay: var(--d, 0ms); transform-origin: center; transform-box: fill-box; }
+.living-map .dot.provisional { fill: var(--amber); }
+.living-map .dot.safe_again { fill: var(--green); }
+.living-map .dot.approx { fill: var(--paper); stroke: var(--red); stroke-width: 1.1; }
+.living-map .featured .core { fill: var(--ink); stroke: var(--paper); stroke-width: 2; }
+.living-map .featured .pulse { fill: none; stroke: var(--ink); stroke-width: 1.5; transform-origin: center; transform-box: fill-box; animation: pulse 2.4s ease-out infinite; }
+@keyframes dot-in { from { opacity: 0; transform: scale(0.4); } to { opacity: 0.85; transform: scale(1); } }
+@keyframes pulse { from { opacity: 0.9; transform: scale(0.8); } to { opacity: 0; transform: scale(3); } }
+.map-card { position: absolute; right: 26px; top: 26px; display: grid; gap: 2px; max-width: 220px; padding: 12px 34px 12px 14px; background: #fff; border: 1px solid var(--rule); border-radius: 14px; text-decoration: none; color: var(--ink); box-shadow: 0 12px 30px -18px rgba(23, 63, 85, 0.5); transition: transform 0.2s; }
+.map-card:hover { transform: translateY(-2px); }
+.map-card > .icon:last-child { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; color: var(--teal); }
+.map-card-tag { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 700; color: var(--red); }
+.map-card-tag .icon { width: 13px; height: 13px; }
+.map-card strong { font-size: 16px; text-transform: capitalize; }
+.map-card small { color: var(--muted); font-size: 12px; }
+.map-card-finding { font-size: 13px; font-weight: 600; color: var(--red); }
+.about-hero-map figcaption { position: relative; font-size: 12px; line-height: 1.5; color: var(--muted); padding: 8px 6px 0; }
+.about-hero-map figcaption span { display: block; color: #a08a66; }
+
+/* Sections */
+.about-why, .about-how, .about-places, .about-tech { padding: 64px 0; border-top: 1px solid var(--rule); }
+.about-why header, .about-places header, .about-tech header { max-width: 640px; margin-bottom: 36px; }
+.about-why h2, .about-how h2, .about-places h2, .about-tech h2 { font-size: clamp(30px, 3.6vw, 44px); line-height: 1.12; margin: 0 0 12px; color: var(--ink); }
+:lang(hi) .about-why h2, :lang(hi) .about-how h2, :lang(hi) .about-places h2, :lang(hi) .about-tech h2 { line-height: 1.35; }
+.about-why header p, .about-places header p, .about-tech header p { font-size: 18px; color: var(--body); margin: 0; }
+
+/* Why it matters: three editorial figures */
+.why-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.why-grid article { padding: 4px 32px 8px 0; margin-right: 32px; border-right: 1px solid var(--rule); }
+.why-grid article:last-child { border-right: 0; margin-right: 0; }
+.why-grid .figure { display: block; font-family: "Fraunces", Georgia, serif; font-weight: 700; font-size: clamp(56px, 6vw, 84px); line-height: 1; color: var(--ink); letter-spacing: -0.03em; }
+.why-grid h3 { font-size: 17px; line-height: 1.35; margin: 10px 0; color: var(--earth); }
+.why-grid p { margin: 0; color: var(--body); }
+
+/* How it works: milestones on a dashed route */
+.route { list-style: none; margin: 40px 0 0; padding: 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 24px; position: relative; }
+.route::before { content: ""; position: absolute; left: 4%; right: 4%; top: 22px; border-top: 2px dashed var(--gold); }
+.route li { position: relative; }
+.milestone { position: relative; z-index: 1; display: grid; place-items: center; width: 46px; height: 46px; border-radius: 50%; background: var(--ink); color: #fff; font-family: "Fraunces", Georgia, serif; font-size: 20px; border: 4px solid var(--ivory); }
+.route li:last-child .milestone { background: var(--green); }
+.route h3 { font-size: 18px; line-height: 1.3; margin: 16px 0 8px; color: var(--ink); }
+.route p { margin: 0; font-size: 15px; color: var(--body); }
+
+/* A sense of place: a gazetteer of districts */
+.gazetteer { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 48px; }
+.gazetteer a { display: grid; grid-template-columns: 40px minmax(0, 1fr) auto 18px; gap: 14px; align-items: center; padding: 16px 0; border-bottom: 1px solid var(--rule); text-decoration: none; color: var(--ink); transition: background 0.2s, padding 0.2s; }
+.gazetteer a:hover { background: var(--paper); padding-left: 8px; }
+.g-rank { font-family: "Fraunces", Georgia, serif; font-size: 22px; color: var(--gold); }
+.g-name strong { display: block; font-size: 18px; }
+.g-name small, .g-count small { display: block; color: var(--muted); font-size: 12px; }
+.g-count { text-align: right; font-size: 13px; color: var(--muted); }
+.g-count b { font-family: "Fraunces", Georgia, serif; font-size: 22px; color: var(--red); }
+.gazetteer .icon { width: 16px; height: 16px; color: var(--teal); }
+
+/* Built on AWS */
+.tech-grid { list-style: none; margin: 0 0 28px; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1px; background: var(--rule); border: 1px solid var(--rule); border-radius: 20px; overflow: hidden; }
+.tech-grid li { background: var(--paper); padding: 22px 20px; }
+.tech-grid h3 { font-size: 16px; margin: 0 0 6px; color: var(--ink); }
+.tech-grid .service { font-size: 12px; font-weight: 700; color: var(--teal); margin: 0 0 8px; }
+.tech-grid p { margin: 0; font-size: 14px; color: var(--body); }
+
+/* Try every screen */
+.about-try { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); gap: 32px; align-items: start; padding: 32px; margin: 8px 0 64px; background: var(--paper); border: 1px solid var(--rule); border-radius: 24px; }
+.about-try h2 { font-size: 22px; margin: 0 0 6px; }
+.about-try p { margin: 0; color: var(--muted); }
+.about-try ul { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.about-try a { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 12px 14px; border: 1px solid var(--rule); border-radius: 12px; text-decoration: none; color: var(--ink); font-weight: 600; background: #fff; }
+.about-try a:hover { border-color: var(--teal); color: var(--teal); }
+.about-try .icon { width: 16px; height: 16px; flex-shrink: 0; }
+
+/* Closing invitation */
+.about-close { text-align: center; padding: 72px 32px; margin-bottom: 24px; border-radius: 32px; color: #fff; background: radial-gradient(900px 300px at 50% -10%, rgba(201, 166, 107, 0.28), transparent 60%), var(--ink); }
+.about-close h2 { font-size: clamp(30px, 4vw, 48px); line-height: 1.15; max-width: 22ch; margin: 0 auto 28px; color: #fff; }
+:lang(hi) .about-close h2 { line-height: 1.4; }
+.about-close .hero-actions { justify-content: center; }
+.about-close .button.primary { background: var(--gold); border-color: var(--gold); color: var(--charcoal); }
+.about-close .button.primary:hover { background: #d8b97f; }
+
+/* Find my village: the same warm identity */
+.directory-heading h1 { font-family: var(--display); letter-spacing: -0.02em; }
+:lang(hi) .directory-heading h1 { font-family: "Tiro Devanagari Hindi", var(--display); font-weight: 400; letter-spacing: 0; }
+.search-field { background: #fff; }
+.village-row { background: #fff; }
+
+@media (max-width: 950px) {
+  .about-hero { grid-template-columns: 1fr; gap: 32px; }
+  .route { grid-template-columns: 1fr; gap: 22px; }
+  .route::before { left: 22px; right: auto; top: 10px; bottom: 10px; border-top: 0; border-left: 2px dashed var(--gold); }
+  .route li { display: grid; grid-template-columns: 46px minmax(0, 1fr); column-gap: 16px; }
+  .route li .milestone { grid-row: span 2; }
+  .route h3 { margin-top: 8px; }
+  .tech-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .about-try { grid-template-columns: 1fr; }
+}
+@media (max-width: 760px) {
+  .header-inner nav { gap: 18px; }
+  .why-grid { grid-template-columns: 1fr; gap: 28px; }
+  .why-grid article { border-right: 0; margin-right: 0; padding: 0 0 24px; border-bottom: 1px solid var(--rule); }
+  .gazetteer { grid-template-columns: 1fr; }
+  .about-why, .about-how, .about-places, .about-tech { padding: 44px 0; }
+  .lede { font-size: 17px; }
+}
+@media (max-width: 520px) {
+  .map-card { position: static; margin: 8px 6px 0; max-width: none; }
+  .tech-grid { grid-template-columns: 1fr; }
+  .about-try { padding: 20px; }
+  .about-try ul { grid-template-columns: 1fr; }
+  .about-close { padding: 48px 20px; border-radius: 24px; }
+  .hero-actions .button { flex: 1 1 100%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .living-map .dot { animation: none; opacity: 0.85; }
+  .living-map .featured .pulse { animation: none; opacity: 0; }
+  .header-inner nav a.nav-primary, .map-card, .gazetteer a { transition: none; }
+}

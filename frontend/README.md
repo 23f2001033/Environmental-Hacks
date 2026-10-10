@@ -37,7 +37,8 @@ screen and never silently substitute mock results.
 
 | Route             | Screen                                                     |
 | ----------------- | ---------------------------------------------------------- |
-| `/`               | Searchable village directory; optional Amazon Location map |
+| `/`               | **About** (opens first): the problem, live numbers, a map of every failed test, how it works, AWS, try-it links |
+| `/?find`, `/?find&q=<text>` | Find my village: searchable directory (prefilled from `q`); optional Amazon Location map |
 | `/?v=<key>`       | Village status, advice, audio, history and poster          |
 | `/?b=<block_key>` | That block's cases, ordered by severity and age            |
 | Add `demo=1`      | Explicit fixture preview, preserved across navigation      |
@@ -46,6 +47,7 @@ Query routing preserves the CloudFront and Telegram contracts. Hindi is the init
 language; subsequent choices persist locally.
 
 - `src/app.js`: routing, cancellation, loading/error state, interaction binding.
+- `src/about.js` + `src/about.css`: the About page and the warm editorial layer (ivory, ink, earth, gold; Fraunces / Tiro Devanagari Hindi display type). Every figure and map dot comes from `/stats`, `/villages` and `/overview`.
 - `src/components.js`: shared shell, village page, six-stage timeline, expandable
   history/test details, directory and block dashboard.
 - `src/api.js`: same-origin requests with a 15-second timeout.

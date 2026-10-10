@@ -22,16 +22,19 @@ export function routeFrom(search) {
   const p = new URLSearchParams(search);
   return {
     demo: p.get("demo") === "1",
-    view: p.has("b") ? "block" : p.has("v") ? "village" : "directory",
+    view: p.has("b") ? "block" : p.has("v") ? "village" : p.has("find") ? "directory" : "about",
     key: p.get("b") ?? p.get("v") ?? "",
+    q: p.get("q") ?? "",
   };
 }
 
 export function routeURL(view, key, demo = false) {
   const p = new URLSearchParams();
   if (demo) p.set("demo", "1");
-  if (view !== "directory") p.set(view === "block" ? "b" : "v", key);
-  return `/${p.size ? "?" + p : ""}`;
+  if (view === "block" || view === "village") p.set(view === "block" ? "b" : "v", key);
+  const query = p.size ? String(p) : "";
+  if (view === "directory") return `/?find${query ? "&" + query : ""}`;
+  return `/${query ? "?" + query : ""}`;
 }
 
 export function formatDate(value, lang = "hi", time = false) {

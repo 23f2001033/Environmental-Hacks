@@ -49,13 +49,21 @@ def deploy_code() -> None:
     lam = boto3.client("lambda", region_name=REGION)
     funcs = _functions(lam)
     layer_name = funcs["CaseSteps"]["Layers"][0]["Arn"].split(":layer:")[1].split(":")[0]
-    # Through S3: the layer zip can be over Lambda's 50 MB direct-upload limit
-    bucket, key = outputs()["BucketName"], "deploy/layer.zip"
-    boto3.client("s3", region_name=REGION).put_object(Bucket=bucket, Key=key, Body=_zip(ROOT / "build" / "layer"))
-    layer = lam.publish_layer_version(LayerName=layer_name, Content={"S3Bucket": bucket, "S3Key": key},
-                                      CompatibleRuntimes=["python3.12"], CompatibleArchitectures=["arm64"],
-                                      Description="hotdeploy")
-    print("layer", layer["Version"])
+    stamp, published = ROOT / "build" / "layer" / ".requirements", ROOT / "build" / "layer" / ".published"
+    current = funcs["CaseSteps"]["Layers"][0]["Arn"]
+    if published.exists() and stamp.exists() and published.read_text().split("\n", 1)[1:] == [stamp.read_text()] \
+            and published.read_text().split("\n", 1)[0] == current:
+        layer = {"LayerVersionArn": current, "Version": current.rsplit(":", 1)[1]}
+        print("layer unchanged", layer["Version"])
+    else:
+        # Through S3: the layer zip can be over Lambda's 50 MB direct-upload limit
+        bucket, key = outputs()["BucketName"], "deploy/layer.zip"
+        boto3.client("s3", region_name=REGION).put_object(Bucket=bucket, Key=key, Body=_zip(ROOT / "build" / "layer"))
+        layer = lam.publish_layer_version(LayerName=layer_name, Content={"S3Bucket": bucket, "S3Key": key},
+                                          CompatibleRuntimes=["python3.12"], CompatibleArchitectures=["arm64"],
+                                          Description="hotdeploy")
+        published.write_text(layer["LayerVersionArn"] + "\n" + stamp.read_text())
+        print("layer", layer["Version"])
     code = _zip(ROOT / "build" / "lambda")
     for short, f in funcs.items():
         name = f["FunctionName"]

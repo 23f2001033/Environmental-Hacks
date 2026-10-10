@@ -18,14 +18,22 @@ test("routes preserve explicit preview mode and encoded village keys", () => {
     view: "village",
     key: "a&b",
     demo: true,
+    q: "",
   });
   assert.equal(routeURL("village", "a&b", true), "/?demo=1&v=a%26b");
   assert.deepEqual(routeFrom("?b=5037"), {
     view: "block",
     key: "5037",
     demo: false,
+    q: "",
   });
   assert.equal(routeFrom("").demo, false);
+  assert.equal(routeFrom("").view, "about");
+  assert.equal(routeFrom("?find&q=Jaipur").view, "directory");
+  assert.equal(routeFrom("?find&q=Jaipur").q, "Jaipur");
+  assert.equal(routeURL("directory", ""), "/?find");
+  assert.equal(routeURL("directory", "", true), "/?find&demo=1");
+  assert.equal(routeURL("about", ""), "/");
 });
 test("unknown and provisional records are never classified as safe", () => {
   assert.equal(villageStatus([]), "unknown");

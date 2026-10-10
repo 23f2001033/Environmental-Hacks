@@ -42,9 +42,10 @@ export function shell(route, bundle) {
   const block = route.view === "block" ? route.key : bundle?.village?.block_key;
   document.documentElement.lang = language;
   document.querySelector("#header").innerHTML = `<div class="header-inner">
-    <a class="brand" data-nav href="${routeURL("directory", "", route.demo)}"><span class="brand-symbol">${icon("drop")}</span><span><strong>${e(t("brand"))}</strong><small>${e(t("tagline"))}</small></span></a>
+    <a class="brand" data-nav href="${routeURL("about", "", route.demo)}"><span class="brand-symbol">${icon("drop")}</span><span><strong>${e(t("brand"))}</strong><small>${e(t("tagline"))}</small></span></a>
     <nav aria-label="${language === "hi" ? "मुख्य मेन्यू" : "Main navigation"}">
-      <a data-nav ${route.view === "directory" ? 'aria-current="page"' : ""} href="${routeURL("directory", "", route.demo)}">${e(t("villages"))}</a>
+      <a data-nav ${route.view === "about" ? 'aria-current="page"' : ""} href="${routeURL("about", "", route.demo)}">${e(t("about"))}</a>
+      <a data-nav class="nav-primary" ${route.view === "directory" ? 'aria-current="page"' : ""} href="${routeURL("directory", "", route.demo)}">${icon("search")}<span>${e(t("villages"))}</span></a>
       ${block ? `<a data-nav ${route.view === "block" ? 'aria-current="page"' : ""} href="${routeURL("block", block, route.demo)}">${e(t("block"))}</a>` : ""}
     </nav>
     <div class="language-switch" role="group" aria-label="Language / भाषा">

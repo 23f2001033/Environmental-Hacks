@@ -254,3 +254,8 @@ def test_kit_hint_uses_nova_and_stops_asking_a_refused_model(monkeypatch):
     monkeypatch.setattr(config, "client", lambda n: Bedrock(deny=True))
     assert vision.kit_hint(b"jpeg") is None and vision.kit_hint(b"jpeg") is None
     assert asked == [vision.MODEL_ID, vision.MODEL_ID]  # refused once, then not asked again
+
+
+def test_days_since_test_is_bundled():
+    d = api.days_since_test()
+    assert d["median_days"] > 0 and 0 < d["share_over_60_days"] <= 1

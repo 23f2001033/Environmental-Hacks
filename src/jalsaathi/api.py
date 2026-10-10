@@ -82,6 +82,16 @@ def repeat_failures() -> dict | None:
     return {k: data.get(k) for k in ("question", "source", "totals", "caveats", "by_state_and_parameter")}
 
 
+@lru_cache(maxsize=1)
+def days_since_test() -> dict | None:
+    """How long the failed lab tests have been on record (scripts/analyze_age.py)."""
+    try:
+        data = json.loads(paths.analysis_file("days_since_test.json").read_text(encoding="utf-8"))
+    except (FileNotFoundError, json.JSONDecodeError):
+        return None
+    return {k: data.get(k) for k in ("as_of", "median_days", "share_over_60_days", "share_over_90_days", "caveat")}
+
+
 def _stats():
     cases = store.list_cases()
     open_cases = [c for c in cases if c.get("status") in store.OPEN_STATUSES]
@@ -99,7 +109,7 @@ def _stats():
             "open_by_severity": count("severity", open_cases), "open_by_code": count("code", open_cases),
             "by_status": count("status", cases), "by_source": count("source", cases),
             "alert_latency": alert_latency(cases), "last_run": run, "scale_run": scale,
-            "repeat_failures": repeat_failures()}
+            "repeat_failures": repeat_failures(), "days_since_test": days_since_test()}
 
 
 @lru_cache(maxsize=1)
