@@ -11,6 +11,7 @@ import base64
 import hmac
 import json
 import logging
+import os
 
 from . import actions, case_steps, config, i18n, store, telegram, views, vision
 
@@ -93,6 +94,30 @@ def _command(u: dict) -> None:
         telegram.send_message(chat, i18n.t("stopped", lang, n=n))
     else:
         telegram.send_message(chat, i18n.t("help", lang))
+
+
+def _village_of(chat_id: int) -> str | None:
+    subs = [s for s in store.chat_subscriptions(chat_id) if s["scope_pk"].startswith("VILLAGE#")]
+    return subs[0]["scope_pk"].split("#", 1)[1] if subs else None
+
+
+def _ask(u: dict) -> None:
+    """A question by voice or text: acknowledge now, answer from an async run of this function (Ask JalSaathi)."""
+    from . import assistant
+
+    chat, lang = u["chat_id"], store.chat_lang(u["chat_id"])
+    key = _village_of(chat)
+    if not key:
+        telegram.send_message(chat, i18n.t("ask_join_first", lang))
+        return
+    if u["kind"] == "voice" and (u.get("duration") or 0) > assistant.MAX_VOICE_SECONDS:
+        telegram.send_message(chat, i18n.t("ask_too_long", lang))
+        return
+    job = {"chat_id": chat, "village_key": key, "lang": lang}
+    job.update(file_id=u["file_id"]) if u["kind"] == "voice" else job.update(text=u["text"][:500])
+    telegram.send_message(chat, i18n.t("ask_wait", lang))
+    config.client("lambda").invoke(FunctionName=os.environ.get("AWS_LAMBDA_FUNCTION_NAME", ""), InvocationType="Event",
+                                   Payload=json.dumps({"assistant": job}).encode())
 
 
 def _store_kit_photo(chat_id: int, case_id: str) -> tuple[str | None, dict | None]:
@@ -178,6 +203,10 @@ def _callback(u: dict) -> None:
 
 
 def handler(event, context=None):
+    if "assistant" in event:  # our own async invoke (never reachable through the function URL)
+        from . import assistant
+
+        return assistant.handle_telegram(event["assistant"])
     if not _authorised(event):
         return {"statusCode": 401, "body": "unauthorised"}
     body = event.get("body") or "{}"
@@ -193,8 +222,13 @@ def handler(event, context=None):
             _callback(u)
         elif u["kind"] == "photo":
             _photo(u)
+        elif u["kind"] == "voice":
+            _ask(u)
         elif u["kind"] == "text":
-            telegram.send_message(u["chat_id"], i18n.t("help", store.chat_lang(u["chat_id"])))
+            if _village_of(u["chat_id"]):
+                _ask(u)
+            else:
+                telegram.send_message(u["chat_id"], i18n.t("help", store.chat_lang(u["chat_id"])))
     except Exception:  # noqa: BLE001 - always 200 so Telegram doesn't retry forever
         log.exception("webhook handling failed")
     return _ok()

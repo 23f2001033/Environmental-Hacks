@@ -2,3 +2,5 @@
 cedarpy==4.12.1
 pycryptodome==3.24.0
 cryptography==44.0.2
+strands-agents==1.59.0
+amazon-transcribe==0.6.4

@@ -8,10 +8,10 @@ MESSAGES: dict[str, dict[str, str]] = {
     "help": {
         "hi": "💧 <b>JalSaathi</b>\nसरकारी लैब जांच में गाँव का पानी असुरक्षित पाया जाए, तो हम सूचना और सही सावधानी बताते हैं, "
               "और ठीक होने तक मामले पर नज़र रखते हैं।\n\nजुड़ने के लिए गाँव के पोस्टर का QR कोड स्कैन करें, या नीचे गाँव चुनें।\n"
-              "/status पानी की स्थिति · /english English · /stop सदस्यता बंद करें",
+              "/status पानी की स्थिति · /english English · /stop सदस्यता बंद करें\n🎙️ कोई भी सवाल बोलकर या लिखकर पूछें।",
         "en": "💧 <b>JalSaathi</b>\nWhen a government lab test finds a village's water unsafe, we send the alert and the right "
               "precautions, and follow the case until a re-test passes.\n\nScan the QR code on the village poster to join, "
-              "or pick a village below.\n/status water status · /hindi हिंदी · /stop unsubscribe",
+              "or pick a village below.\n/status water status · /hindi हिंदी · /stop unsubscribe\n🎙️ Ask any question by voice or text.",
     },
     "consent": {
         "hi": "<b>{label}</b> {who} की सूचनाएं पाने के लिए आपकी अनुमति चाहिए।\n"
@@ -77,6 +77,15 @@ MESSAGES: dict[str, dict[str, str]] = {
                    "en": "{village}: the water test found {found}. See what to do."},
     "push_new_case": {"hi": "{village}: नया मामला ({found})। काम दर्ज करें।",
                       "en": "{village}: new case ({found}). Log the fix."},
+    "ask_wait": {"hi": "🎙️ सवाल मिल गया। जवाब तैयार हो रहा है…", "en": "🎙️ Got your question. Preparing the answer…"},
+    "ask_heard": {"hi": "🎙️ आपने पूछा: \"{question}\"", "en": "🎙️ You asked: \"{question}\""},
+    "ask_not_heard": {"hi": "माफ़ कीजिए, आवाज़ साफ़ सुनाई नहीं दी। दोबारा बोलकर या लिखकर पूछें।",
+                      "en": "Sorry, I couldn't hear that clearly. Please ask again by voice or text."},
+    "ask_join_first": {"hi": "सवाल पूछने से पहले अपने गाँव से जुड़ें: /start", "en": "Join your village first to ask questions: /start"},
+    "ask_too_long": {"hi": "कृपया एक मिनट से छोटा सवाल भेजें।", "en": "Please keep the question under one minute."},
+    "ask_official": {"hi": "आपके गाँव के लिए सरकारी जांच पर आधारित सलाह:", "en": "Here is the official advice for your village:"},
+    "ask_fallback": {"hi": "और जानकारी के लिए आशा दीदी या ब्लॉक इंजीनियर से पूछें।",
+                     "en": "For anything else, ask your ASHA worker or the block engineer."},
     "audio_title": {"hi": "JalSaathi सूचना", "en": "JalSaathi alert"},
     "photo_received": {"hi": "📷 फ़ोटो मिल गई। अब जांच वाले संदेश में नतीजा चुनें।",
                        "en": "📷 Photo received. Now choose the result in the test message."},

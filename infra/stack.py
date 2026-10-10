@@ -268,13 +268,25 @@ class JalSaathiStack(Stack):
         ingest_fn.add_to_role_policy(iam.PolicyStatement(
             actions=["geo-places:Geocode"], resources=[f"arn:aws:geo-places:{self.region}::provider/default"]))
 
-        webhook_fn = fn("Webhook", "jalsaathi.webhook.handler", timeout=30)
+        webhook_fn = fn("Webhook", "jalsaathi.webhook.handler", timeout=90, memory=1024)  # also runs Ask JalSaathi
         machine.grant_task_response(webhook_fn)
         webhook_fn.add_to_role_policy(polly)
         webhook_fn.add_to_role_policy(iam.PolicyStatement(
             actions=["bedrock:InvokeModel"],
             resources=[f"arn:aws:bedrock:{self.region}:{self.account}:inference-profile/apac.amazon.nova-pro-v1:0",
                        "arn:aws:bedrock:*::foundation-model/amazon.nova-pro-v1:0"]))
+        # Ask JalSaathi: Transcribe (streaming) -> Translate -> Strands agent on Bedrock -> Guardrails -> Cedar -> Polly
+        ask_jalsaathi = [
+            iam.PolicyStatement(actions=["translate:TranslateText"], resources=["*"]),
+            iam.PolicyStatement(actions=["bedrock:ApplyGuardrail"],
+                                resources=[f"arn:aws:bedrock:{self.region}:{self.account}:guardrail/*"]),
+        ]
+        for statement in ask_jalsaathi:
+            webhook_fn.add_to_role_policy(statement)
+        webhook_fn.add_to_role_policy(iam.PolicyStatement(actions=["transcribe:StartStreamTranscription"], resources=["*"]))
+        webhook_fn.add_to_role_policy(iam.PolicyStatement(  # hands each question to an async run of itself
+            actions=["lambda:InvokeFunction"],
+            resources=[f"arn:aws:lambda:{self.region}:{self.account}:function:{self.stack_name}-Webhook*"]))
         webhook_url = webhook_fn.add_function_url(auth_type=lambda_.FunctionUrlAuthType.NONE)
 
         api_fn = fn("ApiHandler", "jalsaathi.api.handler", timeout=29,
@@ -288,6 +300,8 @@ class JalSaathiStack(Stack):
             resources=[f"arn:aws:states:{self.region}:{self.account}:mapRun:{scale_machine.state_machine_name}/*"]))
         api_fn.add_to_role_policy(iam.PolicyStatement(actions=["geo:DescribeKey"], resources=[map_key.attr_key_arn]))
         api_fn.add_to_role_policy(polly)
+        for statement in ask_jalsaathi:  # Ask JalSaathi from the web app (text questions)
+            api_fn.add_to_role_policy(statement)
         api_fn.add_to_role_policy(iam.PolicyStatement(  # the app's field-kit photo hint
             actions=["bedrock:InvokeModel"],
             resources=[f"arn:aws:bedrock:{self.region}:{self.account}:inference-profile/apac.amazon.nova-pro-v1:0",

@@ -84,6 +84,8 @@ def parse_update(update: dict) -> dict:
                message_id=msg.get("message_id"))
     if photos := msg.get("photo"):
         out.update(kind="photo", file_id=photos[-1]["file_id"])  # largest size is last
+    elif voice := msg.get("voice"):
+        out.update(kind="voice", file_id=voice["file_id"], duration=voice.get("duration", 0))
     elif (text := (msg.get("text") or "").strip()).startswith("/"):
         command, _, arg = text.partition(" ")
         out.update(kind="command", command=command.split("@")[0].lower(), arg=arg.strip())

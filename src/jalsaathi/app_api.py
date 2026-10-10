@@ -170,12 +170,30 @@ def overview() -> dict:
     return {"totals": totals, "districts": rows}
 
 
+def ask(body: dict) -> dict:
+    """Ask JalSaathi from the app: the same checked pipeline as the Telegram voice questions (text in, text + voice out)."""
+    from . import assistant
+
+    key, question = str(body.get("village") or ""), str(body.get("question") or "").strip()
+    if not key or not question:
+        raise AppError(400, "village and question are required")
+    if len(question) > 300:
+        raise AppError(400, "please keep the question under 300 characters")
+    lang = i18n.norm(body.get("lang"))
+    result = assistant.answer(key, question, lang, actor="web app")
+    result["audio_url"] = assistant.speak(result["answer"], lang)
+    return {k: result.get(k) for k in ("answer", "audio_url", "lang", "fallback", "question_en", "answer_en", "guardrail",
+                                       "cedar", "ms")}
+
+
 def route(method: str, parts: list[str], body: dict, query: dict) -> dict | None:
     """Returns the response body, or None if the path is not an app route. Raises AppError or ActionError."""
     if method == "POST" and len(parts) == 6 and parts[3] == "engineer":
         return engineer(parts[4], parts[5], body)
     if method == "POST" and len(parts) == 6 and parts[3] == "relay":
         return relay(parts[4], parts[5], body)
+    if method == "POST" and parts[3:] == ["ask"]:
+        return ask(body)
     if method == "POST" and parts[3:] == ["push", "subscribe"]:
         return push_subscribe(body)
     if method == "GET" and parts[3:] == ["activity"]:
