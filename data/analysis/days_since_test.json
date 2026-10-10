@@ -1,0 +1,12 @@
+{
+  "question": "How many days before the snapshot was each village's most recent failed lab test (per parameter)?",
+  "as_of": "2026-10-09",
+  "village_parameter_failures": 573,
+  "median_days": 105,
+  "p25_days": 59,
+  "p75_days": 132,
+  "max_days": 191,
+  "share_over_60_days": 0.736,
+  "share_over_90_days": 0.588,
+  "caveat": "The portal records the failure; we found nothing in it that tells the village or forces a fix. We cannot see whether villages were told some other way."
+}

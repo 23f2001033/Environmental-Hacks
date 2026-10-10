@@ -10,6 +10,14 @@
       "source": "/api/v1/stats"
     },
     {
+      "id": "days_since_test",
+      "label": "Days since the lab found it",
+      "value": 105,
+      "unit": "days (median)",
+      "context": "Median age of each village's most recent failed test on 9 Oct 2026; 74% are over 60 days old. The portal records it; nothing in it tells the village.",
+      "source": "data/analysis/days_since_test.json (scripts/analyze_age.py)"
+    },
+    {
       "id": "chemical_share",
       "label": "Cases boiling can't fix",
       "value": 87,
