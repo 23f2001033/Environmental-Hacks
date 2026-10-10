@@ -1,3 +1,4 @@
 # Runtime dependencies bundled into the Lambda layer (boto3 is provided by the Lambda runtime).
 cedarpy==4.12.1
 pycryptodome==3.24.0
+cryptography==44.0.2
