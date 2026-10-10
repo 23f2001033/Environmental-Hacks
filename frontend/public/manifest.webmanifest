@@ -1,0 +1,10 @@
+{
+  "name": "JalSaathi",
+  "short_name": "JalSaathi",
+  "description": "Lab-confirmed drinking-water alerts for villages, in Hindi and English.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f3f7f8",
+  "theme_color": "#0b2a3c",
+  "icons": [{ "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }]
+}
