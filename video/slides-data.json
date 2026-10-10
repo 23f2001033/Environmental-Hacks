@@ -1,0 +1,45 @@
+{
+  "title": "JalSaathi — Evidence and Proof",
+  "metrics": [
+    {
+      "id": "coverage",
+      "label": "Water quality cases",
+      "value": 573,
+      "unit": "cases",
+      "context": "560 real WQMIS cases and 13 demo cases across 496 villages.",
+      "source": "/api/v1/stats"
+    },
+    {
+      "id": "scale_run",
+      "label": "Successful workflows",
+      "value": 560,
+      "unit": "of 560",
+      "context": "0 failures; run completed in 611 seconds.",
+      "source": "scale_run"
+    },
+    {
+      "id": "estimated_cost",
+      "label": "Estimated scale-run cost",
+      "value": 0.43,
+      "unit": "USD",
+      "context": "Estimated cost, not a confirmed final bill.",
+      "source": "last_run.cost_estimate"
+    },
+    {
+      "id": "repeat_failures",
+      "label": "Villages failing again for the same parameter",
+      "value": 149,
+      "unit": "of 1,233 villages",
+      "context": "12.1% failed again in FY 2026-27; data covers April to 9 October 2026. Repeat failure does not prove no corrective action was taken.",
+      "source": "data/analysis/repeat_failures.json"
+    },
+    {
+      "id": "village_precision",
+      "label": "Village-level map pins",
+      "value": 172,
+      "unit": "of 496 villages",
+      "context": "Only 172 of 496 pins are village-level; the rest have lower geographic precision.",
+      "source": "data/fixtures/coordinates.json"
+    }
+  ]
+}
