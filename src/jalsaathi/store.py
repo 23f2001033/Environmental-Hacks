@@ -225,12 +225,23 @@ def chat_subscriptions(chat_id: int) -> list[dict]:
     return _query(f"CHAT#tg{chat_id}", "SUB#")
 
 
+def chat_lang(chat_id: int) -> str:
+    """The language this chat chose ("hi" by default)."""
+    item = _get(f"CHAT#tg{chat_id}", "PREF")
+    return (item or {}).get("lang", "hi")
+
+
+def set_chat_lang(chat_id: int, lang: str) -> None:
+    _t().put_item(Item={"pk": f"CHAT#tg{chat_id}", "sk": "PREF", "type": "pref", "lang": lang})
+
+
 def unsubscribe_all(chat_id: int) -> int:
     subs = chat_subscriptions(chat_id)
     for s in subs:
         _t().delete_item(Key={"pk": s["scope_pk"], "sk": f"SUB#tg{chat_id}"})
         _t().delete_item(Key={"pk": f"CHAT#tg{chat_id}", "sk": s["sk"]})
     _t().delete_item(Key={"pk": f"CHAT#tg{chat_id}", "sk": "PHOTO"})
+    _t().delete_item(Key={"pk": f"CHAT#tg{chat_id}", "sk": "PREF"})
     return len(subs)
 
 
@@ -283,7 +294,7 @@ def latest_run(scale_only: bool = False) -> dict | None:
 
 def reset_demo() -> int:
     """Delete cases, samples, villages, events, tokens and runs. Keeps subscriptions so demo phones stay joined."""
-    keep = {"sub", "chatsub"}
+    keep = {"sub", "chatsub", "pref"}
     deleted, start = 0, None
     while True:
         kwargs = {"ProjectionExpression": "pk, sk, #t", "ExpressionAttributeNames": {"#t": "type"}}

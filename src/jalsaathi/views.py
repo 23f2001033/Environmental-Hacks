@@ -48,6 +48,7 @@ def case_view(case: dict, with_timeline: bool = True) -> dict:
         "advice": {"hi": advice.lines(code, "hi"), "en": advice.lines(code, "en")},
         "actions": advice.actions(code),
         "audio_url": voice.public_url(case.get("audio_path")),
+        "audio": {"hi": voice.public_url(case.get("audio_path")), "en": voice.public_url(case.get("audio_path_en"))},
         "village_key": case.get("village_key"),
         "village": case.get("village"),
         "block": case.get("block"),
@@ -74,7 +75,8 @@ def village_bundle(key: str, make_audio: bool = False) -> dict | None:
     if make_audio:
         for c in cases:
             if c.get("status") in store.OPEN_STATUSES:
-                voice.ensure_audio(c)  # first visit makes the voice note; later visits reuse it
+                voice.ensure_audio(c)  # first visit makes the voice notes; later visits reuse them
+                voice.ensure_audio(c, "en")
     status = village_status(cases)
     samples = [{k: s.get(k) for k in ("parameter", "value", "unit", "acceptable_limit", "permissible_limit", "lab",
                                        "lab_approval", "sample_id", "source_type", "scheme_id", "scheme_name")}

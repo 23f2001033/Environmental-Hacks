@@ -42,9 +42,9 @@
       "class": "chemical",
       "name": {"hi": "नाइट्रेट", "en": "nitrate"},
       "do_now": [
-        {"action": "no_boil", "hi": "यह पानी उबालें नहीं। उबालने से नाइट्रेट और बढ़ता है।", "en": "Do not boil this water. Boiling makes nitrate stronger."},
+        {"action": "no_boil", "hi": "इस पानी को उबालें नहीं। उबालने से नाइट्रेट और बढ़ जाता है।", "en": "Do not boil this water. Boiling makes nitrate stronger."},
         {"action": "alt_source", "hi": "पीने और खाना बनाने के लिए दूसरा जांचा हुआ स्रोत इस्तेमाल करें।", "en": "Use another tested source for drinking and cooking."},
-        {"action": "infant_warning", "hi": "6 महीने से छोटे बच्चों के लिए यह पानी बिल्कुल इस्तेमाल न करें।", "en": "Never use this water for babies under 6 months."}
+        {"action": "infant_warning", "hi": "6 महीने से छोटे बच्चे का दूध या खाना इस पानी से कभी न बनाएं।", "en": "Never make milk or food for a baby under 6 months with this water."}
       ],
       "engineer_fix": {"hi": "स्रोत बदलें, गहरा करें, या किसी सुरक्षित स्रोत के पानी से मिलाएं। खाद या सीवेज का रिसाव जांचें।", "en": "Change or deepen the source, or blend with a safe source. Check for fertiliser or sewage seepage."},
       "sources": ["IS 10500:2012 (nitrate 45 mg/L)", "Iowa DNR: boiling concentrates nitrate"]
@@ -53,7 +53,7 @@
       "class": "chemical",
       "name": {"hi": "फ्लोराइड", "en": "fluoride"},
       "do_now": [
-        {"action": "no_boil", "hi": "उबालने से फ्लोराइड नहीं हटता।", "en": "Boiling does not remove fluoride."},
+        {"action": "no_boil", "hi": "उबालने से फ्लोराइड नहीं हटता, इसलिए उबालकर पीना सुरक्षित नहीं है।", "en": "Boiling does not remove fluoride, so boiled water is still unsafe."},
         {"action": "alt_source", "hi": "पीने और खाना बनाने के लिए दूसरा जांचा हुआ स्रोत इस्तेमाल करें। बच्चे और गर्भवती महिलाएं सबसे पहले।", "en": "Use another tested source for drinking and cooking, children and pregnant women first."}
       ],
       "engineer_fix": {"hi": "डीफ्लोराइडेशन यूनिट लगाएं या दूसरा स्रोत दें।", "en": "Install a defluoridation unit or provide an alternate source."},
@@ -63,7 +63,7 @@
       "class": "chemical",
       "name": {"hi": "आर्सेनिक", "en": "arsenic"},
       "do_now": [
-        {"action": "no_boil", "hi": "उबालने से आर्सेनिक नहीं हटता, बल्कि बढ़ता है।", "en": "Boiling does not remove arsenic; it makes it stronger."},
+        {"action": "no_boil", "hi": "उबालने से आर्सेनिक नहीं हटता, बल्कि और बढ़ जाता है।", "en": "Boiling does not remove arsenic; it makes it stronger."},
         {"action": "alt_source", "hi": "पीने और खाना बनाने के लिए दूसरा जांचा हुआ स्रोत इस्तेमाल करें।", "en": "Use another tested source for drinking and cooking."}
       ],
       "engineer_fix": {"hi": "आर्सेनिक हटाने की यूनिट लगाएं या दूसरा गहरा या सतही स्रोत दें।", "en": "Install an arsenic removal unit or provide an alternate deeper or surface source."},

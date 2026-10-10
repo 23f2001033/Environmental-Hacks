@@ -54,10 +54,11 @@ def test_engineer_consent_triggers_catch_up(monkeypatch):
     monkeypatch.setattr(webhook.telegram, "answer_callback", lambda *a, **k: None)
     monkeypatch.setattr(webhook.telegram, "clear_buttons", lambda *a, **k: None)
     monkeypatch.setattr(webhook.case_steps, "catch_up_engineer", lambda chat, key: caught.append((chat, key)) or 0)
+    monkeypatch.setattr(webhook.store, "block_cases", lambda key: [{"block": "Harpalpur"}])
     import json
     webhook.handler({"headers": {"X-Telegram-Bot-Api-Secret-Token": "hook-secret"}, "body": json.dumps(
         {"update_id": 30, "callback_query": {"id": "c", "data": "s:e:5037:y", "message": {"chat": {"id": 7}, "message_id": 1}}})})
-    assert caught == [(7, "5037")] and "कोई खुला मामला नहीं" in msgs[-1]
+    assert caught == [(7, "5037")] and "Harpalpur ब्लॉक" in msgs[0] and "कोई खुला मामला नहीं" in msgs[-1]
 
 
 class FakeSfn:
@@ -88,3 +89,41 @@ def test_restart_demo_touches_only_demo_cases(monkeypatch):
     assert fake.stopped == [f"arn:{behta}-a1b2c3"]  # the real case and a look-alike name are left alone
     assert set(deleted) == demo_ids and reseeded == [{"source": "fixtures"}]
     assert result["cases_removed"] == len(demo_ids) and result["cases_started"] == 13
+
+
+def test_same_advice_cases_share_one_alert_but_boil_and_never_boil_never_do():
+    ecoli = _case(1)
+    coliform = dict(_case(2), code="coliform", value=200)
+    nitrate = dict(_case(3), code="nitrate", value=60, unit="mg/l")
+    groups = case_steps.group_by_advice([ecoli, nitrate, coliform])
+    assert sorted(len(g) for g in groups) == [1, 2]
+    assert {c["code"] for g in groups if len(g) == 2 for c in g} == {"ecoli", "coliform"}
+
+
+def test_english_button_switches_language_and_resends_in_english(monkeypatch, default_language):
+    import json
+    answered, resent = [], []
+    monkeypatch.setattr(webhook.config, "secret", lambda name: "hook-secret")
+    monkeypatch.setattr(webhook.store, "seen_update", lambda uid: False)
+    monkeypatch.setattr(webhook.telegram, "answer_callback", lambda cb, text=None, alert=False: answered.append(text))
+    monkeypatch.setattr(webhook.case_steps, "send_village_alerts", lambda key, chat, lang=None: resent.append((key, chat, lang)))
+    webhook.handler({"headers": {"X-Telegram-Bot-Api-Secret-Token": "hook-secret"}, "body": json.dumps(
+        {"update_id": 31, "callback_query": {"id": "c", "data": "l:en:412558", "message": {"chat": {"id": 7}, "message_id": 1}}})})
+    assert default_language[7] == "en" and resent == [("412558", 7, "en")] and "English" in answered[0]
+
+
+def test_english_command_sets_language(monkeypatch, default_language):
+    import json
+    msgs = []
+    monkeypatch.setattr(webhook.config, "secret", lambda name: "hook-secret")
+    monkeypatch.setattr(webhook.store, "seen_update", lambda uid: False)
+    monkeypatch.setattr(webhook.telegram, "send_message", lambda chat, text, buttons=None: msgs.append(text))
+    webhook.handler({"headers": {"X-Telegram-Bot-Api-Secret-Token": "hook-secret"},
+                     "body": json.dumps({"update_id": 32, "message": {"chat": {"id": 8}, "text": "/english"}})})
+    assert default_language[8] == "en" and "English" in msgs[0]
+
+
+def test_every_message_exists_in_both_languages():
+    from jalsaathi import i18n
+    for key, texts in i18n.MESSAGES.items():
+        assert set(texts) == {"hi", "en"}, key

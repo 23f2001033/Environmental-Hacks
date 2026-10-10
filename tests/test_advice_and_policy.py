@@ -79,7 +79,7 @@ CASE = {"code": "nitrate", "village": "Dhabla Kalayanpura", "block": "Anta", "di
 
 def test_alert_text_hindi_contains_facts_and_no_boil_warning():
     text = advice.alert_text(CASE, "hi", page_url="https://example.org/v/1", data_as_of="2026-10-09")
-    assert "Dhabla Kalayanpura" in text and "60 mg/l" in text and "45" in text and "2026-08-05" in text
+    assert "Dhabla Kalayanpura" in text and "60 mg/l" in text and "45" in text and "05-08-2026" in text
     assert "उबालें नहीं" in text and "https://example.org/v/1" in text
 
 

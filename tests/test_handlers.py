@@ -57,7 +57,8 @@ def test_webhook_start_with_village_asks_for_consent(monkeypatch, sent):
     webhook.handler(_tg_event({"update_id": 8, "message": {"chat": {"id": 5}, "text": "/start v_412558"}}))
     chat, text, buttons = sent[0]
     assert chat == 5 and "BEHTA LAKHI" in text
-    assert buttons == [[("✅ हाँ", "s:v:412558:y"), ("❌ नहीं", "s:v:412558:n")]]
+    assert buttons == [[("✅ हाँ", "s:v:412558:y"), ("❌ नहीं", "s:v:412558:n")],
+                       [("🇬🇧 Read in English", "g:en:v:412558")]]
 
 
 def test_webhook_close_attempt_is_denied_by_cedar(monkeypatch, sent):
