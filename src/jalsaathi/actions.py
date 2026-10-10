@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 
-from . import config, policy, store
+from . import config, metrics, policy, store
 
 FIX_ACTIONS = {"chlorination": "chlorination (क्लोरीनेशन)", "repair": "repair (मरम्मत)", "source_changed": "source changed (स्रोत बदला)",
                "need_help": "needs help (मदद चाहिए)"}
@@ -41,6 +41,7 @@ def log_fix(case_id: str, action: str, actor: str) -> None:
     store.add_event(case_id, "fix_logged", actor=actor, action=action, note=FIX_ACTIONS[action])
     if action != "need_help":
         _resume(case_id, "fix", tok, {"action": action})
+    metrics.emit("FixesLogged", Action=action)
 
 
 def try_close(case_id: str, actor: str, role: str = "engineer") -> dict:
@@ -61,6 +62,7 @@ def kit_result(case_id: str, result: str, actor: str, photo_key: str | None, ai_
         note += f"; AI suggestion was {ai_hint.get('colour')} ({ai_hint.get('confidence')}), " + ("agrees" if agrees else "person chose differently")
     store.add_event(case_id, "kit_result", actor=actor, result=result, photo_key=photo_key, ai_hint=ai_hint, note=note)
     _resume(case_id, "kit", tok, {"result": result})
+    metrics.emit("FieldTests", Result=result)
 
 
 def lab_result(case_id: str, result: str, actor: str, simulated: bool) -> None:
@@ -70,3 +72,4 @@ def lab_result(case_id: str, result: str, actor: str, simulated: bool) -> None:
     note = ("SIMULATED lab re-test (demo control)" if simulated else "lab re-test") + f": {result}"
     store.add_event(case_id, "lab_result", actor=actor, result=result, note=note, simulated=simulated)
     _resume(case_id, "lab", tok, {"result": result})
+    metrics.emit("LabResults", Result=result)

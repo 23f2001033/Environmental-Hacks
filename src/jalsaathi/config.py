@@ -5,6 +5,8 @@ from __future__ import annotations
 import os
 from functools import lru_cache
 
+from . import metrics  # noqa: F401 - sets up X-Ray tracing inside Lambda
+
 REGION = os.environ.get("AWS_REGION", "ap-south-1")
 SSM_BOT_TOKEN = "/jalsaathi/telegram/bot-token"
 SSM_WEBHOOK_SECRET = "/jalsaathi/telegram/webhook-secret"

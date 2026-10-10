@@ -11,7 +11,7 @@ import secrets
 import time
 from datetime import datetime, timezone
 
-from . import advice, config, i18n, notify, policy, rules, store, telegram, voice
+from . import advice, config, i18n, metrics, notify, policy, rules, store, telegram, voice
 
 log = logging.getLogger()
 log.setLevel(logging.INFO)
@@ -109,6 +109,7 @@ def send_village_alerts(village_key: str, chat_id: int, lang: str | None = None)
 
 
 def step_init(case: dict, event: dict) -> dict:
+    metrics.emit("CasesOpened", Class=rules.contaminant_class(case["code"]), Severity=case.get("severity"))
     store.add_event(case["case_id"], "detected", note=f"{case.get('parameter')} {case.get('value')} {case.get('unit') or ''}".strip(),
                     source=case.get("source"))
     return {"timers": case["timers"]}
@@ -125,6 +126,7 @@ def step_alert(case: dict, event: dict) -> dict:
         voice.ensure_audio(case)  # demo villages always have their voice note ready; others get one on first need
     sent = send_alert(case)
     pushed = notify.village(case, "push_alert")
+    metrics.emit("AlertsSent", sent + pushed)
     store.update_case(case["case_id"], status="WARNED", warned_at=store.now_iso())
     note = f"alert sent to {sent} village contact(s) on Telegram" + (f" and {pushed} in the app" if pushed else "")
     store.add_event(case["case_id"], "warned", note=note)
@@ -202,6 +204,7 @@ def step_escalate(case: dict, event: dict) -> dict:
     store.update_case(case["case_id"], status="ESCALATED" if reason == "fix" else status_after,
                       escalations=sum(counts.values()), escalation_counts=counts)
     store.add_event(case["case_id"], "escalated", note=f"{note} (escalation {n} of 3)")
+    metrics.emit("Escalations", Reason=reason)
     targets = _engineers(case) if reason in ("fix", "lab") else _relays(case)
     for t in targets:
         _tell(t["chat_id"], message, village=case["village"])
@@ -253,6 +256,7 @@ def step_close(case: dict, event: dict) -> dict:
         raise RuntimeError("close denied by policy: " + d["reason"])
     store.update_case(case["case_id"], status="CLOSED", closed_at=store.now_iso(), deadline_at=None)
     store.add_event(case["case_id"], "closed", note="lab re-test passed")
+    metrics.emit("CasesClosed")
     for r in _relays(case):
         _tell(r["chat_id"], "closed", village=case["village"])
     notify.village(case, "closed")
