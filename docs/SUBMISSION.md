@@ -26,7 +26,7 @@ Fields marked **TODO** need a team member's own details. Everything else is read
 
 **Deployed link:** https://d2735023v3xj6.cloudfront.net
 
-**YouTube video:** **TODO (Aman)**: upload the final 2:58 cut as Unlisted and paste the link; check it opens in a signed-out browser. Script: [video/SCRIPT.md](../video/SCRIPT.md)
+**YouTube video:** https://youtu.be/oexFNyjCqKo (2:58). Script: [video/SCRIPT.md](../video/SCRIPT.md)
 
 ### What does your project do? (problem, and who it is for)
 

@@ -8,6 +8,8 @@
 
 Built for **Environmental Hacks** (WeMakeDevs × AWS, Bharat Builds Tour, event 02), **Heat and Water** track, 8–11 October 2026. Running on AWS in Mumbai (`ap-south-1`) on real government data.
 
+**Watch the 3-minute demo:** [youtu.be/oexFNyjCqKo](https://youtu.be/oexFNyjCqKo)
+
 **Try it:** [the site](https://d2735023v3xj6.cloudfront.net) · [a village page](https://d2735023v3xj6.cloudfront.net/?v=412558) · [the Telegram bot](https://t.me/Srott_bot?start=v_412558) (Hindi; send `/english`) · [engineer screen](https://d2735023v3xj6.cloudfront.net/app/engineer/5037?k=demo) · [health-worker screen](https://d2735023v3xj6.cloudfront.net/app/relay/412558?k=demo) · [officials' live feed](https://d2735023v3xj6.cloudfront.net/app/officials)
 
 ![The About page: every dot is a village whose drinking water failed a government lab test this year](docs/img/about.png)
