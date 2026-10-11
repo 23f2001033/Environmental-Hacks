@@ -363,8 +363,8 @@ document.addEventListener("click", async (event) => {
       const loc = [v.block, v.district].filter(Boolean).join(", ");
       const text =
         language === "hi"
-          ? `जलसाथी: ${v.name} (${loc}) के पीने के पानी की सरकारी जांच रिपोर्ट और सही सलाह:`
-          : `JalSaathi: Drinking-water lab test report and safety advice for ${v.name} (${loc}):`;
+          ? `${t("brand")}: ${v.name} (${loc}) के पीने के पानी की सरकारी जांच रिपोर्ट और सही सलाह:`
+          : `${t("brand")}: Drinking-water lab test report and safety advice for ${v.name} (${loc}):`;
       if (navigator.share)
         await navigator.share({ title: v.name, text, url });
       else {
