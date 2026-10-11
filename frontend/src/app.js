@@ -111,10 +111,13 @@ function wireDirectory() {
             v.lon,
           );
           const dStr = dist < 1 ? "<1" : `${Math.round(dist)}`;
+          // Most pins are block or district centres: say the distance is approximate, as the map does
+          const approx = v.geo_precision !== "village";
           return {
             ...v,
             distanceKm: dist,
-            distanceText: `${dStr} ${t("km")}`,
+            distanceText: `${approx ? t("approxPrefix") : ""}${dStr} ${t("km")}`,
+            distanceNote: approx ? t("approxDistance") : "",
           };
         }
         return { ...v, distanceKm: null, distanceText: null };

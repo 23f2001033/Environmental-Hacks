@@ -175,6 +175,11 @@ export const words = {
     "Could not determine your location.",
   ],
   km: ["किमी", "km"],
+  approxPrefix: ["लगभग ", "~"],
+  approxDistance: [
+    "अनुमानित: गांव की सही जगह नहीं पता, दूरी ब्लॉक या ज़िले के केंद्र से है।",
+    "Approximate: measured to the block or district centre, not the village itself.",
+  ],
 };
 export let language = "hi";
 export function setLanguage(lang) {

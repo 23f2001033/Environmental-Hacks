@@ -123,7 +123,7 @@ export function villageRows(villages, route) {
   return villages
     .map(
       (v) =>
-        `<a class="village-row" data-nav href="${routeURL("village", v.key, route.demo)}"><span class="row-location">${icon("pin")}</span><span class="row-name"><strong>${e(v.name)}</strong><small>${e([v.block, v.district, v.state].filter(Boolean).join(", "))}</small></span>${v.distanceText ? `<span class="distance-pill">${e(v.distanceText)}</span>` : ""}${badge(v.status || "unknown")}<span class="row-count">${e(v.open_cases ?? 0)} ${e(t("open"))}</span>${icon("arrow")}</a>`,
+        `<a class="village-row" data-nav href="${routeURL("village", v.key, route.demo)}"><span class="row-location">${icon("pin")}</span><span class="row-name"><strong>${e(v.name)}</strong><small>${e([v.block, v.district, v.state].filter(Boolean).join(", "))}</small></span>${v.distanceText ? `<span class="distance-pill${v.distanceNote ? " approx" : ""}"${v.distanceNote ? ` title="${e(v.distanceNote)}"` : ""}>${e(v.distanceText)}</span>` : ""}${badge(v.status || "unknown")}<span class="row-count">${e(v.open_cases ?? 0)} ${e(t("open"))}</span>${icon("arrow")}</a>`,
     )
     .join("");
 }
