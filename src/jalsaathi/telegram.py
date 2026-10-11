@@ -44,7 +44,7 @@ def send_message(chat_id: int, text: str, buttons=None) -> dict:
 
 
 def send_audio(chat_id: int, audio_url: str, caption: str | None = None, title: str | None = None) -> dict:
-    return _call("sendAudio", chat_id=chat_id, audio=audio_url, caption=caption, title=title, performer="JalSaathi")
+    return _call("sendAudio", chat_id=chat_id, audio=audio_url, caption=caption, title=title, performer="Srot")
 
 
 def answer_callback(callback_id: str, text: str | None = None, alert: bool = False) -> None:

@@ -1,6 +1,6 @@
 {
-  "name": "JalSaathi",
-  "short_name": "JalSaathi",
+  "name": "Srot",
+  "short_name": "Srot",
   "description": "Lab-confirmed drinking-water alerts for villages, in Hindi and English.",
   "start_url": "/app/",
   "display": "standalone",

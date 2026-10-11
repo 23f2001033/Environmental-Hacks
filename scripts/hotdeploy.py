@@ -113,7 +113,7 @@ def deploy_infra() -> None:
 
 
 def deploy_observability() -> None:
-    """X-Ray tracing on every function and both state machines, and the JalSaathi CloudWatch dashboard."""
+    """X-Ray tracing on every function and both state machines, and the Srot CloudWatch dashboard."""
     import json
     sys.path.insert(0, str(ROOT / "infra"))
     from dashboard import body
@@ -137,7 +137,7 @@ def deploy_observability() -> None:
         sfn.update_state_machine(stateMachineArn=arn, tracingConfiguration={"enabled": True})
     dash = body(REGION, {k: v["FunctionName"] for k, v in funcs.items()}, out["StateMachineArn"], out["ScaleRunArn"])
     msgs = boto3.client("cloudwatch", region_name=REGION).put_dashboard(
-        DashboardName="JalSaathi", DashboardBody=json.dumps(dash)).get("DashboardValidationMessages")
+        DashboardName="Srot", DashboardBody=json.dumps(dash)).get("DashboardValidationMessages")
     print("observability: X-Ray on", len(funcs), "functions + 2 state machines; dashboard", msgs or "ok")
 
 

@@ -1,4 +1,4 @@
-"""Web Push to the JalSaathi web app, written against the standards (RFC 8291 encryption, RFC 8292 VAPID).
+"""Web Push to the Srot web app, written against the standards (RFC 8291 encryption, RFC 8292 VAPID).
 
 No push library: the usual one needs a package with no Lambda wheel. This is about 60 lines on `cryptography`.
 """

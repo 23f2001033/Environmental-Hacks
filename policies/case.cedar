@@ -1,4 +1,4 @@
-// JalSaathi case policies (DECISIONS.md D-07, D-08).
+// Srot case policies (DECISIONS.md D-07, D-08).
 // Evaluated by src/jalsaathi/policy.py, which also denies on any evaluation error (fail closed).
 // Anything not permitted here is denied.
 

@@ -1,4 +1,4 @@
-# JalSaathi: Product Requirements
+# Srot: Product Requirements
 
 | | |
 |---|---|
@@ -10,7 +10,7 @@
 
 ## 1. Summary
 
-The government already tests rural drinking water and publishes the failures. Nobody tells the village, the advice people do get is often wrong for the contaminant, and nobody can see whether the source was fixed. JalSaathi turns each failed lab test into a case. The village hears about it in Hindi the same day, gets advice that is right for that contaminant, the block engineer is asked to fix it, and the case stays open until a re-test passes.
+The government already tests rural drinking water and publishes the failures. Nobody tells the village, the advice people do get is often wrong for the contaminant, and nobody can see whether the source was fixed. Srot turns each failed lab test into a case. The village hears about it in Hindi the same day, gets advice that is right for that contaminant, the block engineer is asked to fix it, and the case stays open until a re-test passes.
 
 ## 2. Problem
 
@@ -32,7 +32,7 @@ The government already tests rural drinking water and publishes the failures. No
 
 ## 3. Users
 
-| User | Who | Their decision | How they reach JalSaathi |
+| User | Who | Their decision | How they reach Srot |
 |---|---|---|---|
 | **Primary: village relay** | Anganwadi worker or village water committee member. Illustrative persona: Sunita, anganwadi worker in Behta Lakhi, Harpalpur. She feeds about 30 children under six every day from the village tap, and is one of the women JJM trains to use field test kits. | Is this water safe to drink and cook with today? If not, what do we do until it's fixed? | Telegram bot (joins by link or by scanning the poster's QR code); forwards the Hindi voice note to the village WhatsApp group; pins the poster on the wall |
 | **Secondary: fixer** | Block-level Junior or Assistant Engineer of the state water agency (U.P. Jal Nigam in the demo) | Which failed sources in my block need action first, and have I closed them? | Telegram case cards with action buttons; block map page |
@@ -51,7 +51,7 @@ The government already tests rural drinking water and publishes the failures. No
 
 ### Non-goals (this weekend)
 
-- Replacing public-health action or official notices. JalSaathi relays official results; it does not certify water.
+- Replacing public-health action or official notices. Srot relays official results; it does not certify water.
 - Real SMS, WhatsApp or phone (IVR) delivery. These need DLT registration or a Meta Business account; Telegram stands in.
 - Writing back to WQMIS or any government system.
 - Login screens. Telegram identity and an admin token are enough.

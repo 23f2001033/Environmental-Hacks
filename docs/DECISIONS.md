@@ -301,7 +301,7 @@ Only after the Saturday 18:00 freeze is green, in this order:
 - **S4 SES email escalation:** SES is in sandbox, so it could only email verified addresses. Telegram escalation to the block engineer is in place.
 - **S5 Repeat-failure analysis** was built as a script plus bundled results (`data/analysis/repeat_failures.json`, shown in `/stats`) rather than a live job, because last year's data does not change.
 
-## D-32 Ask JalSaathi: a checked voice assistant, not a chatbot
+## D-32 Ask Srot: a checked voice assistant, not a chatbot
 
 **Decision.** Village members can ask a question by Telegram voice note or text (or in the app). Amazon Transcribe (streaming, hi-IN, Telegram's OGG/Opus as is) → Amazon Translate → a Strands agent on Bedrock (Nova Pro) whose only tools read this village's case and our advice library → Bedrock Guardrails contextual grounding check against exactly what the agent read (threshold 0.7) → the same Cedar rule as the alerts (no "boil" when every open case is chemical) → Amazon Translate → Amazon Polly. Any failed check, error or model refusal sends the official advice for the village instead of the model's words. Each question is recorded on the case timeline and in the officials' feed.
 
@@ -320,3 +320,9 @@ Only after the Saturday 18:00 freeze is green, in this order:
 **Decision.** An EventBridge Scheduler schedule (every 15 minutes with the demo clock, hourly otherwise) runs the digest: each district official gets one Amazon SES email listing every overdue case in their district, and only if something changed since their last email. The admin console can send one at once (`POST /admin/digest`). Recipients and sender are in SSM, set with `scripts/setup_email.py`; SES is in sandbox, so addresses are verified first.
 
 **Why.** Escalations on Telegram reach the block engineer; accountability needs the person above them. One email per escalation would send about 40 emails per demo run; a digest reads like a report an official would actually act on.
+
+## D-35 The product is called Srot; internal identifiers keep the working name
+
+**Decision.** The product name is **Srot** (स्रोत, "source"), matching the bot @Srott_bot. Everything people read uses it: the site, the app, Telegram messages, voice-note titles, app notifications, emails, the CloudWatch dashboard, the docs and the video. The working name stays only where it is an identifier: the Python package `jalsaathi`, the CloudFormation stack `JalSaathi` and its Lambda function names, SSM parameters under `/jalsaathi/`, the CloudWatch metric namespace `JalSaathi` and the Guardrail `jalsaathi-answers`.
+
+**Why.** Renaming the stack, namespace or parameters would replace live resources (new URLs and secrets, an empty dashboard) on the last day, for no change anyone sees.

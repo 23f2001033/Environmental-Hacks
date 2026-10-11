@@ -1,4 +1,4 @@
-# JalSaathi public frontend
+# Srot public frontend
 
 Design process: the frontend-design skill from anthropics/claude-code,
 plugins/frontend-design/skills/frontend-design/SKILL.md (main), read in this chat.
@@ -50,5 +50,5 @@ Display type Fraunces (Latin) and Tiro Devanagari Hindi; body type unchanged.
 No stock photography: the hero is a "living map" drawn from the real coordinates of every village with a failed test
 (hollow = approximate location), with the demo village marked. Figures come from the live API only (105 days, 87%,
 149); if a figure can't load, its block is hidden rather than invented. The brief's heritage framing ("reconnect with
-your roots") was not used: JalSaathi is about unsafe drinking water, and the page says so.
+your roots") was not used: Srot is about unsafe drinking water, and the page says so.
 Checked at 360, 390 and 1440 px with mobile emulation: no horizontal overflow on any page.

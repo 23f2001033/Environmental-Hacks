@@ -1,4 +1,4 @@
-// JalSaathi test console. Talks only to /api/v1 (same origin). See docs/API.md.
+// Srot test console. Talks only to /api/v1 (same origin). See docs/API.md.
 (function () {
   "use strict";
   const API = "/api/v1";

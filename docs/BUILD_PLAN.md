@@ -1,6 +1,6 @@
 # Build plan
 
-How we build JalSaathi between Fri 9 Oct 21:00 IST and the Sun 11 Oct 20:00 IST deadline. Read [PRD.md](../PRD.md) for what and why, [DECISIONS.md](DECISIONS.md) for the reasoning behind each choice, and [SETUP.md](SETUP.md) for what must be ready first.
+How we build Srot between Fri 9 Oct 21:00 IST and the Sun 11 Oct 20:00 IST deadline. Read [PRD.md](../PRD.md) for what and why, [DECISIONS.md](DECISIONS.md) for the reasoning behind each choice, and [SETUP.md](SETUP.md) for what must be ready first.
 
 ## Contents
 

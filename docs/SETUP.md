@@ -45,7 +45,7 @@ uv run pytest -q
 ## 3. Create the Telegram bot (5 minutes)
 
 1. In Telegram, open **@BotFather** and send `/newbot`.
-2. Name: `JalSaathi`. Username: something free ending in `bot`, for example `JalSaathiAlertBot`.
+2. Name: `Srot`. Username: something free ending in `bot`, for example `SrotAlertBot`.
 3. BotFather replies with a token like `123456:ABC...`. **Treat it like a password.** Don't post it in the WhatsApp group or commit it.
 4. Give it to Aman privately, or store it yourself:
    - AWS console → Systems Manager → Parameter Store → Create parameter

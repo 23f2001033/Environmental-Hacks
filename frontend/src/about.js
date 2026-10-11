@@ -11,8 +11,8 @@ const c = {
   kicker: ["सरकारी लैब जांच पर आधारित पानी की सूचना", "Lab-confirmed drinking-water alerts"],
   title: ["साफ़ दिखने वाला पानी भी बच्चे को बीमार कर सकता है।", "Clear water can still make a child sick."],
   lead: [
-    "जब सरकारी लैब किसी गांव के पीने के पानी को असुरक्षित पाती है, जलसाथी पानी पीने वालों को बताता है कि क्या करना है: हिंदी या English में, लिखकर और बोलकर। और मामला तब तक खुला रखता है, जब तक दोबारा जांच में पानी सुरक्षित साबित न हो।",
-    "When a government lab finds a village's drinking water unsafe, JalSaathi tells the people who drink it what to do, in Hindi or English, by text and by voice, and keeps the case open until a re-test proves the water safe.",
+    "जब सरकारी लैब किसी गांव के पीने के पानी को असुरक्षित पाती है, स्रोत पानी पीने वालों को बताता है कि क्या करना है: हिंदी या English में, लिखकर और बोलकर। और मामला तब तक खुला रखता है, जब तक दोबारा जांच में पानी सुरक्षित साबित न हो।",
+    "When a government lab finds a village's drinking water unsafe, Srot tells the people who drink it what to do, in Hindi or English, by text and by voice, and keeps the case open until a re-test proves the water safe.",
   ],
   find: ["अपना गांव खोजें", "Find my village"],
   how: ["यह कैसे काम करता है", "How it works"],

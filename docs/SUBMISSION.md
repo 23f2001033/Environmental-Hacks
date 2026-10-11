@@ -18,7 +18,7 @@ Fields marked **TODO** need a team member's own details. Everything else is read
 
 ## Part 2: Project details
 
-**Project title:** JalSaathi: lab-confirmed drinking-water alerts for villages
+**Project title:** Srot: lab-confirmed drinking-water alerts for villages
 
 **Track:** Heat and Water
 
@@ -32,13 +32,13 @@ Fields marked **TODO** need a team member's own details. Everything else is read
 
 > Government labs under India's Jal Jeevan Mission test village drinking water and publish every failure on a public portal (JJM-WQMIS). The result is recorded, but nothing carries it to the family drinking the water or forces a fix. In Uttar Pradesh and Rajasthan we found 573 failed tests this year; the median one is 105 days old, and 149 villages failed the same test again the year after. Water with E. coli looks clear, and 87% of these failures are nitrate, fluoride or arsenic, where the usual advice, "boil it", does nothing or makes the water worse.
 >
-> JalSaathi turns each failed lab test into a case that cannot be closed until the water is proven safe. The village's health worker gets a Hindi or English alert with a voice note and the right action for that contaminant, on Telegram and in a web app. People can ask questions by voice in Hindi ("can I boil it?") and get a spoken answer drawn only from their village's results. The block engineer gets the case with a deadline; missed deadlines escalate and the district official gets an email digest of overdue cases. The engineer cannot close a case: a field-kit re-test makes it provisionally safe, and only a passing lab re-test closes it.
+> Srot turns each failed lab test into a case that cannot be closed until the water is proven safe. The village's health worker gets a Hindi or English alert with a voice note and the right action for that contaminant, on Telegram and in a web app. People can ask questions by voice in Hindi ("can I boil it?") and get a spoken answer drawn only from their village's results. The block engineer gets the case with a deadline; missed deadlines escalate and the district official gets an email digest of overdue cases. The engineer cannot close a case: a field-kit re-test makes it provisionally safe, and only a passing lab re-test closes it.
 >
 > It is for the people drinking the water (through the village health worker), the block engineers who fix sources, and district officials who need to see what is overdue. It runs on real government data today: 573 cases in 496 villages.
 
 ### How did you use AWS in your project?
 
-> **AWS open source:** **AWS CDK** (Python) defines and deploys the whole stack in one `cdk deploy`. **Cedar** expresses the case rules (only a passing lab re-test can close a case; a field kit only makes it provisionally safe; never advise boiling for chemical contamination); the same policy file runs in Amazon Verified Permissions and, as a fail-closed fallback, locally via cedarpy. **Strands Agents** runs the "Ask JalSaathi" agent on Amazon Bedrock with tools that can only read the asking village's record. We also use the **Amazon Transcribe streaming SDK** and boto3.
+> **AWS open source:** **AWS CDK** (Python) defines and deploys the whole stack in one `cdk deploy`. **Cedar** expresses the case rules (only a passing lab re-test can close a case; a field kit only makes it provisionally safe; never advise boiling for chemical contamination); the same policy file runs in Amazon Verified Permissions and, as a fail-closed fallback, locally via cedarpy. **Strands Agents** runs the "Ask Srot" agent on Amazon Bedrock with tools that can only read the asking village's record. We also use the **Amazon Transcribe streaming SDK** and boto3.
 >
 > **AWS services:**
 > - **AWS Step Functions**: one Standard workflow per village case. Task tokens wait (for free) for the engineer, the field kit and the lab; deadlines escalate. An Express **Distributed Map** started 560 real cases in 611 s with 0 failures, paced to fit a new account's Lambda limit.

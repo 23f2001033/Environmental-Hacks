@@ -171,7 +171,7 @@ def overview() -> dict:
 
 
 def ask(body: dict) -> dict:
-    """Ask JalSaathi from the app: the same checked pipeline as the Telegram voice questions (text in, text + voice out)."""
+    """Ask Srot from the app: the same checked pipeline as the Telegram voice questions (text in, text + voice out)."""
     from . import assistant
 
     key, question = str(body.get("village") or ""), str(body.get("question") or "").strip()

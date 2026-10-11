@@ -1,4 +1,4 @@
-"""Ask JalSaathi: the answer pipeline and every check that can replace the model's words with the official advice."""
+"""Ask Srot: the answer pipeline and every check that can replace the model's words with the official advice."""
 
 import json
 

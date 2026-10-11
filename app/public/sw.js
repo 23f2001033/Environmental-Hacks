@@ -1,11 +1,11 @@
-// JalSaathi service worker: shows app notifications (Web Push) and opens the right page when tapped.
+// Srot service worker: shows app notifications (Web Push) and opens the right page when tapped.
 self.addEventListener("install", () => self.skipWaiting());
 self.addEventListener("activate", (event) => event.waitUntil(self.clients.claim()));
 
 self.addEventListener("push", (event) => {
   let data = {};
   try { data = event.data ? event.data.json() : {}; } catch { data = { body: event.data && event.data.text() }; }
-  event.waitUntil(self.registration.showNotification(data.title || "JalSaathi", {
+  event.waitUntil(self.registration.showNotification(data.title || "Srot", {
     body: data.body || "",
     icon: "/app/icon.svg",
     badge: "/app/icon.svg",

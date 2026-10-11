@@ -1,7 +1,7 @@
 """Business metrics in CloudWatch via Embedded Metric Format: a JSON log line becomes a metric, no API call needed.
 
 Namespace JalSaathi. What happened to villages (cases opened, alerts sent, fixes, field tests, closures), what the
-assistant did (questions, grounding, latency) and what Cedar decided. Shown on the JalSaathi CloudWatch dashboard.
+assistant did (questions, grounding, latency) and what Cedar decided. Shown on the Srot CloudWatch dashboard.
 """
 
 from __future__ import annotations

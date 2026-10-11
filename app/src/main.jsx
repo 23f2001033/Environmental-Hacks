@@ -16,7 +16,7 @@ function Header() {
   return (
     <header className="top">
       <div className="wrap">
-        <a className="brand" href="/"><img src="/app/icon.svg" alt="" /><span>JalSaathi</span></a>
+        <a className="brand" href="/"><img src="/app/icon.svg" alt="" /><span>Srot</span></a>
         <nav className="nav">
           <a href="/">{t("nav_about")}</a>
           <NavLink to="/officials">{t("nav_officials")}</NavLink>

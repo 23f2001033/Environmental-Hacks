@@ -1,5 +1,5 @@
 export const words = {
-  brand: ["जलसाथी", "JalSaathi"],
+  brand: ["स्रोत", "Srot"],
   tagline: ["पानी की खबर, गांव तक", "Water information, within reach"],
   villages: ["अपना गांव खोजें", "Find my village"],
   about: ["परिचय", "About"],
@@ -153,8 +153,8 @@ export const words = {
     "Based on JJM-WQMIS test records.",
   ],
   disclaimer: [
-    "जलसाथी जांच की जानकारी पहुंचाता है; पानी प्रमाणित नहीं करता।",
-    "JalSaathi relays test information; it does not certify water.",
+    "स्रोत जांच की जानकारी पहुंचाता है; पानी प्रमाणित नहीं करता।",
+    "Srot relays test information; it does not certify water.",
   ],
   qrNote: ["Telegram पर सूचना के लिए स्कैन करें", "Scan for Telegram updates"],
   qrMissing: [
