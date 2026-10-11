@@ -11,7 +11,7 @@ import {
   formatDate,
   haversineDistanceKm,
 } from "../src/model.js";
-import { villagePage, blockPage } from "../src/components.js";
+import { villagePage, blockPage, villageRows } from "../src/components.js";
 import { setLanguage } from "../src/i18n.js";
 
 test("routes preserve explicit preview mode and encoded village keys", () => {
@@ -156,4 +156,11 @@ test("haversineDistanceKm computes great-circle distance accurately and handles 
   // Behta Lakhi (27.23725, 79.77993) to Basi (27.32363, 79.82606)
   const dist = haversineDistanceKm(27.23725, 79.77993, 27.32363, 79.82606);
   assert.ok(dist >= 10 && dist <= 11);
+});
+test("an approximate pin's distance is marked as approximate", () => {
+  setLanguage("en");
+  const html = villageRows([{ key: "a", name: "A", status: "unsafe", distanceText: "~4 km", distanceNote: "Approximate" },
+                            { key: "b", name: "B", status: "unsafe", distanceText: "2 km", distanceNote: "" }], { demo: false });
+  assert.ok(html.includes('class="distance-pill approx" title="Approximate">~4 km'));
+  assert.ok(html.includes('class="distance-pill">2 km'));
 });
