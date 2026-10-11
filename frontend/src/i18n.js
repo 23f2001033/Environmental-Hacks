@@ -163,6 +163,18 @@ export const words = {
   ],
   refresh: ["ताज़ा जानकारी", "Refresh information"],
   historical: ["पहले दर्ज जांच", "Previously recorded test"],
+  nearMe: ["पास के गांव", "Near me"],
+  nearMeActive: ["निकटतम गांव", "Nearest villages"],
+  locating: ["स्थान खोज रहे हैं…", "Locating…"],
+  geoDenied: [
+    "स्थान की अनुमति नहीं मिली। खोज बॉक्स से गांव खोजें।",
+    "Location permission denied. Use the search box above.",
+  ],
+  geoUnavailable: [
+    "स्थान की जानकारी उपलब्ध नहीं हो सकी।",
+    "Could not determine your location.",
+  ],
+  km: ["किमी", "km"],
 };
 export let language = "hi";
 export function setLanguage(lang) {
@@ -195,6 +207,9 @@ export const eventNames = {
   closed: ["मामला बंद हुआ", "Case closed"],
   policy: ["नियम की जांच", "Rule check"],
   question: ["गांव से सवाल पूछा गया", "A villager asked a question"],
-  district_notified: ["ज़िला अधिकारी को ईमेल भेजा", "District official emailed"],
+  district_notified: [
+    "ज़िला अधिकारी को ईमेल भेजा",
+    "District official emailed",
+  ],
   restarted: ["मामला फिर शुरू हुआ", "Case restarted"],
 };

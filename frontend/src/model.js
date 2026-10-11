@@ -22,7 +22,13 @@ export function routeFrom(search) {
   const p = new URLSearchParams(search);
   return {
     demo: p.get("demo") === "1",
-    view: p.has("b") ? "block" : p.has("v") ? "village" : p.has("find") ? "directory" : "about",
+    view: p.has("b")
+      ? "block"
+      : p.has("v")
+        ? "village"
+        : p.has("find")
+          ? "directory"
+          : "about",
     key: p.get("b") ?? p.get("v") ?? "",
     q: p.get("q") ?? "",
   };
@@ -31,7 +37,8 @@ export function routeFrom(search) {
 export function routeURL(view, key, demo = false) {
   const p = new URLSearchParams();
   if (demo) p.set("demo", "1");
-  if (view === "block" || view === "village") p.set(view === "block" ? "b" : "v", key);
+  if (view === "block" || view === "village")
+    p.set(view === "block" ? "b" : "v", key);
   const query = p.size ? String(p) : "";
   if (view === "directory") return `/?find${query ? "&" + query : ""}`;
   return `/${query ? "?" + query : ""}`;
@@ -83,4 +90,26 @@ export function villageStatus(cases) {
     : open.every((c) => c.status === "PROVISIONALLY_SAFE")
       ? "provisional"
       : "unsafe";
+}
+
+export function haversineDistanceKm(lat1, lon1, lat2, lon2) {
+  if (
+    !Number.isFinite(lat1) ||
+    !Number.isFinite(lon1) ||
+    !Number.isFinite(lat2) ||
+    !Number.isFinite(lon2)
+  )
+    return null;
+  const R = 6371;
+  const toRad = Math.PI / 180;
+  const dLat = (lat2 - lat1) * toRad;
+  const dLon = (lon2 - lon1) * toRad;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * toRad) *
+      Math.cos(lat2 * toRad) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return Math.round(R * c * 10) / 10;
 }

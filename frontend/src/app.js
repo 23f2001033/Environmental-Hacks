@@ -11,7 +11,12 @@ import { t, language, setLanguage } from "./i18n.js";
 import "@fontsource/fraunces/600.css";
 import "@fontsource/fraunces/700.css";
 import "@fontsource/tiro-devanagari-hindi/400.css";
-import { routeFrom, routeURL, escapeHTML as e } from "./model.js";
+import {
+  routeFrom,
+  routeURL,
+  escapeHTML as e,
+  haversineDistanceKm,
+} from "./model.js";
 import { aboutPage } from "./about.js";
 import {
   shell,
@@ -78,9 +83,14 @@ function render() {
   if (route.view === "directory") wireDirectory();
 }
 
+let userLocation = null;
+
 function wireDirectory() {
   const search = document.querySelector("#village-search");
   const filter = document.querySelector("#status-filter");
+  const nearMeBtn = document.querySelector("#near-me-btn");
+  const nearMeText = document.querySelector("#near-me-text");
+
   const update = () => {
     const query = search.value.trim().toLocaleLowerCase();
     const rank = { unsafe: 0, provisional: 1, unknown: 2, safe_again: 3 };
@@ -92,14 +102,92 @@ function wireDirectory() {
             .includes(query) &&
           (filter.value === "all" || v.status === filter.value),
       )
-      .sort((a, b) => (rank[a.status] ?? 2) - (rank[b.status] ?? 2));
+      .map((v) => {
+        if (userLocation && Number.isFinite(v.lat) && Number.isFinite(v.lon)) {
+          const dist = haversineDistanceKm(
+            userLocation.lat,
+            userLocation.lon,
+            v.lat,
+            v.lon,
+          );
+          const dStr = dist < 1 ? "<1" : `${Math.round(dist)}`;
+          return {
+            ...v,
+            distanceKm: dist,
+            distanceText: `${dStr} ${t("km")}`,
+          };
+        }
+        return { ...v, distanceKm: null, distanceText: null };
+      });
+
+    if (userLocation) {
+      villages.sort((a, b) => {
+        if (a.distanceKm != null && b.distanceKm != null)
+          return a.distanceKm - b.distanceKm;
+        if (a.distanceKm != null) return -1;
+        if (b.distanceKm != null) return 1;
+        return (rank[a.status] ?? 2) - (rank[b.status] ?? 2);
+      });
+    } else {
+      villages.sort((a, b) => (rank[a.status] ?? 2) - (rank[b.status] ?? 2));
+    }
+
     document.querySelector("#village-list").innerHTML = villageRows(
       villages,
       route,
     );
-    document.querySelector("#result-count").textContent =
-      `${villages.length} ${t("results")}`;
+    const countLabel = userLocation
+      ? `${villages.length} ${t("results")} • ${t("nearMeActive")}`
+      : `${villages.length} ${t("results")}`;
+    document.querySelector("#result-count").textContent = countLabel;
   };
+
+  if (nearMeBtn) {
+    if (userLocation) {
+      nearMeBtn.classList.add("active");
+      if (nearMeText) nearMeText.textContent = t("nearMeActive");
+    }
+    nearMeBtn.onclick = () => {
+      if (userLocation) {
+        userLocation = null;
+        nearMeBtn.classList.remove("active");
+        if (nearMeText) nearMeText.textContent = t("nearMe");
+        update();
+        announce(t("results"));
+        return;
+      }
+      if (!navigator.geolocation) {
+        announce(t("geoUnavailable"));
+        alert(t("geoUnavailable"));
+        return;
+      }
+      if (nearMeText) nearMeText.textContent = t("locating");
+      nearMeBtn.disabled = true;
+
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          nearMeBtn.disabled = false;
+          userLocation = {
+            lat: pos.coords.latitude,
+            lon: pos.coords.longitude,
+          };
+          nearMeBtn.classList.add("active");
+          if (nearMeText) nearMeText.textContent = t("nearMeActive");
+          update();
+          announce(t("nearMeActive"));
+        },
+        (err) => {
+          nearMeBtn.disabled = false;
+          if (nearMeText) nearMeText.textContent = t("nearMe");
+          const msg = err.code === 1 ? t("geoDenied") : t("geoUnavailable");
+          announce(msg);
+          alert(msg);
+        },
+        { enableHighAccuracy: false, timeout: 10000, maximumAge: 60000 },
+      );
+    };
+  }
+
   if (route.q) search.value = route.q;
   search.addEventListener("input", update);
   filter.addEventListener("change", update);
@@ -149,12 +237,18 @@ async function load(focus = false) {
   try {
     if (route.view === "about") {
       const [stats, villages, overview] = await Promise.all([
-        get("/stats", { demo: route.demo, signal: thisRequest.signal }).catch(() => null),
+        get("/stats", { demo: route.demo, signal: thisRequest.signal }).catch(
+          () => null,
+        ),
         get("/villages", { demo: route.demo, signal: thisRequest.signal }),
-        get("/overview", { demo: route.demo, signal: thisRequest.signal }).catch(() => null),
+        get("/overview", {
+          demo: route.demo,
+          signal: thisRequest.signal,
+        }).catch(() => null),
       ]);
       if (thisRequest !== request) return;
-      if (!Array.isArray(villages?.villages)) throw new Error("Invalid response");
+      if (!Array.isArray(villages?.villages))
+        throw new Error("Invalid response");
       data = { stats, villages: villages.villages, overview };
       render();
       return;
