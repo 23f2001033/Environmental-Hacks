@@ -99,7 +99,9 @@ def alert_text_group(cases: list[dict], lang: str = "hi", page_url: str | None =
              else f"Source: Jal Jeevan Mission (JJM-WQMIS), as of {_date(data_as_of, lang)}") if data_as_of else "")
     link = (f"पूरी जानकारी: {page_url}" if hi else f"Details: {page_url}") if page_url else ""
     numbered = "\n".join(f"{i}. {esc(t)}" for i, t in enumerate(lines(case["code"], lang), 1))
-    parts = [f"⚠️ <b>{esc(place)}</b>\n{found}", facts, "", f"<b>{todo}</b>", numbered, "", tail, link, asof]
+    ask = ("🎙️ कोई सवाल? माइक दबाकर बोलकर पूछें, जवाब आवाज़ में मिलेगा।" if hi
+           else "🎙️ Questions? Hold the mic and ask by voice; the answer comes back spoken.")
+    parts = [f"⚠️ <b>{esc(place)}</b>\n{found}", facts, "", f"<b>{todo}</b>", numbered, "", ask, "", tail, link, asof]
     return "\n".join(p for p in parts if p is not None).strip()
 
 
