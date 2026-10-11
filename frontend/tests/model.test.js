@@ -9,6 +9,7 @@ import {
   safeURL,
   escapeHTML,
   formatDate,
+  haversineDistanceKm,
 } from "../src/model.js";
 import { villagePage, blockPage } from "../src/components.js";
 import { setLanguage } from "../src/i18n.js";
@@ -147,4 +148,12 @@ test("block links remain in preview and do not render private actions", () => {
   );
   assert.ok(html.includes("/?demo=1&v=a"));
   assert.ok(!html.includes("/admin/"));
+});
+test("haversineDistanceKm computes great-circle distance accurately and handles invalid coordinates", () => {
+  assert.equal(haversineDistanceKm(null, 79.77, 27.23, 79.77), null);
+  assert.equal(haversineDistanceKm(27.23, undefined, 27.23, 79.77), null);
+  assert.equal(haversineDistanceKm(27.237, 79.779, 27.237, 79.779), 0);
+  // Behta Lakhi (27.23725, 79.77993) to Basi (27.32363, 79.82606)
+  const dist = haversineDistanceKm(27.23725, 79.77993, 27.32363, 79.82606);
+  assert.ok(dist >= 10 && dist <= 11);
 });

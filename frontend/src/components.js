@@ -114,7 +114,7 @@ export function villagePage(bundle, route) {
 }
 
 export function directoryPage(villages, route) {
-  return `<section class="directory-heading"><div><h1>${e(t("findTitle"))}</h1><p>${e(t("findNote"))}</p></div>${waterArt("unknown")}</section><div class="directory-tools"><label class="search-field">${icon("search")}<input type="search" id="village-search" placeholder="${e(t("search"))}" aria-label="${e(t("search"))}"></label><select id="status-filter" aria-label="${e(t("all"))}">${["all", "unsafe", "provisional", "safe_again", "unknown"].map((s) => `<option value="${s}">${e(t(s))}</option>`).join("")}</select></div><div class="directory-top"><p id="result-count" role="status"></p><button class="button secondary" id="show-map">${icon("pin")}${e(t("showMap"))}</button></div><section id="map-section" hidden><div id="map" aria-label="${e(t("map"))}"></div><p class="muted">${e(t("mapNote"))}</p></section><div id="village-list" class="village-list"></div>`;
+  return `<section class="directory-heading"><div><h1>${e(t("findTitle"))}</h1><p>${e(t("findNote"))}</p></div>${waterArt("unknown")}</section><div class="directory-tools"><label class="search-field">${icon("search")}<input type="search" id="village-search" placeholder="${e(t("search"))}" aria-label="${e(t("search"))}"></label><select id="status-filter" aria-label="${e(t("all"))}">${["all", "unsafe", "provisional", "safe_again", "unknown"].map((s) => `<option value="${s}">${e(t(s))}</option>`).join("")}</select><button class="button secondary near-me-btn" id="near-me-btn" type="button" aria-label="${e(t("nearMe"))}">${icon("pin")}<span id="near-me-text">${e(t("nearMe"))}</span></button></div><div class="directory-top"><p id="result-count" role="status"></p><button class="button secondary" id="show-map">${icon("pin")}${e(t("showMap"))}</button></div><section id="map-section" hidden><div id="map" aria-label="${e(t("map"))}"></div><p class="muted">${e(t("mapNote"))}</p></section><div id="village-list" class="village-list"></div>`;
 }
 
 export function villageRows(villages, route) {
@@ -123,7 +123,7 @@ export function villageRows(villages, route) {
   return villages
     .map(
       (v) =>
-        `<a class="village-row" data-nav href="${routeURL("village", v.key, route.demo)}"><span class="row-location">${icon("pin")}</span><span class="row-name"><strong>${e(v.name)}</strong><small>${e([v.block, v.district, v.state].filter(Boolean).join(", "))}</small></span>${badge(v.status || "unknown")}<span class="row-count">${e(v.open_cases ?? 0)} ${e(t("open"))}</span>${icon("arrow")}</a>`,
+        `<a class="village-row" data-nav href="${routeURL("village", v.key, route.demo)}"><span class="row-location">${icon("pin")}</span><span class="row-name"><strong>${e(v.name)}</strong><small>${e([v.block, v.district, v.state].filter(Boolean).join(", "))}</small></span>${v.distanceText ? `<span class="distance-pill">${e(v.distanceText)}</span>` : ""}${badge(v.status || "unknown")}<span class="row-count">${e(v.open_cases ?? 0)} ${e(t("open"))}</span>${icon("arrow")}</a>`,
     )
     .join("");
 }
