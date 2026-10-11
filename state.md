@@ -54,6 +54,7 @@ Admin token for the test console's demo controls: SSM `/jalsaathi/console-token`
 | Sat 20:50 | X-Ray tracing and the Srot CloudWatch dashboard (#16); video script (#17) | Metrics flowing |
 | Sat 21:05 | About-first site from Umar's brief, adapted to the water story (#18) | No overflow at 360/390 px |
 | Sat 21:30 | District digest (SES + EventBridge Scheduler), Cedar in Amazon Verified Permissions, **real `cdk deploy`** (#19) | Decisions show `engine: verified-permissions` |
+| Sun 12:00 | Renamed to **Srot** (#26); Near me search by Umar (#28, #29); SES sender verified and the district digest live (#31) | 4 digests sent and delivered, 0 bounces; full demo loop checked end to end |
 | Sat 21:40 | README to judging standard (#20); submission answers in `docs/SUBMISSION.md` (#21) | 226 + 9 tests |
 
 ## Bugs found and fixed while testing
