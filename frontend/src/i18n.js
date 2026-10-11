@@ -180,6 +180,16 @@ export const words = {
     "अनुमानित: गांव की सही जगह नहीं पता, दूरी ब्लॉक या ज़िले के केंद्र से है।",
     "Approximate: measured to the block or district centre, not the village itself.",
   ],
+  speed: ["गति", "Speed"],
+  clearSearch: ["खोज हटाएं", "Clear search"],
+  offlineBanner: [
+    "इंटरनेट बंद है • आप पहले से खुला डेटा देख रहे हैं।",
+    "Offline • Viewing previously loaded data.",
+  ],
+  onlineBanner: [
+    "वापस ऑनलाइन • ताज़ा डेटा उपलब्ध है।",
+    "Back online • Fresh data available.",
+  ],
 };
 export let language = "hi";
 export function setLanguage(lang) {
