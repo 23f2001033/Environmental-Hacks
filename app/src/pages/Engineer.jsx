@@ -6,6 +6,7 @@ import { useLang } from "../i18n.jsx";
 import { CaseCard } from "./Village.jsx";
 
 const FIXES = ["chlorination", "repair", "source_changed", "need_help"];
+const WAITING_FIX = new Set(["DETECTED", "WARNED", "AWAITING_FIX", "ESCALATED"]); // fix buttons only while a fix is awaited
 const OPEN = new Set(["DETECTED", "WARNED", "AWAITING_FIX", "ESCALATED", "AWAITING_RETEST", "PROVISIONALLY_SAFE"]);
 
 function urgency(c) {
@@ -92,9 +93,11 @@ export default function Engineer() {
           )}
           {canActOn(c) && OPEN.has(c.status) && (
             <div>
-              <div className="small muted">{t("eng_log")}</div>
+              {WAITING_FIX.has(c.status)
+                ? <div className="small muted">{t("eng_log")}</div>
+                : <div className="notice">{t(c.status === "PROVISIONALLY_SAFE" ? "eng_wait_lab" : "eng_wait_retest")}</div>}
               <div className="actions">
-                {FIXES.map((f) => (
+                {WAITING_FIX.has(c.status) && FIXES.map((f) => (
                   <button key={f} className={f === "chlorination" ? "primary" : ""} disabled={!!busy}
                     onClick={() => act(c, "fix", f)}>{t(`fix_${f}`)}</button>
                 ))}
