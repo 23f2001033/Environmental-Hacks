@@ -1,4 +1,4 @@
-# JalSaathi public frontend
+# Srot public frontend
 
 Hindi-first village reports, a searchable directory, scoped block queues, case
 progress, Hindi audio and printable posters. Built with Vite and JavaScript modules.

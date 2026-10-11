@@ -1,4 +1,4 @@
-"""Create (once) the Bedrock guardrail that checks every 'Ask JalSaathi' answer, and record its id in SSM.
+"""Create (once) the Bedrock guardrail that checks every 'Ask Srot' answer, and record its id in SSM.
 
 The answer must be grounded in the facts the agent looked up (contextual grounding); content
 filters and PII masking apply too. Grounding is what stops a false all-clear or a medicine name: neither is in our facts.
@@ -24,7 +24,7 @@ def main() -> None:
     bedrock = boto3.client("bedrock", region_name=REGION)
     existing = next((g for g in bedrock.list_guardrails()["guardrails"] if g["name"] == NAME), None)
     config = dict(
-            description="Checks JalSaathi's answers to villagers: grounded in their case data.",
+            description="Checks Srot's answers to villagers: grounded in their case data.",
             contentPolicyConfig={"filtersConfig": [
                 {"type": t, "inputStrength": "HIGH", "outputStrength": "HIGH"}
                 for t in ("HATE", "INSULTS", "SEXUAL", "VIOLENCE", "MISCONDUCT")

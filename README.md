@@ -1,8 +1,10 @@
-# JalSaathi (जलसाथी): clear water can still make a child sick
+# Srot (स्रोत): clear water can still make a child sick
 
 [![CI](https://github.com/23f2001033/Environmental-Hacks/actions/workflows/ci.yml/badge.svg)](https://github.com/23f2001033/Environmental-Hacks/actions/workflows/ci.yml)
 
-**When a government lab finds a village's drinking water unsafe, JalSaathi tells the people who drink it what to do (in Hindi or English, by text and by voice), makes the block engineer responsible for the fix, and keeps the case open until a re-test proves the water safe.**
+**When a government lab finds a village's drinking water unsafe, Srot tells the people who drink it what to do (in Hindi or English, by text and by voice), makes the block engineer responsible for the fix, and keeps the case open until a re-test proves the water safe.**
+
+*Srot* (स्रोत) is Hindi for "source": the well, handpump or tank a village drinks from, and the government record that says whether it is safe.
 
 Built for **Environmental Hacks** (WeMakeDevs × AWS, Bharat Builds Tour, event 02), **Heat and Water** track, 8–11 October 2026. Running on AWS in Mumbai (`ap-south-1`) on real government data.
 
@@ -22,7 +24,7 @@ Numbers from the live system and the committed WQMIS snapshot (9 Oct 2026). The 
 | **Same failure next year** | **149 of 1,233** villages (12.1%) that failed in 2025-26 failed the same test again in 2026-27, with half the year still to come | [`data/analysis/repeat_failures.json`](data/analysis/repeat_failures.json) |
 | **Scale** | One Step Functions Distributed Map started **560 of 560** case workflows in **611 s**, **0 failed**, paced to fit a new account's Lambda limit of 10 | `/api/v1/stats` → `scale_run` |
 | **Estimated cost** | About **$0.43** for those 560 cases (≈ $0.0008 per case), mostly geocoding; voice notes are made only when someone listens. An estimate from list prices | [`src/jalsaathi/costs.py`](src/jalsaathi/costs.py) |
-| **Alert time** | Failed test → village warned: median **5 s** (demo run). Ask JalSaathi answers in **2–10 s**; Hindi speech to text in about **3 s** | `/api/v1/stats` → `alert_latency`; measured |
+| **Alert time** | Failed test → village warned: median **5 s** (demo run). Ask Srot answers in **2–10 s**; Hindi speech to text in about **3 s** | `/api/v1/stats` → `alert_latency`; measured |
 | **Answers checked** | Every model answer must be grounded in the village's own results (Bedrock Guardrails, threshold 0.7) and pass Cedar, or the person gets the official advice instead | [D-32](docs/DECISIONS.md) |
 | **Weak: map pins** | Only **172 of 496** pins are at the village; 202 at the block centre, 119 at the district centre (drawn hollow), 3 unplaced. The geocoder put villages in the wrong district, so we only trust name + district matches | [D-29](docs/DECISIONS.md) |
 | **Weak: not yet in the field** | No real villager or engineer has used it yet. The **lab re-test is simulated** in the demo (labelled on screen); the field kit only makes a case *provisionally* safe | — |
@@ -80,7 +82,7 @@ flowchart LR
 | **Amazon Polly** | Kajal neural voice: every alert and answer as a Hindi or English voice note |
 | **Amazon Transcribe** | Streaming Hindi speech-to-text for voice questions (Telegram's OGG/Opus as is) |
 | **Amazon Translate** | Hindi ↔ English around the agent |
-| **Amazon Bedrock** | Nova Pro: the Ask JalSaathi agent and the field-kit photo hint |
+| **Amazon Bedrock** | Nova Pro: the Ask Srot agent and the field-kit photo hint |
 | **Bedrock Guardrails** | Contextual grounding of every answer against the facts the agent read; content filters; PII masking |
 | **Amazon Verified Permissions** | The four Cedar rules (close only on a lab pass; kit only provisional; never "boil" for chemicals) decide every action |
 | **Amazon Location Service** | Geocoding (accepted only on a name + district match) and the map tiles (API key restricted to our site) |
@@ -89,7 +91,7 @@ flowchart LR
 | **Amazon CloudWatch + AWS X-Ray** | Business metrics (cases, alerts, fixes, questions, Cedar refusals, grounding score) on a dashboard; traces across every AWS call |
 | **AWS CDK** (Python) | The whole stack, one `cdk deploy` |
 
-**AWS open source:** [AWS CDK](https://github.com/aws/aws-cdk) (infrastructure), [Cedar](https://github.com/cedar-policy) (the case rules, evaluated locally as a fallback via `cedarpy`), [Strands Agents](https://github.com/strands-agents/sdk-python) (the Ask JalSaathi agent), [Amazon Transcribe streaming SDK](https://github.com/awslabs/amazon-transcribe-streaming-sdk), boto3.
+**AWS open source:** [AWS CDK](https://github.com/aws/aws-cdk) (infrastructure), [Cedar](https://github.com/cedar-policy) (the case rules, evaluated locally as a fallback via `cedarpy`), [Strands Agents](https://github.com/strands-agents/sdk-python) (the Ask Srot agent), [Amazon Transcribe streaming SDK](https://github.com/awslabs/amazon-transcribe-streaming-sdk), boto3.
 
 ## Safety and honesty by design
 
@@ -136,6 +138,6 @@ Setup details and secrets: [docs/SETUP.md](docs/SETUP.md). API contract: [docs/A
 
 ## Data, credits and AI tools
 
-- **Data:** Jal Jeevan Mission Water Quality Management Information System (JJM-WQMIS), Department of Drinking Water and Sanitation, Ministry of Jal Shakti, Government of India. Limits per IS 10500:2012 as returned with each sample. JalSaathi relays government test information; it does not certify water and is not a government service.
+- **Data:** Jal Jeevan Mission Water Quality Management Information System (JJM-WQMIS), Department of Drinking Water and Sanitation, Ministry of Jal Shakti, Government of India. Limits per IS 10500:2012 as returned with each sample. Srot relays government test information; it does not certify water and is not a government service.
 - **Libraries and fonts:** MapLibre GL JS (BSD-3-Clause), React, Vite, node-qrcode (MIT), cedarpy, Strands Agents, Amazon Transcribe streaming SDK (Apache-2.0); Fraunces, Tiro Devanagari Hindi, Noto Sans Devanagari, DM Sans, Inter (SIL OFL); map tiles © AWS, HERE; About-page state outlines and rivers from Natural Earth 1:10m v5.1.2 (public domain), built by `scripts/build_map_shapes.py`.
 - **AI tools used:** **Claude Code** (Anthropic) for research, planning, documentation and most of the code, driven and reviewed by the team. At runtime the product uses Amazon Bedrock (Nova Pro), always behind Guardrails and Cedar.

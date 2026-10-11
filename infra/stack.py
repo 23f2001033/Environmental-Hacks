@@ -1,4 +1,4 @@
-"""The whole JalSaathi system in one stack (docs/BUILD_PLAN.md section 1)."""
+"""The whole Srot system in one stack (docs/BUILD_PLAN.md section 1)."""
 
 from __future__ import annotations
 
@@ -131,7 +131,7 @@ class JalSaathiStack(Stack):
 
         # Cedar policies in Amazon Verified Permissions: every case decision is made (and recorded) by AWS
         policy_store = avp.CfnPolicyStore(
-            self, "CasePolicies", description="JalSaathi case rules (policies/case.cedar)",
+            self, "CasePolicies", description="Srot case rules (policies/case.cedar)",
             validation_settings=avp.CfnPolicyStore.ValidationSettingsProperty(mode="OFF"))
         for pid, statement in cedar_statements((ROOT / "policies" / "case.cedar").read_text(encoding="utf-8")):
             avp.CfnPolicy(self, "Policy-" + pid, policy_store_id=policy_store.attr_policy_store_id,
@@ -292,14 +292,14 @@ class JalSaathiStack(Stack):
         ingest_fn.add_to_role_policy(iam.PolicyStatement(
             actions=["geo-places:Geocode"], resources=[f"arn:aws:geo-places:{self.region}::provider/default"]))
 
-        webhook_fn = fn("Webhook", "jalsaathi.webhook.handler", timeout=90, memory=1024)  # also runs Ask JalSaathi
+        webhook_fn = fn("Webhook", "jalsaathi.webhook.handler", timeout=90, memory=1024)  # also runs Ask Srot
         machine.grant_task_response(webhook_fn)
         webhook_fn.add_to_role_policy(polly)
         webhook_fn.add_to_role_policy(iam.PolicyStatement(
             actions=["bedrock:InvokeModel"],
             resources=[f"arn:aws:bedrock:{self.region}:{self.account}:inference-profile/apac.amazon.nova-pro-v1:0",
                        "arn:aws:bedrock:*::foundation-model/amazon.nova-pro-v1:0"]))
-        # Ask JalSaathi: Transcribe (streaming) -> Translate -> Strands agent on Bedrock -> Guardrails -> Cedar -> Polly
+        # Ask Srot: Transcribe (streaming) -> Translate -> Strands agent on Bedrock -> Guardrails -> Cedar -> Polly
         ask_jalsaathi = [
             iam.PolicyStatement(actions=["translate:TranslateText"], resources=["*"]),
             iam.PolicyStatement(actions=["bedrock:ApplyGuardrail"],
@@ -324,7 +324,7 @@ class JalSaathiStack(Stack):
             resources=[f"arn:aws:states:{self.region}:{self.account}:mapRun:{scale_machine.state_machine_name}/*"]))
         api_fn.add_to_role_policy(iam.PolicyStatement(actions=["geo:DescribeKey"], resources=[map_key.attr_key_arn]))
         api_fn.add_to_role_policy(polly)
-        for statement in ask_jalsaathi:  # Ask JalSaathi from the web app (text questions)
+        for statement in ask_jalsaathi:  # Ask Srot from the web app (text questions)
             api_fn.add_to_role_policy(statement)
         api_fn.add_to_role_policy(iam.PolicyStatement(  # the app's field-kit photo hint
             actions=["bedrock:InvokeModel"],
@@ -373,7 +373,7 @@ class JalSaathiStack(Stack):
             self, "IngestErrors",
             metric=ingest_fn.metric_errors(period=Duration.minutes(5)),
             threshold=1, evaluation_periods=1,
-            alarm_description="JalSaathi ingest failed",
+            alarm_description="Srot ingest failed",
         )
 
         # District digest: Amazon SES email to district officials about overdue cases, on an EventBridge schedule
@@ -383,7 +383,7 @@ class JalSaathiStack(Stack):
         ingest_fn.grant_invoke(digest_role)
         scheduler.CfnSchedule(
             self, "DistrictDigest",
-            description="JalSaathi: email each district official the overdue water cases (only when something changed)",
+            description="Srot: email each district official the overdue water cases (only when something changed)",
             schedule_expression="rate(15 minutes)" if demo_clock else "rate(1 hour)",
             flexible_time_window=scheduler.CfnSchedule.FlexibleTimeWindowProperty(mode="OFF"),
             target=scheduler.CfnSchedule.TargetProperty(
@@ -392,7 +392,7 @@ class JalSaathiStack(Stack):
                 retry_policy=scheduler.CfnSchedule.RetryPolicyProperty(maximum_retry_attempts=2)),
         )
 
-        cw.CfnDashboard(self, "Dashboard", dashboard_name="JalSaathi", dashboard_body=self.to_json_string(dashboard_body(
+        cw.CfnDashboard(self, "Dashboard", dashboard_name="Srot", dashboard_body=self.to_json_string(dashboard_body(
             self.region, {"CaseSteps": steps_fn.function_name, "Ingest": ingest_fn.function_name,
                           "Webhook": webhook_fn.function_name, "ApiHandler": api_fn.function_name},
             machine.state_machine_arn, scale_machine.state_machine_arn)))

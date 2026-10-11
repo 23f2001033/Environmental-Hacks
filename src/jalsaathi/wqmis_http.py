@@ -38,7 +38,7 @@ def _default_transport(url: str, timeout: float) -> bytes:
         url,
         headers={
             "Accept": "application/json",
-            "User-Agent": "JalSaathi/0.1 (WQMIS data client)",
+            "User-Agent": "Srot/0.1 (WQMIS data client)",
         },
         method="GET",
     )

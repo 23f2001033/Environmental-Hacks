@@ -1,4 +1,4 @@
-"""The JalSaathi CloudWatch dashboard: what the system did for villages first, then how AWS ran it.
+"""The Srot CloudWatch dashboard: what the system did for villages first, then how AWS ran it.
 
 One builder for both the CDK stack (names are tokens there) and scripts/hotdeploy.py (real names).
 Business metrics come from src/jalsaathi/metrics.py (Embedded Metric Format, namespace JalSaathi).
@@ -45,20 +45,20 @@ def body(region: str, functions: dict[str, str], case_machine_arn: str, scale_ma
     ]
     widgets = [
         {"type": "text", "x": 0, "y": 0, "width": 24, "height": 3, "properties": {"markdown": (
-            "# JalSaathi · live\n"
+            "# Srot · live\n"
             "Failed government drinking-water lab tests → village alerts in Hindi and English → engineer's fix → re-test. "
             "**Every number here is emitted by the system as it works** (CloudWatch Embedded Metric Format), followed by "
             "the AWS services running it. Traces: X-Ray service map.")}},
         _widget(0, 3, 24, 4, "What happened to villages (last 24 h)", impact, view="singleValue", period=86400,
                 region=region),
-        _widget(0, 7, 8, 6, "Ask JalSaathi: questions", [
+        _widget(0, 7, 8, 6, "Ask Srot: questions", [
             expr(_search("Questions", "Outcome", label="")),
         ], region=region),
-        _widget(8, 7, 8, 6, "Ask JalSaathi: grounding score (Bedrock Guardrails)", [
+        _widget(8, 7, 8, 6, "Ask Srot: grounding score (Bedrock Guardrails)", [
             expr(_search("GroundingScore", "", "Average", 3600, "Average grounding")),
             expr(_search("GroundingScore", "", "Minimum", 3600, "Lowest grounding")),
         ], region=region, yAxis={"left": {"min": 0, "max": 1}}),
-        _widget(16, 7, 8, 6, "Ask JalSaathi: answer time (ms)", [
+        _widget(16, 7, 8, 6, "Ask Srot: answer time (ms)", [
             expr(_search("AnswerLatency", "", "p50", 3600, "p50")),
             expr(_search("AnswerLatency", "", "p95", 3600, "p95")),
         ], region=region),

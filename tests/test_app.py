@@ -29,7 +29,7 @@ def _call(method, path, body=None, query=None):
 def test_web_push_message_decrypts_like_a_browser():
     browser = ec.generate_private_key(ec.SECP256R1())
     auth = b"0123456789abcdef"
-    body = webpush.encrypt(b'{"title":"JalSaathi"}', webpush.b64u(webpush.public_bytes(browser)), webpush.b64u(auth))
+    body = webpush.encrypt(b'{"title":"Srot"}', webpush.b64u(webpush.public_bytes(browser)), webpush.b64u(auth))
     salt, rs, idlen = body[:16], int.from_bytes(body[16:20], "big"), body[20]
     server_public = body[21:21 + idlen]
     shared = browser.exchange(ec.ECDH(), ec.EllipticCurvePublicKey.from_encoded_point(ec.SECP256R1(), server_public))
@@ -37,7 +37,7 @@ def test_web_push_message_decrypts_like_a_browser():
     cek = webpush._hkdf(salt, ikm, b"Content-Encoding: aes128gcm\x00", 16)
     nonce = webpush._hkdf(salt, ikm, b"Content-Encoding: nonce\x00", 12)
     plain = AESGCM(cek).decrypt(nonce, body[21 + idlen:], None)
-    assert rs == 4096 and plain == b'{"title":"JalSaathi"}\x02'
+    assert rs == 4096 and plain == b'{"title":"Srot"}\x02'
 
 
 def test_vapid_header_is_a_valid_es256_jwt():

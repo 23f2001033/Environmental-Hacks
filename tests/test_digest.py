@@ -28,7 +28,7 @@ def test_overdue_groups_open_escalated_cases_by_district():
 def test_email_names_villages_and_links_to_them(monkeypatch):
     monkeypatch.setenv("PUBLIC_DOMAIN", "example.org")
     subject, text, body = digest.render("Hardoi", digest.overdue(CASES)["Hardoi"])
-    assert subject == "JalSaathi · Hardoi: 2 overdue drinking-water cases need action"
+    assert subject == "Srot · Hardoi: 2 overdue drinking-water cases need action"
     assert "BEHTA LAKHI (Harpalpur): E. coli bacteria 80 CFU/100 ml" in text and "https://example.org/?v=412558" in text
     assert "<a href='https://example.org/?v=412558'>BEHTA LAKHI</a>" in body and "officials" in body
 

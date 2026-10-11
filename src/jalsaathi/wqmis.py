@@ -33,7 +33,7 @@ class Client:
     def _open_session(self, para: str, state_id: int, fy: str) -> None:
         jar = http.cookiejar.CookieJar()
         self.opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(jar))
-        self.opener.addheaders = [("User-Agent", "Mozilla/5.0 (JalSaathi; hackathon research)")]
+        self.opener.addheaders = [("User-Agent", "Mozilla/5.0 (Srot; hackathon research)")]
         q = {"paraname": enc(para), "fy": enc(fy), "stid": enc(state_id), "dtid": enc(0), "blid": enc(0),
              "gpid": enc(0), "villid": enc(0)}
         self.opener.open(f"{BASE}/Report/Contaminantwisesamplelist?{urllib.parse.urlencode(q)}", timeout=self.timeout).read()

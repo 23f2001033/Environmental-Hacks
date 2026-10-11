@@ -32,7 +32,7 @@ function Arrow({ d, label, lx, ly }) {
 
 export function Architecture() {
   return (
-    <svg className="arch" viewBox="0 0 1100 560" role="img" aria-label="JalSaathi architecture on AWS">
+    <svg className="arch" viewBox="0 0 1100 560" role="img" aria-label="Srot architecture on AWS">
       <defs>
         <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
           <path d="M0 0 L10 5 L0 10 z" fill="#587080" />

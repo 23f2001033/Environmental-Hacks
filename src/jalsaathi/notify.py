@@ -27,7 +27,7 @@ def push(scope_pk: str, key: str, case: dict, url_path: str, **kw) -> int:
     for s in subs:
         lang = i18n.norm(s.get("lang"))
         body = _plain(i18n.t(key, lang, village=case["village"], found=advice.name(case["code"], lang), **kw))
-        message = {"title": "JalSaathi", "body": body, "url": f"{config.public_base()}{url_path}",
+        message = {"title": "Srot", "body": body, "url": f"{config.public_base()}{url_path}",
                    "tag": f"{case['case_id']}-{key}"}
         try:
             status = webpush.send(s["subscription"], message)

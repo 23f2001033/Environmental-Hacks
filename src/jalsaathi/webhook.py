@@ -104,7 +104,7 @@ def _village_of(chat_id: int) -> str | None:
 
 
 def _ask(u: dict) -> None:
-    """A question by voice or text: acknowledge now, answer from an async run of this function (Ask JalSaathi)."""
+    """A question by voice or text: acknowledge now, answer from an async run of this function (Ask Srot)."""
     from . import assistant
 
     chat, lang = u["chat_id"], store.chat_lang(u["chat_id"])

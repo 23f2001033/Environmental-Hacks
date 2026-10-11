@@ -1,4 +1,4 @@
-"""Ask JalSaathi: a villager asks about their water by Hindi voice note or text, and gets a checked, spoken answer.
+"""Ask Srot: a villager asks about their water by Hindi voice note or text, and gets a checked, spoken answer.
 
 Pipeline (each step is a separate AWS service, and each check can only make the answer safer):
   Telegram voice note --Amazon Transcribe (streaming, hi-IN)--> question text
@@ -25,7 +25,7 @@ MAX_VOICE_SECONDS = 60
 OPEN = store.OPEN_STATUSES
 
 SYSTEM_PROMPT = (
-    "You are JalSaathi, a helper for people in Indian villages whose drinking water failed a government lab test. "
+    "You are Srot, a helper for people in Indian villages whose drinking water failed a government lab test. "
     "Always call village_status first; call contaminant_facts when asked why something is harmful or what to do. "
     "Answer in at most three short, plain sentences, using only facts returned by the tools. "
     "Never diagnose illness or name medicines; for illness, say give ORS to children with diarrhoea and see the ASHA worker or a doctor. "

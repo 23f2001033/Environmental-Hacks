@@ -50,8 +50,8 @@ Admin token for the test console's demo controls: SSM `/jalsaathi/console-token`
 | Sat 15:00 | Late joiners catch up (engineer gets open cases); restart only the 13 demo villages; Reshma's ingestion guard merged (#5, #6) | Live |
 | Sat 16:00 | Bot in Hindi and English (one tap), combined village alerts, Hindi review (#7) | English voice notes served |
 | Sat 18:00 | Web app: signed links, engineer/relay actions, Web Push, officials' overview, activity feed (#8–#10); Faiz's village site at `/`, role screens at `/app/` (#11) | Full demo loop run live |
-| Sat 20:40 | **Ask JalSaathi**: Hindi voice questions → Transcribe → Translate → Strands agent on Bedrock → Guardrails → Cedar → Polly (#15) | Live; grounded answers, unsafe ones replaced |
-| Sat 20:50 | X-Ray tracing and the JalSaathi CloudWatch dashboard (#16); video script (#17) | Metrics flowing |
+| Sat 20:40 | **Ask Srot**: Hindi voice questions → Transcribe → Translate → Strands agent on Bedrock → Guardrails → Cedar → Polly (#15) | Live; grounded answers, unsafe ones replaced |
+| Sat 20:50 | X-Ray tracing and the Srot CloudWatch dashboard (#16); video script (#17) | Metrics flowing |
 | Sat 21:05 | About-first site from Umar's brief, adapted to the water story (#18) | No overflow at 360/390 px |
 | Sat 21:30 | District digest (SES + EventBridge Scheduler), Cedar in Amazon Verified Permissions, **real `cdk deploy`** (#19) | Decisions show `engine: verified-permissions` |
 | Sat 21:40 | README to judging standard (#20); submission answers in `docs/SUBMISSION.md` (#21) | 226 + 9 tests |

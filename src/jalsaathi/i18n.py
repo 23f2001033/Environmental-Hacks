@@ -6,10 +6,10 @@ LANGS = ("hi", "en")
 
 MESSAGES: dict[str, dict[str, str]] = {
     "help": {
-        "hi": "💧 <b>JalSaathi</b>\nसरकारी लैब जांच में गाँव का पानी असुरक्षित पाया जाए, तो हम सूचना और सही सावधानी बताते हैं, "
+        "hi": "💧 <b>Srot</b>\nसरकारी लैब जांच में गाँव का पानी असुरक्षित पाया जाए, तो हम सूचना और सही सावधानी बताते हैं, "
               "और ठीक होने तक मामले पर नज़र रखते हैं।\n\nजुड़ने के लिए गाँव के पोस्टर का QR कोड स्कैन करें, या नीचे गाँव चुनें।\n"
               "/status पानी की स्थिति · /english English · /stop सदस्यता बंद करें\n🎙️ कोई भी सवाल बोलकर या लिखकर पूछें।",
-        "en": "💧 <b>JalSaathi</b>\nWhen a government lab test finds a village's water unsafe, we send the alert and the right "
+        "en": "💧 <b>Srot</b>\nWhen a government lab test finds a village's water unsafe, we send the alert and the right "
               "precautions, and follow the case until a re-test passes.\n\nScan the QR code on the village poster to join, "
               "or pick a village below.\n/status water status · /hindi हिंदी · /stop unsubscribe\n🎙️ Ask any question by voice or text.",
     },
@@ -86,7 +86,7 @@ MESSAGES: dict[str, dict[str, str]] = {
     "ask_official": {"hi": "आपके गाँव के लिए सरकारी जांच पर आधारित सलाह:", "en": "Here is the official advice for your village:"},
     "ask_fallback": {"hi": "और जानकारी के लिए आशा दीदी या ब्लॉक इंजीनियर से पूछें।",
                      "en": "For anything else, ask your ASHA worker or the block engineer."},
-    "audio_title": {"hi": "JalSaathi सूचना", "en": "JalSaathi alert"},
+    "audio_title": {"hi": "Srot सूचना", "en": "Srot alert"},
     "photo_received": {"hi": "📷 फ़ोटो मिल गई। अब जांच वाले संदेश में नतीजा चुनें।",
                        "en": "📷 Photo received. Now choose the result in the test message."},
     "hint": {"hi": "📷 फ़ोटो मिल गई।\n🤖 <i>AI सुझाव</i>: {hint}\nयह सिर्फ़ सुझाव है। शीशी को खुद देखकर जांच वाले संदेश में सही नतीजा चुनें।",

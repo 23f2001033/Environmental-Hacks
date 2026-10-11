@@ -41,7 +41,7 @@ def _days(iso: str | None) -> str:
 def render(district: str, rows: list[dict]) -> tuple[str, str, str]:
     """(subject, text, html) for one district."""
     base = config.public_base()
-    subject = f"JalSaathi · {district}: {len(rows)} overdue drinking-water case{'s' if len(rows) != 1 else ''} need action"
+    subject = f"Srot · {district}: {len(rows)} overdue drinking-water case{'s' if len(rows) != 1 else ''} need action"
     lines = [f"{len(rows)} village drinking-water case(s) in {district} have missed their deadline.",
              "Each failed a government lab test (JJM-WQMIS). A case closes only when a lab re-test passes.", ""]
     trs = []
@@ -57,7 +57,7 @@ def render(district: str, rows: list[dict]) -> tuple[str, str, str]:
                 html.escape(c.get("block") or ""), html.escape(name), html.escape(value), days,
                 str(c.get("escalations", 0)))) + "</tr>")
     lines += ["", f"All districts and the live activity feed: {base}/app/officials",
-              "JalSaathi relays government test information; it does not certify water."]
+              "Srot relays government test information; it does not certify water."]
     head = "".join(f"<th style='text-align:left;padding:8px;border-bottom:2px solid #173f55'>{h}</th>" for h in (
         "Village", "Block", "Contaminant", "Measured", "Days since lab test", "Escalations"))
     body = (f"<div style='font-family:Arial,sans-serif;color:#173f55;max-width:720px'>"
@@ -65,7 +65,7 @@ def render(district: str, rows: list[dict]) -> tuple[str, str, str]:
             f"{html.escape(district)}</h2><p>Each failed a government lab test (JJM-WQMIS) and missed the fix deadline. "
             f"A case closes only when a lab re-test passes.</p><table style='border-collapse:collapse;width:100%;font-size:14px'>"
             f"<tr>{head}</tr>{''.join(trs)}</table><p><a href='{base}/app/officials'>Open the officials' view</a></p>"
-            f"<p style='color:#566d79;font-size:12px'>JalSaathi relays government test information; it does not certify "
+            f"<p style='color:#566d79;font-size:12px'>Srot relays government test information; it does not certify "
             f"water.</p></div>")
     return subject, "\n".join(lines), body
 

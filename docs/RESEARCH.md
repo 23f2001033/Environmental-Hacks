@@ -1,6 +1,6 @@
 # Research
 
-Evidence behind JalSaathi, what we verified ourselves, the competitive landscape at this event, and the ideas we rejected. Collected on 9 Oct 2026. Use this for the writeup and the blog.
+Evidence behind Srot, what we verified ourselves, the competitive landscape at this event, and the ideas we rejected. Collected on 9 Oct 2026. Use this for the writeup and the blog.
 
 ## 1. The problem in numbers
 
