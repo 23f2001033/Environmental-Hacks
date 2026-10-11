@@ -221,6 +221,8 @@ table.data tr.click:hover td { background: #f7fafb; }
 .bars .track span.both { background: var(--red); }
 @media (max-width: 560px) { .bars .bar-row { grid-template-columns: 110px 1fr 56px; } }
 .arch { width: 100%; height: auto; background: #fff; border-radius: var(--radius); border: 1px solid var(--line); }
+.arch-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.arch-scroll .arch { display: block; min-width: 880px; }
 
 footer { padding: 30px 0 50px; color: var(--muted); font-size: 13px; }
 .skeleton { background: linear-gradient(90deg, #e9f0f2 25%, #f5f9fa 50%, #e9f0f2 75%); background-size: 200% 100%; animation: shimmer 1.2s infinite; border-radius: 10px; min-height: 18px; }
