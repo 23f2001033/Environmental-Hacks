@@ -26,7 +26,7 @@ Fields marked **TODO** need a team member's own details. Everything else is read
 
 **Deployed link:** https://d2735023v3xj6.cloudfront.net
 
-**YouTube video:** **TODO** (unlisted or public, under 3:00; check it opens in a signed-out browser). Script: [video/SCRIPT.md](../video/SCRIPT.md)
+**YouTube video:** **TODO (Aman)**: upload the final 2:58 cut as Unlisted and paste the link; check it opens in a signed-out browser. Script: [video/SCRIPT.md](../video/SCRIPT.md)
 
 ### What does your project do? (problem, and who it is for)
 
@@ -57,21 +57,17 @@ Fields marked **TODO** need a team member's own details. Everything else is read
 
 ### Blog links (optional; individual AirPods prize for the top 5 on AWS Builder Center)
 
-**TODO**: one per member if time allows. Good topics, each from something we actually hit:
-- "Fail-closed Cedar policies in Verified Permissions for a public-health workflow" (Aman)
-- "Scraping a flaky government portal politely, with a guard against partial data" (Reshma)
-- "Designing a Hindi-first, village-first web page" (Faiz)
-- "Testing a Hindi voice bot on real phones" (Umar)
+**TODO (Aman)**: paste the AWS Builder Center link once published. One blog for the team, by Aman: "Clear water can still make a child sick: what I learned building Srot on AWS in three days".
 
 ### Team members' contributions
 
-> **Aman (team lead):** idea and research; AWS architecture and all deployments; the backend, case workflow, voice assistant, policies, digest and observability (built with Claude Code and reviewed by him); code review and merging of every pull request.
+> **Aman (team lead):** idea and research; AWS architecture and all deployments; the backend, case workflow, voice assistant, policies, digest and observability (built with Claude Code and reviewed by him); code review and merging of every pull request; editing of the final demo video.
 >
 > **Reshma:** the JJM-WQMIS portal client and the guarded ingestion validation that refuses partial or invalid portal data; the demo village coordinates; the traceable evidence behind every number in the video and slides.
 >
 > **Faiz:** the village-first web design and frontend (`frontend/`): village report with contaminant-specific advice and voice notes, searchable village directory, block queue, printable poster; Hindi-first with English.
 >
-> **Umar:** phone testing and QA of the Telegram flows, Hindi review, the design brief for the About page, and the demo video.
+> **Umar:** phone and end-to-end testing of the Telegram flows and Hindi review; the "Near me" location search; audio speed controls, search clearing, a richer share message and an offline notice; expanded frontend unit tests and a live API smoke-test suite; the About page design brief; recording and narrating the demo video.
 
 (Each member should check their own line.)
 
@@ -86,6 +82,8 @@ Fields marked **TODO** need a team member's own details. Everything else is read
 > 5. **Amazon Transcribe batch latency.** A 3-second Hindi clip took 42 s in batch. Streaming took about 3 s, but needs a separate SDK (with a native dependency) rather than boto3.
 > 6. **AWS CDK on Windows under memory pressure.** Synth crashed inside the jsii Node process with `node::Realloc ... Assertion failed` when the PC had under 1 GB of commit memory free. A clear "not enough memory" message would have saved debugging time.
 > 7. **SES sandbox** requires verifying every recipient, which is sensible but slows a demo. A short-lived "verified test inbox" for hackathons would help.
+> 8. **CloudWatch dashboards:** a SEARCH expression with an empty dimension list, `{Namespace,}`, made a whole widget show only "There was an error while trying to get graph data". The real reason (invalid SEARCH schema) only appeared when we ran the same expression through `GetMetricData`.
+> 9. **Amazon Location API keys in CloudFormation:** changing only the description of a key used in the last 7 days fails the stack update ("you must set ForceUpdate to true") and rolls everything back; the CDK construct doesn't make that obvious before deploying.
 
 ### What you liked about the AWS services you used
 
@@ -97,4 +95,5 @@ Fields marked **TODO** need a team member's own details. Everything else is read
 > 6. **Strands Agents:** tools are plain Python functions, and the Bedrock model wrapper took a few lines; it was easy to restrict the agent to one village's data.
 > 7. **CloudWatch Embedded Metric Format:** business metrics (alerts sent, questions answered, Cedar refusals) from a single log line, no extra API calls, straight onto a dashboard. With **X-Ray** we got a service map of every AWS call.
 > 8. **Amazon Location API keys with referer restrictions:** map tiles in the browser without exposing credentials.
-> 9. **AWS CDK in Python:** 20-odd services in one stack and one `cdk deploy`, including Verified Permissions policies generated from our Cedar file.
+> 9. **AWS CDK in Python:** 18 services in one stack and one `cdk deploy`, including Verified Permissions policies generated from our Cedar file.
+> 10. **Amazon SES** delivered every digest we sent (10 of 10, no bounces), and **EventBridge Scheduler** made the recurring digest a single CDK resource.
