@@ -76,3 +76,10 @@ def test_a_rejected_send_is_logged_and_retried_next_run(mail, monkeypatch):
     assert out["sent"] == 0 and out["failed"][0]["district"] == "Hardoi" and "not verified" in out["failed"][0]["error"]
     monkeypatch.setattr(config, "client", lambda name: type("SES", (), {"send_email": lambda self, **k: mail.append(k)})())
     assert digest.run()["sent"] == 1  # not marked as sent, so the next run tries again
+
+
+def test_one_case_reads_as_singular(monkeypatch):
+    monkeypatch.setattr(config, "public_base", lambda: "https://example.org")
+    subject, text, body = digest.render("Kannauj", [CASES[0]])
+    assert subject == "Srot · Kannauj: 1 overdue drinking-water case needs action"
+    assert "has missed its deadline" in text and "It failed a government lab test" in body
