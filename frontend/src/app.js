@@ -191,8 +191,24 @@ function wireDirectory() {
     };
   }
 
+  const clearSearch = document.querySelector("#clear-search");
+  const syncClear = () => {
+    if (clearSearch) clearSearch.hidden = !search.value;
+  };
   if (route.q) search.value = route.q;
-  search.addEventListener("input", update);
+  syncClear();
+  search.addEventListener("input", () => {
+    syncClear();
+    update();
+  });
+  if (clearSearch) {
+    clearSearch.onclick = () => {
+      search.value = "";
+      syncClear();
+      search.focus();
+      update();
+    };
+  }
   filter.addEventListener("change", update);
   update();
   document.querySelector("#show-map").onclick = async (event) => {
@@ -318,22 +334,41 @@ document.addEventListener("click", async (event) => {
     render();
     document.querySelector(`[data-lang="${language}"]`)?.focus();
   }
+  const speedBtn = event.target.closest("[data-speed]");
+  if (speedBtn) {
+    const bar = speedBtn.closest(".audio-speed-bar");
+    const panel = speedBtn.closest(".audio-panel");
+    const audio = panel?.querySelector("audio");
+    if (audio) {
+      const rate = parseFloat(speedBtn.dataset.speed) || 1;
+      audio.playbackRate = rate;
+      bar?.querySelectorAll(".speed-btn").forEach((b) => {
+        b.classList.toggle("active", b === speedBtn);
+      });
+    }
+  }
   if (event.target.closest("[data-refresh]")) load();
   if (event.target.closest("[data-poster]") && data?.village) {
     const { showPoster } = await import("./poster.js");
     showPoster(data, route.demo);
   }
   const share = event.target.closest("[data-share]");
-  if (share) {
+  if (share && data?.village) {
     try {
       const url = new URL(
         routeURL("village", data.village.key, route.demo),
         location.origin,
       ).href;
+      const v = data.village;
+      const loc = [v.block, v.district].filter(Boolean).join(", ");
+      const text =
+        language === "hi"
+          ? `जलसाथी: ${v.name} (${loc}) के पीने के पानी की सरकारी जांच रिपोर्ट और सही सलाह:`
+          : `JalSaathi: Drinking-water lab test report and safety advice for ${v.name} (${loc}):`;
       if (navigator.share)
-        await navigator.share({ title: data.village.name, url });
+        await navigator.share({ title: v.name, text, url });
       else {
-        await navigator.clipboard.writeText(url);
+        await navigator.clipboard.writeText(`${text}\n${url}`);
         share.textContent = t("copied");
         announce(t("copied"));
       }
@@ -345,5 +380,22 @@ document.addEventListener("click", async (event) => {
     }
   }
 });
+
+function updateOnlineStatus() {
+  const banner = document.querySelector("#offline-banner");
+  if (!banner) return;
+  if (!navigator.onLine) {
+    banner.hidden = false;
+    banner.textContent = t("offlineBanner");
+    announce(t("offlineBanner"));
+  } else if (!banner.hidden) {
+    banner.textContent = t("onlineBanner");
+    setTimeout(() => {
+      banner.hidden = true;
+    }, 2500);
+  }
+}
+window.addEventListener("online", updateOnlineStatus);
+window.addEventListener("offline", updateOnlineStatus);
 window.addEventListener("popstate", () => load(true));
 load();
