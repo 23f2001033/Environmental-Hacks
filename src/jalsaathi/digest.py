@@ -83,7 +83,7 @@ def run(force: bool = False) -> dict:
         log.info("district digest skipped: no recipients configured")
         return {"sent": 0, "skipped": "not configured"}
     recipients, sender = settings
-    sent, districts = 0, overdue(store.list_cases())
+    sent, failed, districts = 0, [], overdue(store.list_cases())
     for district, rows in districts.items():
         to = sorted(set(recipients.get(district, []) + recipients.get("*", [])))
         if not to:
@@ -92,12 +92,18 @@ def run(force: bool = False) -> dict:
         if not force and last and all((c.get("updated_at") or "") <= last for c in rows):
             continue  # nothing new since the last email
         subject, text, body = render(district, rows)
-        config.client("sesv2").send_email(
-            FromEmailAddress=sender, Destination={"ToAddresses": to},
-            Content={"Simple": {"Subject": {"Data": subject}, "Body": {"Text": {"Data": text}, "Html": {"Data": body}}}})
+        try:
+            config.client("sesv2").send_email(
+                FromEmailAddress=sender, Destination={"ToAddresses": to},
+                Content={"Simple": {"Subject": {"Data": subject}, "Body": {"Text": {"Data": text}, "Html": {"Data": body}}}})
+        except Exception as exc:  # noqa: BLE001 - e.g. an address not verified yet: skip, retry on the next run
+            log.warning("district digest for %s not sent: %s", district, exc)
+            failed.append({"district": district, "error": str(exc)[:200]})
+            continue
         store.set_digest_sent(district)
         for c in rows:
             store.add_event(c["case_id"], "district_notified", note=f"overdue case emailed to the {district} district official")
         metrics.emit("DistrictEmails", len(to), District=district)
         sent += 1
-    return {"sent": sent, "districts_overdue": len(districts)}
+    out = {"sent": sent, "districts_overdue": len(districts)}
+    return {**out, "failed": failed} if failed else out

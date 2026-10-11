@@ -66,3 +66,13 @@ def test_scheduler_event_reaches_the_digest(monkeypatch):
     ingest.handler({"action": "district_digest"})
     ingest.handler({"action": "district_digest", "force": True})
     assert called == [False, True]
+
+
+def test_a_rejected_send_is_logged_and_retried_next_run(mail, monkeypatch):
+    def reject(self, **k):
+        raise RuntimeError("MessageRejected: Email address is not verified")
+    monkeypatch.setattr(config, "client", lambda name: type("SES", (), {"send_email": reject})())
+    out = digest.run()
+    assert out["sent"] == 0 and out["failed"][0]["district"] == "Hardoi" and "not verified" in out["failed"][0]["error"]
+    monkeypatch.setattr(config, "client", lambda name: type("SES", (), {"send_email": lambda self, **k: mail.append(k)})())
+    assert digest.run()["sent"] == 1  # not marked as sent, so the next run tries again
