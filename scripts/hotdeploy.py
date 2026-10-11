@@ -2,7 +2,7 @@
 
 Pushes exactly what the CDK stack already declares, so the next `cdk deploy` finds nothing new to change:
 Lambda code and dependency layer, the CloudFront routing function, S3 CORS for photo uploads, the API's Bedrock
-permission, and the web app in frontend/dist. Run scripts/build.py and `npm run build` (in frontend/) first.
+permission, and the web app in frontend/dist. --code rebuilds the Lambda bundle itself; run `npm run build` (in frontend/ and app/) before --site.
 
 Usage: python scripts/hotdeploy.py [--code] [--infra] [--observability] [--site]   (no flags = everything)
 """
@@ -12,6 +12,7 @@ from __future__ import annotations
 import io
 import mimetypes
 import re
+import subprocess
 import sys
 import time
 import zipfile
@@ -172,6 +173,8 @@ def _upload(out: dict, dist: Path, prefix: str) -> None:
 if __name__ == "__main__":
     flags = set(sys.argv[1:]) or {"--code", "--infra", "--observability", "--site"}
     if "--code" in flags:
+        # Rebuild first: zipping a stale build/lambda would silently deploy old code
+        subprocess.run([sys.executable, str(ROOT / "scripts" / "build.py")], check=True)
         deploy_code()
     if "--infra" in flags:
         deploy_infra()

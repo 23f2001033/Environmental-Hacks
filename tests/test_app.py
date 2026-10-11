@@ -185,3 +185,18 @@ def test_demo_link_works_only_on_demo_cases(monkeypatch, recorded):
     assert _call("POST", "/api/v1/engineer/5037/fix", {"case_id": demo_case["case_id"], "action": "chlorination", "k": "demo"})[0] == 200
     assert _call("POST", "/api/v1/engineer/5037/fix", {"case_id": "c-real", "action": "chlorination", "k": "demo"})[0] == 401
     assert _call("GET", "/api/v1/access", query={"role": "e", "key": "5037", "k": "demo"}) == (200, {"valid": True, "demo": True})
+
+
+def test_scale_status_carries_the_scale_runs_cost(monkeypatch):
+    from datetime import datetime, timezone
+
+    from jalsaathi import api
+
+    t0, t1 = datetime(2026, 10, 9, 18, 33, tzinfo=timezone.utc), datetime(2026, 10, 9, 18, 43, tzinfo=timezone.utc)
+    sfn = type("S", (), {
+        "describe_execution": lambda self, **k: {"status": "SUCCEEDED", "startDate": t0, "stopDate": t1},
+        "list_map_runs": lambda self, **k: {"mapRuns": [{"mapRunArn": "m"}]},
+        "describe_map_run": lambda self, **k: {"itemCounts": {"total": 560, "succeeded": 560, "failed": 0}}})()
+    monkeypatch.setattr(api.config, "client", lambda name: sfn)
+    out = api._scale_status({"scale_execution_arn": "arn", "new_cases": 560, "cost_estimate": {"usd_total": 0.4277}})
+    assert out["items"]["succeeded"] == 560 and out["cost_estimate"]["usd_total"] == 0.4277 and out["cases"] == 560

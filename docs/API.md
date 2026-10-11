@@ -99,15 +99,16 @@ A `CaseView` with timeline.
               "finished_at": "...",
               "cost_estimate": {"usd_total": 0.13, "usd_per_case": 0.0098, "usd_by_service": {"polly": 0.12, "...": 0},
                                 "assumptions": {"prices": "approximate on-demand list prices ...", "...": "..."}}},
- "scale_run": {"status": "SUCCEEDED", "started": "...", "stopped": "...", "seconds": 640.2,
-               "items": {"total": 580, "succeeded": 580, "failed": 0, "running": 0, "pending": 0}},
+ "scale_run": {"status": "SUCCEEDED", "started": "...", "stopped": "...", "seconds": 610.9, "cases": 560,
+               "cost_estimate": {"usd_total": 0.4277, "usd_per_case": 0.000764, "...": "..."},
+               "items": {"total": 560, "succeeded": 560, "failed": 0, "running": 0, "pending": 0}},
  "repeat_failures": {"question": "...", "source": "...", "totals": {"last_year": 1233, "this_year": 580, "both": 149,
                      "share_of_last_year_failing_again": 0.121}, "caveats": ["..."], "by_state_and_parameter": [...]}}
 ```
 
 - `alert_latency`: seconds from case opened (failed test found) to village warned. For a scale run this includes the
   deliberate pacing (about one case a second).
-- `scale_run` is `null` unless the last ingest used the ScaleRun state machine.
+- `scale_run` is the most recent ingest that used the ScaleRun state machine (`null` if none), with its own cost estimate; the Impact page shows this cost, since `last_run` is usually the 13-case demo restart.
 
 ## Web app (relays, engineers, officials)
 

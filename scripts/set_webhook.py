@@ -15,5 +15,6 @@ telegram("setMyCommands", commands=[
 ])
 telegram("setMyDescription", description=("Srot: सरकारी लैब जांच में आपके गाँव का पानी असुरक्षित पाया जाए तो सूचना, "
                                           "सही सावधानी, और ठीक होने तक मामले पर नज़र। Hindi and English: send /english."))
+telegram("setMyShortDescription", short_description="Srot: village drinking-water alerts from government lab tests, in Hindi and English, with voice notes.")
 info = telegram("getWebhookInfo")["result"]
 print("webhook:", info.get("url") == url, "pending:", info.get("pending_update_count"), "last error:", info.get("last_error_message"))

@@ -63,7 +63,8 @@ def _scale_status(run: dict | None) -> dict | None:
         return None
     sfn = config.client("stepfunctions")
     ex = sfn.describe_execution(executionArn=arn)
-    out = {"status": ex["status"], "started": ex["startDate"].isoformat()}
+    out = {"status": ex["status"], "started": ex["startDate"].isoformat(),
+           "cost_estimate": run.get("cost_estimate"), "cases": run.get("new_cases")}  # the run judged at scale
     if ex.get("stopDate"):
         out.update(stopped=ex["stopDate"].isoformat(), seconds=round((ex["stopDate"] - ex["startDate"]).total_seconds(), 1))
     runs = sfn.list_map_runs(executionArn=arn).get("mapRuns", [])
