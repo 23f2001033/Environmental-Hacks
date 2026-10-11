@@ -72,7 +72,7 @@ def render(district: str, rows: list[dict]) -> tuple[str, str, str]:
 
 def _settings() -> tuple[dict, str] | None:
     try:
-        return json.loads(config.secret(SSM_RECIPIENTS)), config.secret(SSM_SENDER)
+        return json.loads(config.fresh_secret(SSM_RECIPIENTS)), config.fresh_secret(SSM_SENDER)  # not cached: edits apply next run
     except Exception:  # noqa: BLE001 - not configured: the digest is optional
         return None
 

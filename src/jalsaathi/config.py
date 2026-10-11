@@ -70,9 +70,14 @@ def table():
     return boto3.resource("dynamodb", region_name=REGION).Table(table_name())
 
 
+def fresh_secret(name: str) -> str:
+    """Read an SSM parameter now, for settings people change while the system runs (e.g. digest recipients)."""
+    return client("ssm").get_parameter(Name=name, WithDecryption=True)["Parameter"]["Value"]
+
+
 @lru_cache(maxsize=None)
 def secret(name: str) -> str:
-    return client("ssm").get_parameter(Name=name, WithDecryption=True)["Parameter"]["Value"]
+    return fresh_secret(name)
 
 
 def village_url(village_key: str) -> str:

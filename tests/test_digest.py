@@ -38,7 +38,7 @@ def mail(monkeypatch):
     sent, state = [], {"last": None}
     secrets = {digest.SSM_RECIPIENTS: json.dumps({"Hardoi": ["dm@hardoi.example"], "*": ["team@example.org"]}),
                digest.SSM_SENDER: "alerts@example.org"}
-    monkeypatch.setattr(config, "secret", lambda name: secrets[name])
+    monkeypatch.setattr(config, "fresh_secret", lambda name: secrets[name])
     monkeypatch.setattr(config, "client", lambda name: type("SES", (), {"send_email": lambda self, **k: sent.append(k)})())
     monkeypatch.setattr(store, "list_cases", lambda: CASES)
     monkeypatch.setattr(store, "digest_sent_at", lambda d: state["last"])
@@ -56,7 +56,7 @@ def test_one_email_per_district_then_quiet_until_something_changes(mail):
 
 
 def test_not_configured_sends_nothing(monkeypatch):
-    monkeypatch.setattr(config, "secret", lambda name: (_ for _ in ()).throw(RuntimeError("ParameterNotFound")))
+    monkeypatch.setattr(config, "fresh_secret", lambda name: (_ for _ in ()).throw(RuntimeError("ParameterNotFound")))
     assert digest.run() == {"sent": 0, "skipped": "not configured"}
 
 
