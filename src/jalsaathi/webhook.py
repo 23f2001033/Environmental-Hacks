@@ -97,8 +97,10 @@ def _command(u: dict) -> None:
 
 
 def _village_of(chat_id: int) -> str | None:
+    """The village a question is about: the one this chat joined (or re-joined) most recently."""
     subs = [s for s in store.chat_subscriptions(chat_id) if s["scope_pk"].startswith("VILLAGE#")]
-    return subs[0]["scope_pk"].split("#", 1)[1] if subs else None
+    latest = max(subs, key=lambda s: s.get("consent_at", ""), default=None)
+    return latest["scope_pk"].split("#", 1)[1] if latest else None
 
 
 def _ask(u: dict) -> None:

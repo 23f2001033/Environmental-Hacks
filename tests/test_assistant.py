@@ -117,6 +117,15 @@ def test_voice_question_from_a_relay_is_answered_async(monkeypatch, tg):
     assert "सवाल मिल गया" in tg["sent"][0]
 
 
+def test_question_is_about_the_village_joined_last(monkeypatch, tg):
+    monkeypatch.setattr(webhook.store, "chat_subscriptions", lambda chat: [
+        {"scope_pk": "BLOCK#5037", "consent_at": "2026-10-11T09:00:00+00:00"},
+        {"scope_pk": "VILLAGE#412558", "consent_at": "2026-10-11T08:00:00+00:00"},
+        {"scope_pk": "VILLAGE#651384", "consent_at": "2026-10-11T08:30:00+00:00"}])
+    webhook.handler(_hook({"update_id": 43, "message": {"chat": {"id": 5}, "voice": {"file_id": "v4", "duration": 5}}}))
+    assert tg["invoked"][0]["assistant"]["village_key"] == "651384"
+
+
 def test_text_question_needs_a_village(monkeypatch, tg):
     monkeypatch.setattr(webhook.store, "chat_subscriptions", lambda chat: [])
     webhook.handler(_hook({"update_id": 41, "message": {"chat": {"id": 6}, "voice": {"file_id": "v2", "duration": 5}}}))
