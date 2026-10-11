@@ -16,7 +16,8 @@ def _id(prefix: str, text: str) -> str:
 
 
 def _search(metric: str, dims: str, stat: str = "Sum", period: int = 3600, label: str = "") -> dict:
-    expr = f"SEARCH('{{{NS},{dims}}} MetricName=\"{metric}\"', '{stat}', {period})"
+    schema = f"{NS},{dims}" if dims else NS  # "{NS,}" (empty dimension list) is rejected by CloudWatch
+    expr = f"SEARCH('{{{schema}}} MetricName=\"{metric}\"', '{stat}', {period})"
     return {"expression": expr, "label": label or metric, "id": _id("e", expr + stat)}
 
 
