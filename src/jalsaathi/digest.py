@@ -41,9 +41,13 @@ def _days(iso: str | None) -> str:
 def render(district: str, rows: list[dict]) -> tuple[str, str, str]:
     """(subject, text, html) for one district."""
     base = config.public_base()
-    subject = f"Srot · {district}: {len(rows)} overdue drinking-water case{'s' if len(rows) != 1 else ''} need action"
-    lines = [f"{len(rows)} village drinking-water case(s) in {district} have missed their deadline.",
-             "Each failed a government lab test (JJM-WQMIS). A case closes only when a lab re-test passes.", ""]
+    one = len(rows) == 1
+    cases = f"{len(rows)} overdue drinking-water case{'' if one else 's'}"
+    failed = "It failed" if one else "Each failed"
+    subject = f"Srot · {district}: {cases} need{'s' if one else ''} action"
+    lines = [f"{len(rows)} village drinking-water case{'' if one else 's'} in {district} "
+             f"{'has' if one else 'have'} missed {'its' if one else 'their'} deadline.",
+             f"{failed} a government lab test (JJM-WQMIS). A case closes only when a lab re-test passes.", ""]
     trs = []
     for c in rows:
         name = advice.name(c["code"], "en")
@@ -61,8 +65,8 @@ def render(district: str, rows: list[dict]) -> tuple[str, str, str]:
     head = "".join(f"<th style='text-align:left;padding:8px;border-bottom:2px solid #173f55'>{h}</th>" for h in (
         "Village", "Block", "Contaminant", "Measured", "Days since lab test", "Escalations"))
     body = (f"<div style='font-family:Arial,sans-serif;color:#173f55;max-width:720px'>"
-            f"<h2 style='margin:0 0 6px'>{len(rows)} overdue drinking-water case{'s' if len(rows) != 1 else ''} in "
-            f"{html.escape(district)}</h2><p>Each failed a government lab test (JJM-WQMIS) and missed the fix deadline. "
+            f"<h2 style='margin:0 0 6px'>{cases} in "
+            f"{html.escape(district)}</h2><p>{failed} a government lab test (JJM-WQMIS) and missed the fix deadline. "
             f"A case closes only when a lab re-test passes.</p><table style='border-collapse:collapse;width:100%;font-size:14px'>"
             f"<tr>{head}</tr>{''.join(trs)}</table><p><a href='{base}/app/officials'>Open the officials' view</a></p>"
             f"<p style='color:#566d79;font-size:12px'>Srot relays government test information; it does not certify "
